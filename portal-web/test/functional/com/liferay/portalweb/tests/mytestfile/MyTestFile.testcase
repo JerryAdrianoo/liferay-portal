@@ -1,0 +1,127 @@
+@component-name = "portal-web-forms-and-data-lists"
+definition {
+    property testray.main.component.name = "Forms";
+
+    setUp {
+        TestCase.setUpPortalInstance();
+
+        User.firstLoginPG();
+
+        Navigator.openURL();
+    }
+
+    tearDown {
+        User.logoutAndLoginPG(
+            userLoginEmailAddress = "test@liferay.com",
+            userLoginFullName = "Test Test");
+    }
+
+    @description = "Access Portal Global Menu and validate CONFIGURATION string at Control Panel"
+    @priority = "5"
+    test ValidateConfigurationStringAtControlPanel {
+
+        MyTestFile.canOpenMenu(
+            varExample = "dropdown"
+        );
+        MyTestFile.canOpenControlPanel();
+        AssertElementPresent(locator1 = "MyTestFile#CONFIGURATION_TEXT_VISIBLE");
+
+    }
+
+    @description = "Set Screen size to custom and validate values"
+    @priority = "5"
+    test SetScreenSizeAndValidateValues {
+
+        MyTestFile.canOpenSimulation();
+        MyTestFile.canOpenCustom();
+        MyTestFile.typeHeightAndWidth();
+        MyTestFile.confirmation();
+        MyTestFile.canOpenSimulation();
+        
+    }
+
+    @description = "Adding a Form with Full Name and Age content in two languages"
+    test CanAddForm {
+        FormsAdmin.addForm();
+
+		Form.editName(formName = "Form Test");
+
+		Form.editPageTitle(
+			formPageName = "Test Form",
+			formTitleNumber = "1");
+
+		Form.gotoAddField(
+			fieldType = "Text");
+
+		Form.editFieldLabelMetal(fieldValue="Full Name");
+
+		Form.closeSidebar();
+
+		Form.gotoAddField(
+			fieldType = "Numeric");
+
+		Form.editFieldLabelMetal(fieldValue = "Age");
+
+        Form.addTranslation(localizedLanguage = "Portuguese (Brazil)");
+
+        Form.editFieldLabelMetal(fieldValue="Idade");
+
+        FormViewBuilder.editFieldLabel(
+                fieldLabel = "Full Name",
+                label = "Nome Completo");
+
+        Form.save();
+                
+        Form.publishForm();
+
+        FormsAdminNavigator.gotoPublishedForm();
+
+        FormViewBuilder.editText(
+                fieldName = "Age",
+                fieldValue = "24");
+
+        FormViewBuilder.editText(
+                fieldName = "Full Name",
+                fieldValue = "Pedro Henrique Amaral");
+
+        FormPortlet.submitSuccessfully();
+
+        Form.submitAgain();
+
+        FormPortlet.changeLocale(locale = "português-Brasil");
+
+        FormViewBuilder.editText(
+                fieldName = "Idade",
+                fieldValue = "56");
+
+        FormViewBuilder.editText(
+                fieldName = "Nome Completo",
+                fieldValue = "Joao Cassemiro");
+
+        FormPortlet.submitSuccessfully();
+
+        Navigator.openURL();
+
+		ProductMenu.gotoPortlet(
+			category = "Content & Data",
+			portlet = "Forms");
+
+		FormsAdminNavigator.gotoViewEntries();
+
+        FormPortlet.waitFormRenderer();
+
+        LexiconEntry.viewEntryName(
+            rowEntry = "Pedro Henrique Amaral");
+
+        LexiconEntry.viewEntryContent(
+            rowAny = "24");
+
+        LexiconEntry.viewEntryName(
+            rowEntry = "Joao Cassemiro");
+
+        LexiconEntry.viewEntryContent(
+            rowAny = "56");
+    } 
+
+    
+}
