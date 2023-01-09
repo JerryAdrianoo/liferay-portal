@@ -1,0 +1,46 @@
+definition {
+
+	macro canOpenMenu {
+        var key_varExample = "${varExample}";
+        WaitForElementPresent(locator1 = "MyTestFile#OPEN_MENU");
+		Click(locator1 = "MyTestFile#OPEN_MENU");
+    }
+
+
+    macro canOpenControlPanel {
+        WaitForElementPresent(locator1 = "MyTestFile#CONTROL_PANEL");
+        Click(locator1 = "MyTestFile#CONTROL_PANEL");
+
+    }
+
+    macro canOpenSimulation {
+        WaitForElementPresent(locator1 = "ControlMenu#SIMULATION");
+        Click(locator1 = "ControlMenu#SIMULATION");
+    }
+    
+    macro canOpenCustom {
+        WaitForElementPresent(locator1 = "MyTestFile#BUTTON_CUSTOM");
+        Click(locator1 = "MyTestFile#BUTTON_CUSTOM");
+    }
+
+    macro typeHeightAndWidth {
+        WaitForElementPresent(locator1 = "MyTestFile#HEIGHT_LABEL");
+
+        Type(
+            locator1 = "MyTestFile#HEIGHT_LABEL",
+			value1 = "1920"
+        );
+        Type(
+            locator1 = "MyTestFile#WIDTH_LABEL",
+            value1 = "1080"
+        );
+    }
+
+        macro confirmation{
+            WaitForElementPresent(locator1 = "MyTestFile#CLOSE");
+            Click(locator1 = "MyTestFile#CLOSE");
+
+        
+        
+    }
+}
