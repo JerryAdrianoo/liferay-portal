@@ -1,0 +1,60 @@
+<html>
+<head>
+<title>MyTestFile</title>
+</head>
+
+<body>
+<table border="1" cellpadding="1" cellspacing="1">
+<thead>
+<tr><td rowspan="1" colspan="3">MyTestFile</td></tr>
+</thead>
+
+<tbody>
+<tr>
+	<td>OPEN_MENU</td>
+	<td>//button[@class='${key_varExample}-toggle lfr-portal-tooltip btn btn-monospaced btn-sm btn-unstyled']</td>
+	<td></td>
+</tr>
+<tr>
+
+    <td>CONTROL_PANEL</td>
+    <td>//li[@id='_com_liferay_product_navigation_applications_menu_web_internal_portlet_ProductNavigationApplicationsMenuPortlet_tab_2']</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CONFIGURATION_TEXT_VISIBLE</td>
+    <td>//*[@id="senna_surface1"]/div[7]/div[2]/div/div/div/div/div[2]/div/div/div[1]/div/div[3]/div/div[4]/ul/li[1]/h2</td>
+    <td></td>
+</tr>
+/*<tr>
+    <td>BUTTON_SIMULATION</td>
+    <td>//*[@id="fehs____"]</td>
+    <td></td>
+</tr>*/
+<tr>
+    <td>BUTTON_CUSTOM</td>
+    <td>//button[@data-device='custom']</td>
+    <td></td>
+</tr>
+<tr>
+    <td>HEIGHT_LABEL</td>
+    <td>//input[@id='_com_liferay_product_navigation_simulation_web_portlet_SimulationPortlet_height']</td>
+    <td></td>
+</tr>
+<tr>
+    <td>WIDTH_LABEL</td>
+    <td>//input[@id='_com_liferay_product_navigation_simulation_web_portlet_SimulationPortlet_width']</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CLOSE</td>
+    <td>//a[@id='_com_liferay_product_navigation_simulation_web_portlet_SimulationPortlet_simulationToggleId']</td>
+    <td></td>
+</tr>
+
+
+
+</tbody>
+</table>
+</body>
+</html>
