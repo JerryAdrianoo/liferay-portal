@@ -1,48 +1,25 @@
 @component-name = "portal-web-forms-and-data-lists"
 definition {
-    property testray.main.component.name = "Forms";
 
-    setUp {
-        TestCase.setUpPortalInstance();
+	property testray.main.component.name = "Forms";
 
-        User.firstLoginPG();
+	setUp {
+		TestCase.setUpPortalInstance();
 
-        Navigator.openURL();
-    }
+		User.firstLoginPG();
 
-    tearDown {
-        User.logoutAndLoginPG(
-            userLoginEmailAddress = "test@liferay.com",
-            userLoginFullName = "Test Test");
-    }
+		Navigator.openURL();
+	}
 
-    @description = "Access Portal Global Menu and validate CONFIGURATION string at Control Panel"
-    @priority = "5"
-    test ValidateConfigurationStringAtControlPanel {
+	tearDown {
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "test@liferay.com",
+			userLoginFullName = "Test Test");
+	}
 
-        MyTestFile.canOpenMenu(
-            varExample = "dropdown"
-        );
-        MyTestFile.canOpenControlPanel();
-        AssertElementPresent(locator1 = "MyTestFile#CONFIGURATION_TEXT_VISIBLE");
-
-    }
-
-    @description = "Set Screen size to custom and validate values"
-    @priority = "5"
-    test SetScreenSizeAndValidateValues {
-
-        MyTestFile.canOpenSimulation();
-        MyTestFile.canOpenCustom();
-        MyTestFile.typeHeightAndWidth();
-        MyTestFile.confirmation();
-        MyTestFile.canOpenSimulation();
-        
-    }
-
-    @description = "Adding a Form with Full Name and Age content in two languages"
-    test CanAddForm {
-        FormsAdmin.addForm();
+	@description = "Adding a Form with Full Name and Age content in two languages"
+	test CanAddForm {
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form Test");
 
@@ -50,57 +27,55 @@ definition {
 			formPageName = "Test Form",
 			formTitleNumber = "1");
 
-		Form.gotoAddField(
-			fieldType = "Text");
+		Form.gotoAddField(fieldType = "Text");
 
-		Form.editFieldLabelMetal(fieldValue="Full Name");
+		Form.editFieldLabelMetal(fieldValue = "Full Name");
 
 		Form.closeSidebar();
 
-		Form.gotoAddField(
-			fieldType = "Numeric");
+		Form.gotoAddField(fieldType = "Numeric");
 
 		Form.editFieldLabelMetal(fieldValue = "Age");
 
-        Form.addTranslation(localizedLanguage = "Portuguese (Brazil)");
+		Form.addTranslation(localizedLanguage = "Portuguese (Brazil)");
 
-        Form.editFieldLabelMetal(fieldValue="Idade");
+		Form.editFieldLabelMetal(fieldValue = "Idade");
 
-        FormViewBuilder.editFieldLabel(
-                fieldLabel = "Full Name",
-                label = "Nome Completo");
+		FormViewBuilder.editFieldLabel(
+			fieldLabel = "Full Name",
+			label = "Nome Completo");
 
-        Form.save();
-                
-        Form.publishForm();
+		Form.save();
 
-        FormsAdminNavigator.gotoPublishedForm();
+		Form.publishForm();
 
-        FormViewBuilder.editText(
-                fieldName = "Age",
-                fieldValue = "24");
+		FormsAdminNavigator.gotoPublishedForm();
 
-        FormViewBuilder.editText(
-                fieldName = "Full Name",
-                fieldValue = "Pedro Henrique Amaral");
+		FormViewBuilder.editText(
+			fieldName = "Age",
+			fieldValue = "24");
 
-        FormPortlet.submitSuccessfully();
+		FormViewBuilder.editText(
+			fieldName = "Full Name",
+			fieldValue = "Pedro Henrique Amaral");
 
-        Form.submitAgain();
+		FormPortlet.submitSuccessfully();
 
-        FormPortlet.changeLocale(locale = "português-Brasil");
+		Form.submitAgain();
 
-        FormViewBuilder.editText(
-                fieldName = "Idade",
-                fieldValue = "56");
+		FormPortlet.changeLocale(locale = "português-Brasil");
 
-        FormViewBuilder.editText(
-                fieldName = "Nome Completo",
-                fieldValue = "Joao Cassemiro");
+		FormViewBuilder.editText(
+			fieldName = "Idade",
+			fieldValue = "56");
 
-        FormPortlet.submitSuccessfully();
+		FormViewBuilder.editText(
+			fieldName = "Nome Completo",
+			fieldValue = "Joao Cassemiro");
 
-        Navigator.openURL();
+		FormPortlet.submitSuccessfully();
+
+		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
 			category = "Content & Data",
@@ -108,20 +83,39 @@ definition {
 
 		FormsAdminNavigator.gotoViewEntries();
 
-        FormPortlet.waitFormRenderer();
+		FormPortlet.waitFormRenderer();
 
-        LexiconEntry.viewEntryName(
-            rowEntry = "Pedro Henrique Amaral");
+		LexiconEntry.viewEntryName(rowEntry = "Pedro Henrique Amaral");
 
-        LexiconEntry.viewEntryContent(
-            rowAny = "24");
+		LexiconEntry.viewEntryContent(rowAny = "24");
 
-        LexiconEntry.viewEntryName(
-            rowEntry = "Joao Cassemiro");
+		LexiconEntry.viewEntryName(rowEntry = "Joao Cassemiro");
 
-        LexiconEntry.viewEntryContent(
-            rowAny = "56");
-    } 
+		LexiconEntry.viewEntryContent(rowAny = "56");
+	}
 
-    
+	@description = "Set Screen size to custom and validate values"
+	@priority = "5"
+	test SetScreenSizeAndValidateValues {
+		MyTestFile.canOpenSimulation();
+
+		MyTestFile.canOpenCustom();
+
+		MyTestFile.typeHeightAndWidth();
+
+		MyTestFile.confirmation();
+
+		MyTestFile.canOpenSimulation();
+	}
+
+	@description = "Access Portal Global Menu and validate CONFIGURATION string at Control Panel"
+	@priority = "5"
+	test ValidateConfigurationStringAtControlPanel {
+		MyTestFile.canOpenMenu(varExample = "dropdown");
+
+		MyTestFile.canOpenControlPanel();
+
+		AssertElementPresent(locator1 = "MyTestFile#CONFIGURATION_TEXT_VISIBLE");
+	}
+
 }
