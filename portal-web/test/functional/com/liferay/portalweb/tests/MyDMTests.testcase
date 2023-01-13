@@ -67,4 +67,54 @@ definition {
 		}
 	}
 
+	@description = "Can Delete a Documents and Media"
+	@priority = "5"
+	test CanDeleteDM {
+		task ("Creating a DM and doing upload file") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Documents and Media Page");
+
+			JSONLayout.addWidgetToPublicLayout(
+				column = "1",
+				groupName = "Guest",
+				layoutName = "Documents and Media Page",
+				widgetName = "Documents and Media");
+
+			Navigator.gotoPage(pageName = "Documents and Media Page");
+
+			JSONDocument.addFileWithUploadedFile(
+				dmDocumentDescription = "DM Document Description",
+				dmDocumentTitle = "Title 01",
+				groupName = "Guest",
+				mimeType = "image/png",
+				sourceFileName = "Document_1.png");
+
+			JSONDocument.addFileWithUploadedFile(
+				dmDocumentDescription = "test 02",
+				dmDocumentTitle = "Test 2",
+				groupName = "Guest",
+				mimeType = "image/png",
+				sourceFileName = "Document_2.png");
+
+			DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+		}
+
+		task ("Deleting DM and verifing if haved success") {
+			DMDocument.deleteCP(dmDocumentTitle = "Title 01");
+
+			VerifyElementPresent(locator1 = "Message#SUCCESS");
+
+			Navigator.gotoPage(pageName = "Documents and Media Page");
+
+			DMDocument.viewPG(
+				dmDocumentDescription = "test 02",
+				dmDocumentTitle = "Test 2");
+
+			AssertElementNotPresent(
+				locator1 = "DocumentsAndMedia#DESCRIPTIVE_LIST_DOCUMENT_TITLE",
+				value1 = "Title 01");
+		}
+	}
+
 }
