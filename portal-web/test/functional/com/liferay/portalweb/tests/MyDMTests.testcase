@@ -159,4 +159,46 @@ definition {
 		}
 	}
 
+	@description = "Can Edit a Documents and Media"
+	@priority = "5"
+	test CanEditDM {
+		task ("Creating a DM and doing upload file") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Documents and Media Page");
+
+			JSONLayout.addWidgetToPublicLayout(
+				column = "1",
+				groupName = "Guest",
+				layoutName = "Documents and Media Page",
+				widgetName = "Documents and Media");
+
+			Navigator.gotoPage(pageName = "Documents and Media Page");
+
+			JSONDocument.addFileWithUploadedFile(
+				dmDocumentDescription = "DM Document Description",
+				dmDocumentTitle = "Title 01",
+				groupName = "Guest",
+				mimeType = "image/png",
+				sourceFileName = "Document_1.png");
+
+			DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+		}
+
+		task ("Editing the Title and Archive uploeaded") {
+			DMDocument.editPG(
+				dmDocumentFileEdit = "Document_1.pdf",
+				dmDocumentTitle = "Title 01",
+				dmDocumentTitleEdit = "LiferayCA Title edited");
+
+			VerifyElementPresent(locator1 = "Message#SUCCESS");
+
+			Navigator.gotoPage(pageName = "Documents and Media Page");
+
+			DMDocument.viewPG(
+				dmDocumentDescription = "DM Document Description",
+				dmDocumentTitle = "LiferayCA Title edited");
+		}
+	}
+
 }
