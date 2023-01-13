@@ -1,0 +1,70 @@
+@component-name = "portal-document-management"
+definition {
+
+	property testray.main.component.name = "Document Management";
+
+	setUp {
+		TestCase.setUpPortalInstance();
+
+		User.firstLoginPG();
+
+		Navigator.openURL();
+
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Documents and Media Page");
+
+		JSONLayout.addWidgetToPublicLayout(
+			column = "1",
+			groupName = "Guest",
+			layoutName = "Documents and Media Page",
+			widgetName = "Documents and Media");
+
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Description",
+			dmDocumentTitle = "Document_1.doc",
+			groupName = "Guest",
+			mimeType = "application/msword",
+			sourceFileName = "Document_1.doc");
+
+		VerifyElementPresent(locator1 = "Message#SUCCESS");
+	}
+
+	tearDown {
+		var testPortalInstance = PropsUtil.get("test.portal.instance");
+
+		if ("${testPortalInstance}" == "true") {
+			PortalInstances.tearDownCP();
+
+			DMDocument.tearDownCP();
+
+			PagesAdmin.tearDownCP();
+
+			User.logoutPG();
+		}
+	}
+
+	@description = "Can Create a Documents and Media"
+	@priority = "5"
+	test CanCreateDM {
+		task ("Creating a DM and doing upload file") {
+			DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+
+			DMDocument.addCP(
+				dmDocumentDescription = "DM Document Description",
+				dmDocumentFile = "Document_1.txt",
+				dmDocumentTitle = "DM Document Title");
+		}
+
+		task ("Verifing if DM and File appears") {
+			DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+
+			Navigator.gotoPage(pageName = "Documents and Media Page");
+
+			IsElementPresent(
+				key_rowEntry = "Document_1.doc",
+				locator1 = "ContentRow#ENTRY_CONTENT_ENTRY_NAME");
+		}
+	}
+
+}
