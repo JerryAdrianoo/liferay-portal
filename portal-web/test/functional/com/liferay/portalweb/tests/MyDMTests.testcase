@@ -117,4 +117,46 @@ definition {
 		}
 	}
 
+	@description = "Can Download a Documents and Media"
+	@priority = "5"
+	test CanDownloadDM {
+		task ("Creating a DM and doing upload file") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Documents and Media Page");
+
+			JSONLayout.addWidgetToPublicLayout(
+				column = "1",
+				groupName = "Guest",
+				layoutName = "Documents and Media Page",
+				widgetName = "Documents and Media");
+
+			Navigator.gotoPage(pageName = "Documents and Media Page");
+
+			JSONDocument.addFileWithUploadedFile(
+				dmDocumentDescription = "DM Document Description",
+				dmDocumentTitle = "Title 01",
+				groupName = "Guest",
+				mimeType = "image/png",
+				sourceFileName = "Document_1.png");
+
+			JSONDocument.addFileWithUploadedFile(
+				dmDocumentDescription = "test 02",
+				dmDocumentTitle = "Test 2",
+				groupName = "Guest",
+				mimeType = "image/png",
+				sourceFileName = "Document_2.png");
+
+			DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+
+			DMDocument.downloadCP(
+				dmDocumentSize = "43 KB",
+				dmDocumentTitle = "Title 01");
+
+			DMDocument.assertFileNameFromTempFolder(fileName = "Document_1.png");
+
+			DMDocument.assertNoFileNameFromTempFolder(fileName = "Document_2.png");
+		}
+	}
+
 }
