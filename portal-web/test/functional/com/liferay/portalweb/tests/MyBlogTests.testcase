@@ -178,7 +178,6 @@ definition {
 			Blogs.addEntry(
 				entryContent = "Murder is found in river",
 				entryTitle = "News");
-
 		}
 
 		task ("Checking if the search are correct and appears others results") {
