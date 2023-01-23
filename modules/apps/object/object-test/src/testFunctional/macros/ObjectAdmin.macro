@@ -289,8 +289,12 @@ definition {
 				value1 = "${name}");
 		}
 
-		if (isSet(parameterOption)) {
-			ObjectRelationships.editRelationshipsParameter(parameterOption = "${parameterOption}");
+		if (isSet(parameter)) {
+			Click(locator1 = "ObjectRelationships#SELECT_PARAMETER_FORM");
+
+			ClickNoError.clickNoMouseOver(
+				key_parameterOption = "${parameter}",
+				locator1 = "ObjectRelationships#SELECT_PARAMETER_OPTION");
 		}
 
 		if ("${invalidEntry}" == "true") {

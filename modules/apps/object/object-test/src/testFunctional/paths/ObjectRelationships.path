@@ -21,6 +21,11 @@
 		<td></td>
 	</tr>
 	<tr>
+		<td>SELECT_PARAMETER_OPTION_IN_RELATIONSHIP</td>
+		<td>//div[@id='clay-dropdown-menu-3']//button[@class = 'dropdown-item']//div[contains(text(),'${key_parameterOption}')]</td>
+		<td></td>
+	</tr>
+	<tr>
 		<td>OPTIONS_TAB_RELATIONSHIPS</td>
 		<td>//button[@role='menuitem']//div[contains(.,'Relationship')]//span[contains(@class,'label-item') and contains(.,'${key_relationType}')]</td>
 		<td></td>

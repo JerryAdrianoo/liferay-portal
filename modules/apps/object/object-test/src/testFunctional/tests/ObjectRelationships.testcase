@@ -890,7 +890,11 @@ definition {
 		task ("Verify it's possible to edit a relationship parameter") {
 			ObjectAdmin.goToRelationshipsDetails(fieldName = "Relationship with Custom Object");
 
-			ObjectRelationships.editRelationshipsParameter(parameterOption = "Relationship with Custom Object");
+			Click(locator1 = "ObjectRelationships#SELECT_PARAMETER_FORM");
+
+			ClickNoError.clickNoMouseOver(
+				key_parameterOption = "Relationship with Custom Object",
+				locator1 = "ObjectRelationships#SELECT_PARAMETER_OPTION_IN_RELATIONSHIP");
 
 			PortletEntry.save();
 		}
