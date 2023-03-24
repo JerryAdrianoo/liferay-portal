@@ -2962,18 +2962,12 @@ definition {
 
 		task ("When: view the formula field details (mandatory option is unavailable)") {
 			ObjectAdmin.goToFieldsDetails(label = "Custom Formula 176829");
-
-			AssertElementNotPresent(locator1 = "ObjectField#MANDATORY_TOGGLE");
 		}
 
 		task ("Then: assert that is the entry is not required") {
-			ObjectAdmin.goToCustomObject(objectName = "CustomObject176829");
-
-			LexiconEntry.gotoAdd();
-
-			AssertElementNotPresent(locator1 = "Icon#ASTERISK");
-
-			PortletEntry.save();
+			AssertElementNotPresent(
+				key_fieldName = "Formula Builder",
+				locator1 = "ObjectField#MANDATORY_FIELD");
 		}
 	}
 
