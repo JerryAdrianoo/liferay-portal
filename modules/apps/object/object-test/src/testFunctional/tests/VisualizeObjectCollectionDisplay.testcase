@@ -211,7 +211,7 @@ definition {
 
 		VisualizeObjectCollectionDisplay.addFieldInsideCollectionDisplay(
 			fragmentName = "Heading",
-			label = "Expand Collection Display");
+			label = "Collection Display");
 
 		VisualizeObjectCollectionDisplay.mapFragment(fieldLabel = "Text");
 

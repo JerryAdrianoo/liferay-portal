@@ -77,12 +77,12 @@
 	</tr>
 	<tr>
 		<td>EXPAND_BUTTON</td>
-		<td>//button[@aria-label='Expand Collection Display']</td>
+		<td>//div[@data-qa-id='${key_label}']//button[contains(@class,'component-expander')]</td>
 		<td></td>
 	</tr>
 	<tr>
 		<td>SELECT_HEADING</td>
-		<td>//div[@aria-label='Select Heading']</td>
+		<td>//div[@aria-label='Select ${key_fragmentName}']</td>
 		<td></td>
 	</tr>
 	<tr>

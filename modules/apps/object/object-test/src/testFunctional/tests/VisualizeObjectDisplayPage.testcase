@@ -73,7 +73,7 @@ definition {
 
 		VisualizeObjectCollectionDisplay.addFieldInsideCollectionDisplay(
 			fragmentName = "Heading",
-			label = "Expand Collection Display");
+			label = "Collection Display");
 
 		PageEditor.editCollectionDisplay(
 			fieldLabel = "Field",
@@ -232,7 +232,7 @@ definition {
 
 		VisualizeObjectCollectionDisplay.addFieldInsideCollectionDisplay(
 			fragmentName = "Heading",
-			label = "Expand Collection Display");
+			label = "Collection Display");
 
 		PageEditor.editCollectionDisplay(
 			fragmentName = "Collection Display",
@@ -299,7 +299,7 @@ definition {
 
 		VisualizeObjectCollectionDisplay.addFieldInsideCollectionDisplay(
 			fragmentName = "Heading",
-			label = "Expand Collection Display");
+			label = "Collection Display");
 
 		PageEditor.editCollectionDisplay(
 			fragmentName = "Collection Display",
