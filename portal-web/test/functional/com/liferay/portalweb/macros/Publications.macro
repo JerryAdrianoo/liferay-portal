@@ -116,6 +116,39 @@ definition {
 		Alert.viewSuccessMessage();
 	}
 
+	macro createPublicationEnter {
+		if (${gotoPublicationsAdmin} == "true") {
+			PublicationsNavigator.openPublicationsAdmin();
+
+			Click(locator1 = "Button#PLUS");
+		}
+		else {
+			Click(locator1 = "Publications#PUBLICATIONS_INDICATOR_BUTTON");
+
+			MenuItem.click(menuItem = "Create New Publication");
+		}
+
+		if (isSet(publicationName)) {
+			Type(
+				locator1 = "Publications#PUBLICATION_NAME",
+				value1 = ${publicationName});
+		}
+
+		if (isSet(publicationDescription)) {
+			Type(
+				locator1 = "Publications#PUBLICATION_DESCRIPTION",
+				value1 = ${publicationDescription});
+		}
+
+		KeyPress(
+			locator1 = "Publications#KEYWORD_TEXTFIELD",
+			value1 = "\ENTER");
+
+		AssertElementPresent(
+			key_publicationName = "Test",
+			locator1 = "Publications#PUBLISHED_PUBLICATION_NAME");
+	}
+
 	macro deletePublication {
 		PublicationsNavigator.gotoPublicationEllipsisItem(
 			menuItem = "Delete",
