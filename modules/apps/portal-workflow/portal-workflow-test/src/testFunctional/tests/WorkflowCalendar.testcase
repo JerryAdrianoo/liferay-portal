@@ -210,6 +210,8 @@ definition {
 
 		CalendarNavigator.closeModal(modalTitle = "View Event Details");
 
+		ClickNoError.click(locator1 = "Calendar#SCHEDULER_EVENT_DIALOG_BOX_CLOSE_BUTTON");
+
 		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
 
 		Navigator.gotoNavTab(navTab = "Assigned to My Roles");
