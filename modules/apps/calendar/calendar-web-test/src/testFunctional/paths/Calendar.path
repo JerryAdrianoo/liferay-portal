@@ -654,6 +654,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>SCHEDULER_EVENT_DIALOG_BOX_CLOSE_BUTTON</td>
+	<td>//form[@id='schedulerEventRecorderForm']//span[contains(@aria-label,'close') and contains(text(),'×')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>SCHEDULER_EVENT_DIALOG_BOX_DELETE_BUTTON</td>
 	<td>//form[@id='schedulerEventRecorderForm']//button[@id='deleteBtn']</td>
 	<td></td>
