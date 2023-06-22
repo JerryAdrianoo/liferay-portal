@@ -2,6 +2,7 @@
 definition {
 
 	property custom.properties = "feature.flag.LPS-172904=true";
+	property osgi.modules.includes = "frontend-data-set-sample-web";
 	property portal.acceptance = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
@@ -30,8 +31,6 @@ definition {
 	@description = "LPS-176807. Verify if the apple icon appears when file is deployed"
 	@priority = 4
 	test CanChangeFilterWithClientExtension {
-		property osgi.modules.includes = "frontend-data-set-sample-web";
-
 		task ("Given Sample FDS portlet deployed") {
 			FragmentsDeploy.deployZipOnLiferayPortal(fragmentsZip = "liferay-sample-fds-cell-renderer.zip");
 
@@ -44,6 +43,7 @@ definition {
 				layoutName = "Frontend Data Set Test Page");
 
 			JSONLayout.addWidgetToPublicLayout(
+				column = 1,
 				groupName = "Guest",
 				layoutName = "Frontend Data Set Test Page",
 				widgetName = "Frontend Data Set Sample");
@@ -55,8 +55,6 @@ definition {
 			Click(
 				key_sampleTab = "Customized",
 				locator1 = "FrontendDataSet#FDS_DATASET");
-
-			SelectFrameTop();
 
 			AssertElementPresent(
 				assetType = "apple",
@@ -89,8 +87,6 @@ definition {
 	@description = "LPS-176807. Verify if the Client Extension are visible when deploys"
 	@priority = 4
 	test CanViewDeployedFile {
-		property osgi.modules.includes = "frontend-data-set-sample-web";
-
 		task ("When create a page") {
 			JSONLayout.addPublicLayout(
 				groupName = "Guest",
@@ -117,8 +113,6 @@ definition {
 	@description = "LPS-176807. Verify if filters are corretly displayed"
 	@priority = 4
 	test CanViewSpecificFilters {
-		property osgi.modules.includes = "frontend-data-set-sample-web";
-
 		task ("And entering on a page which uses FDS") {
 			JSONLayout.addPublicLayout(
 				groupName = "Guest",
