@@ -146,11 +146,11 @@ definition {
 	@description = "LPS-175155. Verify if is possible create a Renderer Cell via OSGI"
 	@priority = 4
 	test CanCreateCellRendererViaOSGI {
-		property fdsCellRenderer.client.extension.created = "true";
+		property renderercell.client.extension.created = "true";
 		property test.liferay.virtual.instance = "false";
 
 		task ("Given creating a Cell Renderer via OSGI") {
-			ClientExtension.createGlobalVariableClientExtensionType(type = "fdsCellRenderer");
+			ClientExtension.createGlobalVariableClientExtensionType(type = "renderercell");
 
 			ClientExtension.checkConfigFileCreatedProperly();
 		}
