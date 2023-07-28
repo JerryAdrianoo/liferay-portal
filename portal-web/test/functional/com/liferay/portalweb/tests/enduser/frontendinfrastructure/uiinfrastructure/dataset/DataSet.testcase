@@ -14,10 +14,7 @@ definition {
 		User.firstLoginPG();
 
 		task ("Given access to the Data Sets admin page") {
-			ApplicationsMenu.gotoPortlet(
-				category = "Object",
-				panel = "Control Panel",
-				portlet = "Data Sets");
+			DataSetAdmin.goToDataSetAdminPage();
 		}
 	}
 
@@ -355,6 +352,40 @@ definition {
 			AssertElementPresent(
 				key_itemName = "Test Data Set",
 				locator1 = "DataSet#TABLE_CELL");
+		}
+	}
+
+	@description = "Needs refactor after LPS-183512 is fixed | LPS-175990. Confirm that the user can create a data set entry with special chatacters"
+	@priority = 5
+	test Teste {
+		task ("When Create a DataSet") {
+			DataSetAdmin.createDataSetEntryViaAPI(
+				dataSetName = "Entries",
+				restApplication = "/data-set-manager/entries",
+				restEndpoint = "/",
+				restSchema = "FDSEntry");
+
+			//JSONDataSet._createDataSetEntry(
+			//	dataSetName = "Entries",
+			//	restApplication = "/data-set-manager/entries",
+			//	restEndpoint = "/",
+			//	restSchema = "FDSEntry");
+			//JSONDataSet._createDataSetEntry(
+			//	dataSetName = "Fields",
+			//	restApplication = "/data-set-manager/fields",
+			//	restEndpoint = "/",
+			//	restSchema = "FDSField");
+
+		}
+
+		task ("When Create a DataSet") {
+			DataSetAdmin.createDataSet(
+				key_name = "Sorts",
+				key_type = "/data-set-manager/sorts");
+		}
+
+		task ("Then Confirm that the last entry is at the top of the list") {
+			Pause(locator1 = 50000);
 		}
 	}
 

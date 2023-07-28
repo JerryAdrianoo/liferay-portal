@@ -155,7 +155,7 @@ definition {
 				-u ${userEmailAddress}:${userPassword}
 		''';
 
-		var dataSetEntryId = JSONCurlUtil.get(${curl}, "$.items[?(@.label=='${dataSetName}')].id");
+		var dataSetEntryId = JSONCurlUtil.get(${curl}, "$..[?(@.label=='${dataSetName}')].id");
 
 		if (${dataSetEntryId} == "") {
 			fail("FAIL. No data sets was found");
@@ -181,9 +181,9 @@ definition {
 				-u ${userEmailAddress}:${userPassword}
 		''';
 
-		var siteId = JSONCurlUtil.get(${curl}, "$..items[0].creator.id");
+		var siteId = JSONCurlUtil.get(${curl}, "$..creator.id");
 
-		var dataSetEntryIds = JSONCurlUtil.get(${curl}, "$.items[?(@.id!='${siteId}')].id");
+		var dataSetEntryIds = JSONCurlUtil.get(${curl}, "$..[?(@.id=='${siteId}')].id");
 
 		if (${dataSetEntryIds} == "") {
 			fail("FAIL. No data sets was found");
@@ -213,7 +213,7 @@ definition {
 		var dataSetViewsIds = "";
 
 		for (var dataSetViewName : list ${dataSetViewsNameList}) {
-			var dataSetViewId = JSONCurlUtil.get(${curl}, "$.items[?(@.label=='${dataSetViewName}')].id");
+			var dataSetViewId = JSONCurlUtil.get(${curl}, "$..[?(@.label=='${dataSetViewName}')].id");
 
 			var dataSetViewsIds = StringUtil.add(${dataSetViewsIds}, "${dataSetViewId},");
 		}
@@ -242,9 +242,9 @@ definition {
 				-u ${userEmailAddress}:${userPassword}
 		''';
 
-		var siteId = JSONCurlUtil.get(${curl}, "$..items[0].creator.id");
+		var siteId = JSONCurlUtil.get(${curl}, "$..id");
 
-		var dataSetViewsIds = JSONCurlUtil.get(${curl}, "$.items[?(@.id!='${siteId}')].id");
+		var dataSetViewsIds = JSONCurlUtil.get(${curl}, "$..[?(@.id!='${siteId}')].id");
 
 		return ${dataSetViewsIds};
 	}
