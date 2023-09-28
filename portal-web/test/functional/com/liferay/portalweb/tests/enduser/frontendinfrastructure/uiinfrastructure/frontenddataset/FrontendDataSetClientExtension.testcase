@@ -172,6 +172,8 @@ definition {
 				restApplication = "/data-set-manager/fields",
 				restEndpoint = "/",
 				restSchema = "FDSField");
+
+			Refresh();
 		}
 
 		task ("And adding a dataset view ") {
