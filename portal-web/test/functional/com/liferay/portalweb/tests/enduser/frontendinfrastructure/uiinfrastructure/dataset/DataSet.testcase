@@ -2297,9 +2297,11 @@ definition {
 		task ("And go to the page created, and put a "pt" in URL page") {
 			Navigator.openURL();
 
-			Navigator.openSpecificURL(url = "http://localhost:8080/pt/data-set-test");
-
 			Navigator.gotoPage(pageName = "Data Set Test");
+
+			var portalURL = PropsUtil.get("portal.url");
+
+			Navigator.openSpecificURL(url = "${portalURL}/pt/data-set-test");
 
 			AssertElementPresent(
 				key_column = "Nome",
