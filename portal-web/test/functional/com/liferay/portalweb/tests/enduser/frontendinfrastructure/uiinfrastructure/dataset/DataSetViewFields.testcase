@@ -412,7 +412,7 @@ definition {
 
 	@description = "LPS-176516 Confirm that when adding a field with translation and canceling it, and adding pt to the page URL, the values ​​do not change according to the translation"
 	@priority = 4
-	test CanCanAssertTranslationIsCanceled {
+	test CanAssertTranslationIsCanceled {
 		task ("And adds two or more fields") {
 			DataSetAdmin.addFields(key_fieldList = "creator,id,status");
 		}
@@ -491,7 +491,9 @@ definition {
 		}
 
 		task ("Then the label of the field translated (but not saved) is displayed in the default language.") {
-			Navigator.openSpecificURL(url = "http://localhost:8080/pt/data-set-test");
+			var portalURL = PropsUtil.get("portal.url");
+
+			Navigator.openSpecificURL(url = "${portalURL}/pt/data-set-test");
 
 			AssertElementNotPresent(
 				key_column = "PT-BR",
