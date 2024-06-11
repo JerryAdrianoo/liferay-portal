@@ -10,7 +10,9 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 
 /**
  * @author Andrea Di Giorgi
+ * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
  */
+@Deprecated
 public class CommerceOrderIdComparator
 	extends OrderByComparator<CommerceOrder> {
 
@@ -22,12 +24,12 @@ public class CommerceOrderIdComparator
 
 	public static final String[] ORDER_BY_FIELDS = {"commerceOrderId"};
 
-	public CommerceOrderIdComparator() {
-		this(false);
-	}
+	public static CommerceOrderIdComparator getInstance(boolean ascending) {
+		if (ascending) {
+			return _INSTANCE_ASCENDING;
+		}
 
-	public CommerceOrderIdComparator(boolean ascending) {
-		_ascending = ascending;
+		return _INSTANCE_DESCENDING;
 	}
 
 	@Override
@@ -63,6 +65,16 @@ public class CommerceOrderIdComparator
 	public boolean isAscending() {
 		return _ascending;
 	}
+
+	private CommerceOrderIdComparator(boolean ascending) {
+		_ascending = ascending;
+	}
+
+	private static final CommerceOrderIdComparator _INSTANCE_ASCENDING =
+		new CommerceOrderIdComparator(true);
+
+	private static final CommerceOrderIdComparator _INSTANCE_DESCENDING =
+		new CommerceOrderIdComparator(false);
 
 	private final boolean _ascending;
 

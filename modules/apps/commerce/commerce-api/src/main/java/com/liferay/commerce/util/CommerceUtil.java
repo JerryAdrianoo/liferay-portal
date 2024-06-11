@@ -80,7 +80,7 @@ public class CommerceUtil {
 		OrderByComparator<CommerceAddress> orderByComparator = null;
 
 		if (orderByCol.equals("create-date")) {
-			orderByComparator = new CommerceAddressCreateDateComparator(
+			orderByComparator = CommerceAddressCreateDateComparator.getInstance(
 				orderByAsc);
 		}
 
@@ -248,8 +248,8 @@ public class CommerceUtil {
 		OrderByComparator<CommerceShipmentItem> orderByComparator = null;
 
 		if (orderByCol.equals("create-date")) {
-			orderByComparator = new CommerceShipmentItemCreateDateComparator(
-				orderByAsc);
+			orderByComparator =
+				CommerceShipmentItemCreateDateComparator.getInstance(true);
 		}
 
 		return orderByComparator;
@@ -266,16 +266,16 @@ public class CommerceUtil {
 		}
 
 		if (orderByCol.equals("create-date")) {
-			return new CommerceShipmentCreateDateComparator(orderByAsc);
+			return CommerceShipmentCreateDateComparator.getInstance(true);
 		}
 		else if (orderByCol.equals("expected-delivery-date")) {
-			return new CommerceShipmentExpectedDateComparator(orderByAsc);
+			return CommerceShipmentExpectedDateComparator.getInstance(true);
 		}
 		else if (orderByCol.equals("shipment-number")) {
-			return new CommerceShipmentIdComparator(orderByAsc);
+			return CommerceShipmentIdComparator.getInstance(true);
 		}
 		else if (orderByCol.equals("shipping-date")) {
-			return new CommerceShipmentShippingDateComparator(orderByAsc);
+			return CommerceShipmentShippingDateComparator.getInstance(true);
 		}
 
 		return null;

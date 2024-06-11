@@ -12,7 +12,9 @@ import java.math.BigDecimal;
 
 /**
  * @author Andrea Di Giorgi
+ * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
  */
+@Deprecated
 public class CommerceOrderTotalComparator
 	extends OrderByComparator<CommerceOrder> {
 
@@ -22,12 +24,12 @@ public class CommerceOrderTotalComparator
 
 	public static final String[] ORDER_BY_FIELDS = {"total"};
 
-	public CommerceOrderTotalComparator() {
-		this(false);
-	}
+	public static CommerceOrderTotalComparator getInstance(boolean ascending) {
+		if (ascending) {
+			return _INSTANCE_ASCENDING;
+		}
 
-	public CommerceOrderTotalComparator(boolean ascending) {
-		_ascending = ascending;
+		return _INSTANCE_DESCENDING;
 	}
 
 	@Override
@@ -63,6 +65,16 @@ public class CommerceOrderTotalComparator
 	public boolean isAscending() {
 		return _ascending;
 	}
+
+	private CommerceOrderTotalComparator(boolean ascending) {
+		_ascending = ascending;
+	}
+
+	private static final CommerceOrderTotalComparator _INSTANCE_ASCENDING =
+		new CommerceOrderTotalComparator(true);
+
+	private static final CommerceOrderTotalComparator _INSTANCE_DESCENDING =
+		new CommerceOrderTotalComparator(false);
 
 	private final boolean _ascending;
 
