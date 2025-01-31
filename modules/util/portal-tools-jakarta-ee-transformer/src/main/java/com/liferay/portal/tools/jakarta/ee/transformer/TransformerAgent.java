@@ -47,6 +47,10 @@ public class TransformerAgent {
 						byte[] classfileBuffer)
 					throws IllegalClassFormatException {
 
+					if (className.startsWith("org/glowroot/agent/")) {
+						return classfileBuffer;
+					}
+
 					CodeSource codeSource = protectionDomain.getCodeSource();
 
 					return ClassRemapperBiFunction.INSTANCE.apply(
