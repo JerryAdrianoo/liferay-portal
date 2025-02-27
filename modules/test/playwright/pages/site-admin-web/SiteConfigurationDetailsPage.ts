@@ -4,6 +4,7 @@
  */
 
 import {Locator, Page} from '@playwright/test';
+
 import {MembershipTypes} from './types/membershipTypes';
 
 export class SiteConfigurationDetailsPage {

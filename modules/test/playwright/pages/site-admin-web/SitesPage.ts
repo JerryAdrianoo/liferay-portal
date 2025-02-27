@@ -5,10 +5,10 @@
 
 import {FrameLocator, Locator, Page} from '@playwright/test';
 
-import {UIElementsPage} from '../uielements/UIElementsPage';
 import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
-import {waitForAlert} from '../../utils/waitForAlert';
 import {PORTLET_URLS} from '../../utils/portletUrls';
+import {waitForAlert} from '../../utils/waitForAlert';
+import {UIElementsPage} from '../uielements/UIElementsPage';
 
 export class SitesPage {
 	readonly page: Page;

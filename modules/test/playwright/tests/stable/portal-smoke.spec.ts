@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {mergeTests, expect, Page} from '@playwright/test';
+import {Page, expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
 import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
@@ -45,7 +45,7 @@ test('Ensure that the super admin can add pages, add portlets, navigate to the p
 	productMenuPage,
 	siteConfigurationDetailsPage,
 	sitesPage,
-	widgetPagePage
+	widgetPagePage,
 }) => {
 	let siteName: string;
 	let pageNames: string[];
@@ -77,7 +77,7 @@ test('Ensure that the super admin can add pages, add portlets, navigate to the p
 
 		await sitesPage.createSite({
 			isCustom: false,
-			siteName: siteName,
+			siteName,
 			templateName: 'Blank Site',
 		});
 	});
