@@ -91,6 +91,7 @@ import {config as portalSecurityAuditWebConfig} from './tests/portal-security-au
 import {config as portalSecurityContentSecurityPolicyConfig} from './tests/portal-security-content-security-policy/config';
 import {config as portalSecurityScriptManagementWebConfig} from './tests/portal-security-script-management-web/config';
 import {config as portalSecurityServiceAccessPolicyService} from './tests/portal-security-service-access-policy-service/config';
+import {config as portalSmokeConfig} from './tests/portal-smoke/config';
 import {config as portalToolsRestBuilderTestImpl} from './tests/portal-tools-rest-builder-test-impl/config';
 import {config as portalUserLocaleOptionsConfig} from './tests/portal-user-locale-options-web/config';
 import {config as portalWebConfig} from './tests/portal-web/config';
@@ -224,6 +225,7 @@ export default defineConfig({
 		portalSecurityContentSecurityPolicyConfig,
 		portalSecurityScriptManagementWebConfig,
 		portalSecurityServiceAccessPolicyService,
+		portalSmokeConfig,
 		portalToolsRestBuilderTestImpl,
 		portalUserLocaleOptionsConfig,
 		portalWebConfig,
