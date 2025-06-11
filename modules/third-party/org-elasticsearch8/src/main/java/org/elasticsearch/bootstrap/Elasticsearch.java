@@ -44,7 +44,6 @@ import org.elasticsearch.node.NodeValidationException;
 import org.elasticsearch.plugins.PluginsLoader;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
@@ -292,11 +291,8 @@ class Elasticsearch {
         // Signaling readiness to accept requests must remain the last step of initialization. Note that it is extremely
         // important closing the err stream to the CLI when daemonizing is the last statement since that is the only
         // way to pass errors to the CLI
-        bootstrap.sendCliMarker(BootstrapInfo.SERVER_READY_MARKER);
         if (bootstrap.args().daemonize()) {
             bootstrap.closeStreams();
-        } else {
-            startCliMonitorThread(System.in);
         }
     }
 
@@ -368,32 +364,6 @@ class Elasticsearch {
                     + "]"
             );
         }
-    }
-
-    /**
-     * Starts a thread that monitors stdin for a shutdown signal.
-     *
-     * If the shutdown signal is received, Elasticsearch exits with status code 0.
-     * If the pipe is broken, Elasticsearch exits with status code 1.
-     *
-     * @param stdin Standard input for this process
-     */
-    private static void startCliMonitorThread(InputStream stdin) {
-        new Thread(() -> {
-            int msg = -1;
-            try {
-                msg = stdin.read();
-            } catch (IOException e) {
-                // ignore, whether we cleanly got end of stream (-1) or an error, we will shut down below
-            } finally {
-                if (msg == BootstrapInfo.SERVER_SHUTDOWN_MARKER) {
-                    Bootstrap.exit(0);
-                } else {
-                    // parent process died or there was an error reading from it
-                    Bootstrap.exit(1);
-                }
-            }
-        }, "elasticsearch-cli-monitor-thread").start();
     }
 
     /**
