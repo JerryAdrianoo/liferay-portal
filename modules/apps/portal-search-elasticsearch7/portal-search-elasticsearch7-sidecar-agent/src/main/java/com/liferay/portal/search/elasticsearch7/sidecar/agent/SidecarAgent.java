@@ -15,12 +15,7 @@ public class SidecarAgent {
 	public static void premain(
 		String argument, Instrumentation instrumentation) {
 
-		if ((argument == null) || argument.isBlank()) {
-			return;
-		}
-
-		instrumentation.addTransformer(
-			new SidecarClassFileTransformer(argument));
+		instrumentation.addTransformer(new SidecarClassFileTransformer());
 	}
 
 }
