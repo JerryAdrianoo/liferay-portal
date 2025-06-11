@@ -1,0 +1,291 @@
+diff --git a/org/elasticsearch/bootstrap/Elasticsearch.java b/org/elasticsearch/bootstrap/Elasticsearch.java
+index 028dbb20aec76..2aad938deadd6 100644
+--- a/org/elasticsearch/bootstrap/Elasticsearch.java
++++ b/org/elasticsearch/bootstrap/Elasticsearch.java
+@@ -28,15 +28,8 @@ import org.elasticsearch.common.settings.Settings;
+ import org.elasticsearch.common.transport.BoundTransportAddress;
+ import org.elasticsearch.common.util.concurrent.RunOnce;
+ import org.elasticsearch.core.AbstractRefCounted;
+-import org.elasticsearch.core.CheckedConsumer;
+ import org.elasticsearch.core.IOUtils;
+ import org.elasticsearch.core.SuppressForbidden;
+-import org.elasticsearch.entitlement.bootstrap.EntitlementBootstrap;
+-import org.elasticsearch.entitlement.runtime.api.NotEntitledException;
+-import org.elasticsearch.entitlement.runtime.policy.Policy;
+-import org.elasticsearch.entitlement.runtime.policy.PolicyManager;
+-import org.elasticsearch.entitlement.runtime.policy.PolicyUtils;
+-import org.elasticsearch.entitlement.runtime.policy.entitlements.LoadNativeLibrariesEntitlement;
+ import org.elasticsearch.env.Environment;
+ import org.elasticsearch.index.IndexVersion;
+ import org.elasticsearch.jdk.JarHell;
+@@ -48,31 +41,22 @@ import org.elasticsearch.monitor.process.ProcessProbe;
+ import org.elasticsearch.nativeaccess.NativeAccess;
+ import org.elasticsearch.node.Node;
+ import org.elasticsearch.node.NodeValidationException;
+-import org.elasticsearch.plugins.PluginBundle;
+ import org.elasticsearch.plugins.PluginsLoader;
+ 
+ import java.io.IOException;
+-import java.io.InputStream;
+ import java.io.PrintStream;
+ import java.lang.invoke.MethodHandles;
+-import java.lang.reflect.InvocationTargetException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.security.Permission;
+ import java.security.Security;
+ import java.util.ArrayList;
+-import java.util.HashMap;
+-import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Objects;
+-import java.util.Set;
+ import java.util.concurrent.CountDownLatch;
+ import java.util.concurrent.TimeUnit;
+-import java.util.stream.Collectors;
+-import java.util.stream.Stream;
+ 
+-import static org.elasticsearch.bootstrap.BootstrapSettings.SECURITY_FILTER_BAD_DEFAULTS_SETTING;
+ import static org.elasticsearch.nativeaccess.WindowsFunctions.ConsoleCtrlHandler.CTRL_CLOSE_EVENT;
+ 
+ /**
+@@ -189,8 +173,6 @@ class Elasticsearch {
+         // setDefaultUncaughtExceptionHandler
+         Thread.setDefaultUncaughtExceptionHandler(new ElasticsearchUncaughtExceptionHandler());
+ 
+-        bootstrap.spawner().spawnNativeControllers(nodeEnv);
+-
+         nodeEnv.validateNativesConfig(); // temporary directories are important for JNA
+         initializeNatives(
+             nodeEnv.tmpDir(),
+@@ -228,127 +210,7 @@ class Elasticsearch {
+         var modulesBundles = PluginsLoader.loadModulesBundles(nodeEnv.modulesDir());
+         var pluginsBundles = PluginsLoader.loadPluginsBundles(nodeEnv.pluginsDir());
+ 
+-        final PluginsLoader pluginsLoader;
+-
+-        if (bootstrap.useEntitlements()) {
+-            LogManager.getLogger(Elasticsearch.class).info("Bootstrapping Entitlements");
+-
+-            var pluginData = Stream.concat(
+-                modulesBundles.stream()
+-                    .map(bundle -> new PolicyUtils.PluginData(bundle.getDir(), bundle.pluginDescriptor().isModular(), false)),
+-                pluginsBundles.stream()
+-                    .map(bundle -> new PolicyUtils.PluginData(bundle.getDir(), bundle.pluginDescriptor().isModular(), true))
+-            ).toList();
+-
+-            var pluginPolicyPatches = collectPluginPolicyPatches(modulesBundles, pluginsBundles, logger);
+-            var pluginPolicies = PolicyUtils.createPluginPolicies(pluginData, pluginPolicyPatches, Build.current().version());
+-            var serverPolicyPatch = PolicyUtils.parseEncodedPolicyIfExists(
+-                System.getProperty(SERVER_POLICY_PATCH_NAME),
+-                Build.current().version(),
+-                false,
+-                "server",
+-                PolicyManager.SERVER_LAYER_MODULES.stream().map(Module::getName).collect(Collectors.toUnmodifiableSet())
+-            );
+-
+-            pluginsLoader = PluginsLoader.createPluginsLoader(modulesBundles, pluginsBundles, findPluginsWithNativeAccess(pluginPolicies));
+-
+-            var scopeResolver = ScopeResolver.create(pluginsLoader.pluginLayers(), APM_AGENT_PACKAGE_NAME);
+-            Map<String, Path> sourcePaths = Stream.concat(modulesBundles.stream(), pluginsBundles.stream())
+-                .collect(Collectors.toUnmodifiableMap(bundle -> bundle.pluginDescriptor().getName(), PluginBundle::getDir));
+-            EntitlementBootstrap.bootstrap(
+-                serverPolicyPatch,
+-                pluginPolicies,
+-                scopeResolver::resolveClassToScope,
+-                nodeEnv.settings()::getValues,
+-                nodeEnv.dataDirs(),
+-                nodeEnv.repoDirs(),
+-                nodeEnv.configDir(),
+-                nodeEnv.libDir(),
+-                nodeEnv.modulesDir(),
+-                nodeEnv.pluginsDir(),
+-                sourcePaths,
+-                nodeEnv.logsDir(),
+-                nodeEnv.tmpDir(),
+-                args.pidFile(),
+-                Set.of(EntitlementSelfTester.class)
+-            );
+-            EntitlementSelfTester.entitlementSelfTest();
+-        } else {
+-            assert RuntimeVersionFeature.isSecurityManagerAvailable();
+-            // no need to explicitly enable native access for legacy code
+-            pluginsLoader = PluginsLoader.createPluginsLoader(modulesBundles, pluginsBundles, Map.of());
+-            // install SM after natives, shutdown hooks, etc.
+-            LogManager.getLogger(Elasticsearch.class).info("Bootstrapping java SecurityManager");
+-            org.elasticsearch.bootstrap.Security.configure(
+-                nodeEnv,
+-                SECURITY_FILTER_BAD_DEFAULTS_SETTING.get(args.nodeSettings()),
+-                args.pidFile()
+-            );
+-        }
+-
+-        bootstrap.setPluginsLoader(pluginsLoader);
+-    }
+-
+-    private static Map<String, String> collectPluginPolicyPatches(
+-        Set<PluginBundle> modulesBundles,
+-        Set<PluginBundle> pluginsBundles,
+-        Logger logger
+-    ) {
+-        var policyPatches = new HashMap<String, String>();
+-        var systemProperties = BootstrapInfo.getSystemProperties();
+-        systemProperties.keys().asIterator().forEachRemaining(key -> {
+-            var value = systemProperties.get(key);
+-            if (key instanceof String k
+-                && value instanceof String v
+-                && k.startsWith(POLICY_PATCH_PREFIX)
+-                && k.equals(SERVER_POLICY_PATCH_NAME) == false) {
+-                policyPatches.put(k.substring(POLICY_PATCH_PREFIX.length()), v);
+-            }
+-        });
+-        var pluginNames = Stream.concat(modulesBundles.stream(), pluginsBundles.stream())
+-            .map(bundle -> bundle.pluginDescriptor().getName())
+-            .collect(Collectors.toUnmodifiableSet());
+-
+-        for (var patchedPluginName : policyPatches.keySet()) {
+-            if (pluginNames.contains(patchedPluginName) == false) {
+-                logger.warn(
+-                    "Found command-line policy patch for unknown plugin [{}] (available plugins: [{}])",
+-                    patchedPluginName,
+-                    String.join(", ", pluginNames)
+-                );
+-            }
+-        }
+-        return policyPatches;
+-    }
+-
+-    private static class EntitlementSelfTester {
+-        // check entitlements were loaded correctly. note this must be outside the entitlements lib.
+-        private static void entitlementSelfTest() {
+-            ensureCannotStartProcess(ProcessBuilder::start);
+-            // Try again with reflection
+-            ensureCannotStartProcess(EntitlementSelfTester::reflectiveStartProcess);
+-        }
+-
+-        private static void ensureCannotStartProcess(CheckedConsumer<ProcessBuilder, ?> startProcess) {
+-            try {
+-                // The command doesn't matter; it doesn't even need to exist
+-                startProcess.accept(new ProcessBuilder(""));
+-            } catch (NotEntitledException e) {
+-                return;
+-            } catch (Exception e) {
+-                throw new IllegalStateException("Failed entitlement protection self-test", e);
+-            }
+-            throw new IllegalStateException("Entitlement protection self-test was incorrectly permitted");
+-        }
+-
+-        private static void reflectiveStartProcess(ProcessBuilder pb) throws Exception {
+-            try {
+-                var start = ProcessBuilder.class.getMethod("start");
+-                start.invoke(pb);
+-            } catch (InvocationTargetException e) {
+-                throw (Exception) e.getCause();
+-            }
+-        }
++		bootstrap.setPluginsLoader(PluginsLoader.createPluginsLoader(modulesBundles, pluginsBundles, Map.of()));
+     }
+ 
+     private static void ensureInitialized(Class<?>... classes) {
+@@ -411,11 +273,8 @@ class Elasticsearch {
+         // Signaling readiness to accept requests must remain the last step of initialization. Note that it is extremely
+         // important closing the err stream to the CLI when daemonizing is the last statement since that is the only
+         // way to pass errors to the CLI
+-        bootstrap.sendCliMarker(BootstrapInfo.SERVER_READY_MARKER);
+         if (bootstrap.args().daemonize()) {
+             bootstrap.closeStreams();
+-        } else {
+-            startCliMonitorThread(System.in);
+         }
+     }
+ 
+@@ -431,11 +290,6 @@ class Elasticsearch {
+         final Logger logger = LogManager.getLogger(Elasticsearch.class);
+         var nativeAccess = NativeAccess.instance();
+ 
+-        // check if the user is running as root, and bail
+-        if (nativeAccess.definitelyRunningAsRoot()) {
+-            throw new RuntimeException("can not run elasticsearch as root");
+-        }
+-
+         if (systemCallFilter) {
+             /*
+              * Try to install system call filters; if they fail to install; a bootstrap check will fail startup in production mode.
+@@ -489,32 +343,6 @@ class Elasticsearch {
+         }
+     }
+ 
+-    /**
+-     * Starts a thread that monitors stdin for a shutdown signal.
+-     *
+-     * If the shutdown signal is received, Elasticsearch exits with status code 0.
+-     * If the pipe is broken, Elasticsearch exits with status code 1.
+-     *
+-     * @param stdin Standard input for this process
+-     */
+-    private static void startCliMonitorThread(InputStream stdin) {
+-        new Thread(() -> {
+-            int msg = -1;
+-            try {
+-                msg = stdin.read();
+-            } catch (IOException e) {
+-                // ignore, whether we cleanly got end of stream (-1) or an error, we will shut down below
+-            } finally {
+-                if (msg == BootstrapInfo.SERVER_SHUTDOWN_MARKER) {
+-                    Bootstrap.exit(0);
+-                } else {
+-                    // parent process died or there was an error reading from it
+-                    Bootstrap.exit(1);
+-                }
+-            }
+-        }, "elasticsearch-cli-monitor-thread").start();
+-    }
+-
+     /**
+      * Writes the current process id into the given pidfile, if not null. The pidfile is cleaned up on system exit.
+      *
+@@ -569,19 +397,6 @@ class Elasticsearch {
+         return new Environment(builder.build(), configDir);
+     }
+ 
+-    static Map<String, Set<String>> findPluginsWithNativeAccess(Map<String, Policy> policies) {
+-        Map<String, Set<String>> pluginsWithNativeAccess = new HashMap<>();
+-        for (var kv : policies.entrySet()) {
+-            for (var scope : kv.getValue().scopes()) {
+-                if (scope.entitlements().stream().anyMatch(entitlement -> entitlement instanceof LoadNativeLibrariesEntitlement)) {
+-                    var modulesToEnable = pluginsWithNativeAccess.computeIfAbsent(kv.getKey(), k -> new HashSet<>());
+-                    modulesToEnable.add(scope.moduleName());
+-                }
+-            }
+-        }
+-        return pluginsWithNativeAccess;
+-    }
+-
+     // -- instance
+ 
+     private static volatile Elasticsearch INSTANCE;
+@@ -636,3 +451,4 @@ class Elasticsearch {
+         }
+     }
+ }
++/* @generated */
+\ No newline at end of file
+diff --git a/org/elasticsearch/common/settings/KeyStoreWrapper.java b/org/elasticsearch/common/settings/KeyStoreWrapper.java
+index 2eed56fd97cf6..cb71c86b1c722 100644
+--- a/org/elasticsearch/common/settings/KeyStoreWrapper.java
++++ b/org/elasticsearch/common/settings/KeyStoreWrapper.java
+@@ -440,7 +440,6 @@ public class KeyStoreWrapper implements SecureSettings {
+ 
+     /** Write the keystore to the given config directory. */
+     public synchronized void save(Path configDir, char[] password) throws Exception {
+-        save(configDir, password, true);
+     }
+ 
+     public synchronized void save(Path configDir, char[] password, boolean preservePermissions) throws Exception {
+@@ -662,3 +661,4 @@ public class KeyStoreWrapper implements SecureSettings {
+         out.writeBoolean(closed);
+     }
+ }
++/* @generated */
+\ No newline at end of file
