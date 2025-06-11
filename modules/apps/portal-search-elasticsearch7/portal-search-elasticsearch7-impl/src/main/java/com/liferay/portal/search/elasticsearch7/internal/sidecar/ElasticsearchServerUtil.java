@@ -5,12 +5,8 @@
 
 package com.liferay.portal.search.elasticsearch7.internal.sidecar;
 
-import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
-import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.petra.process.ProcessException;
 import com.liferay.petra.reflect.ReflectionUtil;
-
-import java.io.InputStream;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -24,8 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.elasticsearch.cli.ExitCodes;
-import org.elasticsearch.common.io.stream.OutputStreamStreamOutput;
-import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.node.Node;
 
 /**
  * @author Tina Tian
@@ -47,39 +42,20 @@ public class ElasticsearchServerUtil {
 		_shutdownCountDownLatch.countDown();
 	}
 
-	public static Object start(SidecarServerArgs sidecarServerArgs)
-		throws ProcessException {
-
-		try (UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
-				new UnsyncByteArrayOutputStream();
-			StreamOutput streamOutput = new OutputStreamStreamOutput(
-				unsyncByteArrayOutputStream)) {
-
-			sidecarServerArgs.writeTo(streamOutput);
-
-			InputStream originalSystemInInputStream = System.in;
-
-			try (UnsyncByteArrayInputStream unsyncByteArrayInputStream =
-					new UnsyncByteArrayInputStream(
-						unsyncByteArrayOutputStream.toByteArray())) {
-
-				System.setIn(unsyncByteArrayInputStream);
-
-				_mainMethod.invoke(null, (Object)null);
-			}
-			finally {
-				System.setIn(originalSystemInInputStream);
-			}
+	public static Node start(String[] arguments) throws ProcessException {
+		try {
+			_mainMethod.invoke(null, new Object[] {arguments});
 
 			System.setSecurityManager(null);
 
 			_addShutdownHook();
 
-			return _nodeField.get(_instanceField.get(null));
+			return (Node)_nodeField.get(_instanceField.get(null));
 		}
-		catch (Exception exception) {
+		catch (ReflectiveOperationException reflectiveOperationException) {
 			throw new ProcessException(
-				"Unable to start elasticsearch server", exception);
+				"Unable to start elasticsearch server",
+				reflectiveOperationException);
 		}
 	}
 
@@ -158,17 +134,22 @@ public class ElasticsearchServerUtil {
 				classLoader.loadClass("java.lang.ApplicationShutdownHooks"),
 				"hooks");
 
-			Class<?> elasticsearchClass = classLoader.loadClass(
-				"org.elasticsearch.bootstrap.Elasticsearch");
+			_mainMethod = ReflectionUtil.getDeclaredMethod(
+				classLoader.loadClass(
+					"org.elasticsearch.bootstrap.Elasticsearch"),
+				"main", String[].class);
+
+			Class<?> bootstrapClass = classLoader.loadClass(
+				"org.elasticsearch.bootstrap.Bootstrap");
 
 			_instanceField = ReflectionUtil.getDeclaredField(
-				elasticsearchClass, "INSTANCE");
-			_mainMethod = ReflectionUtil.getDeclaredMethod(
-				elasticsearchClass, "main", String[].class);
+				bootstrapClass, "INSTANCE");
+
 			_nodeField = ReflectionUtil.getDeclaredField(
-				elasticsearchClass, "node");
+				bootstrapClass, "node");
+
 			_stopMethod = ReflectionUtil.getDeclaredMethod(
-				elasticsearchClass, "shutdown");
+				bootstrapClass, "stop");
 		}
 		catch (Exception exception) {
 			throw new ExceptionInInitializerError(exception);

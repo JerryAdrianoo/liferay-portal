@@ -5,9 +5,6 @@
 
 package com.liferay.portal.search.elasticsearch7.internal.sidecar;
 
-import com.liferay.petra.string.CharPool;
-import com.liferay.petra.string.StringBundler;
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -33,23 +30,8 @@ public class ClassModificationUtil {
 
 		Class<?> clazz = classLoader.loadClass(className);
 
-		String classFileName = clazz.getSimpleName();
-
-		if (className.indexOf(CharPool.DOLLAR) > -1) {
-			int index = className.lastIndexOf(CharPool.PERIOD);
-
-			classFileName = className.substring(index + 1);
-		}
-
 		try (InputStream inputStream = clazz.getResourceAsStream(
-				classFileName + ".class")) {
-
-			if (inputStream == null) {
-				throw new IOException(
-					StringBundler.concat(
-						clazz.getName(), " is unable to load ", classFileName,
-						".class"));
-			}
+				clazz.getSimpleName() + ".class")) {
 
 			ClassReader classReader = new ClassReader(inputStream);
 
@@ -57,7 +39,7 @@ public class ClassModificationUtil {
 				classReader, ClassWriter.COMPUTE_MAXS);
 
 			classReader.accept(
-				new ClassVisitor(Opcodes.ASM7, classWriter) {
+				new ClassVisitor(Opcodes.ASM5, classWriter) {
 
 					@Override
 					public MethodVisitor visitMethod(
@@ -71,7 +53,7 @@ public class ClassModificationUtil {
 							return methodVisitor;
 						}
 
-						return new MethodVisitor(Opcodes.ASM7) {
+						return new MethodVisitor(Opcodes.ASM5) {
 
 							@Override
 							public void visitCode() {
