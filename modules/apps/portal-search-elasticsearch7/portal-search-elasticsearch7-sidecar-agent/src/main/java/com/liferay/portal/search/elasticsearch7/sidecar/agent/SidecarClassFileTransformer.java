@@ -6,11 +6,9 @@
 package com.liferay.portal.search.elasticsearch7.sidecar.agent;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import java.lang.instrument.ClassFileTransformer;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import java.security.ProtectionDomain;
 
@@ -19,29 +17,27 @@ import java.security.ProtectionDomain;
  */
 public class SidecarClassFileTransformer implements ClassFileTransformer {
 
-	public SidecarClassFileTransformer(String pathRootPath) {
-		_patchRootPath = Path.of(pathRootPath);
-	}
-
 	@Override
 	public byte[] transform(
 		ClassLoader loader, String className, Class<?> classBeingRedefined,
 		ProtectionDomain protectionDomain, byte[] classFileBuffer) {
 
-		Path patchFilePath = _patchRootPath.resolve(className + ".class");
+		Class<?> clazz = SidecarClassFileTransformer.class;
 
-		if (Files.exists(patchFilePath)) {
-			try {
-				return Files.readAllBytes(patchFilePath);
+		try (InputStream inputStream = clazz.getResourceAsStream(
+				"/patches/" + className + ".class.bytes")) {
+
+			if (inputStream == null) {
+				return null;
 			}
-			catch (IOException ioException) {
-				ioException.printStackTrace(System.err);
-			}
+
+			return inputStream.readAllBytes();
+		}
+		catch (IOException ioException) {
+			ioException.printStackTrace(System.err);
 		}
 
 		return null;
 	}
-
-	private final Path _patchRootPath;
 
 }
