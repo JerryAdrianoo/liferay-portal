@@ -308,11 +308,6 @@ class Elasticsearch {
         final Logger logger = LogManager.getLogger(Elasticsearch.class);
         var nativeAccess = NativeAccess.instance();
 
-        // check if the user is running as root, and bail
-        if (nativeAccess.definitelyRunningAsRoot()) {
-            throw new RuntimeException("can not run elasticsearch as root");
-        }
-
         if (systemCallFilter) {
             /*
              * Try to install system call filters; if they fail to install; a bootstrap check will fail startup in production mode.
