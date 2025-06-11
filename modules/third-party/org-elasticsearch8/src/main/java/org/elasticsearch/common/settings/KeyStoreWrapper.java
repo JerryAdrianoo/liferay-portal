@@ -441,7 +441,6 @@ public class KeyStoreWrapper implements SecureSettings {
 
     /** Write the keystore to the given config directory. */
     public synchronized void save(Path configDir, char[] password) throws Exception {
-        save(configDir, password, true);
     }
 
     public synchronized void save(Path configDir, char[] password, boolean preservePermissions) throws Exception {
@@ -663,3 +662,4 @@ public class KeyStoreWrapper implements SecureSettings {
         out.writeBoolean(closed);
     }
 }
+/* @generated */
