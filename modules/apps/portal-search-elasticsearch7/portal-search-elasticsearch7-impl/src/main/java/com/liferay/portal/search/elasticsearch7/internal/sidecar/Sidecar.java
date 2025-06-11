@@ -7,7 +7,6 @@ package com.liferay.portal.search.elasticsearch7.internal.sidecar;
 
 import com.liferay.petra.concurrent.FutureListener;
 import com.liferay.petra.concurrent.NoticeableFuture;
-import com.liferay.petra.process.ClassPathUtil;
 import com.liferay.petra.process.ProcessChannel;
 import com.liferay.petra.process.ProcessConfig;
 import com.liferay.petra.process.ProcessException;
@@ -21,17 +20,20 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.JavaDetector;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OSDetector;
+import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.elasticsearch7.internal.configuration.ElasticsearchConfigurationWrapper;
 import com.liferay.portal.search.elasticsearch7.internal.sidecar.constants.SidecarConstants;
 import com.liferay.portal.search.elasticsearch7.internal.util.ResourceUtil;
+import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -378,6 +380,27 @@ public class Sidecar {
 		if (JavaDetector.isJDK21() && OSDetector.isLinux()) {
 			arguments.add("-XX:-UseContainerSupport");
 		}
+
+
+		// Modules
+
+		arguments.add("--add-modules=jdk.incubator.vector");
+		arguments.add("--add-modules=jdk.management.agent");
+		arguments.add("--add-modules=jdk.net");
+		arguments.add("--add-modules=ALL-MODULE-PATH");
+		arguments.add(
+			"--add-opens=org.elasticsearch.server/org.elasticsearch." +
+				"bootstrap=ALL-UNNAMED");
+		arguments.add("--module-path=" + _sidecarHomePath.resolve("lib"));
+		arguments.add("-Djdk.module.main=org.elasticsearch.server");
+
+		// Apply agent to load modified classes
+
+		Path path = Path.of(
+			PropsUtil.get(PropsKeys.LIFERAY_HOME), "elasticsearch-sidecar",
+			"com.liferay.portal.search.elasticsearch7.sidecar.agent.jar");
+
+		arguments.add("-javaagent:" + path.toAbsolutePath());
 
 		return arguments;
 	}
