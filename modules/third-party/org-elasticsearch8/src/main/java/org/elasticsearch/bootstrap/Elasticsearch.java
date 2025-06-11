@@ -173,8 +173,6 @@ class Elasticsearch {
         // setDefaultUncaughtExceptionHandler
         Thread.setDefaultUncaughtExceptionHandler(new ElasticsearchUncaughtExceptionHandler());
 
-        bootstrap.spawner().spawnNativeControllers(nodeEnv);
-
         nodeEnv.validateNativesConfig(); // temporary directories are important for JNA
         initializeNatives(
             nodeEnv.tmpDir(),
