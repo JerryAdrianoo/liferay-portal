@@ -1,0 +1,31 @@
+import com.liferay.gradle.plugins.patcher.PatchTask
+
+apply plugin: "com.liferay.patcher"
+
+task patch(type: PatchTask)
+
+dependencies {
+	compileOnly group: "org.apache.logging.log4j", name: "log4j-api", version: "2.19.0"
+	compileOnly group: "org.apache.logging.log4j", name: "log4j-core", version: "2.19.0"
+	compileOnly group: "org.apache.lucene", name: "lucene-backward-codecs", transitive: false, version: "9.12.1"
+	compileOnly group: "org.apache.lucene", name: "lucene-core", transitive: false, version: "9.12.1"
+	compileOnly group: "org.elasticsearch", name: "elasticsearch", transitive: false, version: "8.18.1"
+	compileOnly group: "org.elasticsearch", name: "elasticsearch-cli", transitive: false, version: "8.18.1"
+	compileOnly group: "org.elasticsearch", name: "elasticsearch-core", transitive: false, version: "8.18.1"
+	compileOnly group: "org.elasticsearch", name: "elasticsearch-native", transitive: false, version: "8.18.1"
+	compileOnly group: "org.elasticsearch", name: "elasticsearch-x-content", transitive: false, version: "8.18.1"
+}
+
+jarSources {
+	mustRunAfter patch
+}
+
+patch {
+	ext {
+		autoClean = false
+	}
+
+	fileNames "org/elasticsearch/bootstrap/Elasticsearch.java"
+	fileNames "org/elasticsearch/common/settings/KeyStoreWrapper.java"
+	originalLibModuleName = "elasticsearch"
+}
