@@ -57,7 +57,6 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.elasticsearch.bootstrap.BootstrapSettings.SECURITY_FILTER_BAD_DEFAULTS_SETTING;
 import static org.elasticsearch.nativeaccess.WindowsFunctions.ConsoleCtrlHandler.CTRL_CLOSE_EVENT;
 
 /**
@@ -212,21 +211,6 @@ class Elasticsearch {
         // load the plugin Java modules and layers now for use in entitlements
         var modulesBundles = PluginsLoader.loadModulesBundles(nodeEnv.modulesDir());
         var pluginsBundles = PluginsLoader.loadPluginsBundles(nodeEnv.pluginsDir());
-
-        final PluginsLoader pluginsLoader;
-
-		if (!bootstrap.useEntitlements()) {
-			assert RuntimeVersionFeature.isSecurityManagerAvailable();
-			// no need to explicitly enable native access for legacy code
-			pluginsLoader = PluginsLoader.createPluginsLoader(modulesBundles, pluginsBundles, Map.of());
-			// install SM after natives, shutdown hooks, etc.
-			LogManager.getLogger(Elasticsearch.class).info("Bootstrapping java SecurityManager");
-			org.elasticsearch.bootstrap.Security.configure(
-				nodeEnv,
-				SECURITY_FILTER_BAD_DEFAULTS_SETTING.get(args.nodeSettings()),
-				args.pidFile()
-			);
-		}
 
 		bootstrap.setPluginsLoader(PluginsLoader.createPluginsLoader(modulesBundles, pluginsBundles, Map.of()));
     }
