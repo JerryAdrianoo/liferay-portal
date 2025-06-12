@@ -2,5 +2,5 @@ dependencies {
 }
 
 liferay {
-    deployDir = file("${liferayHome}/elasticsearch-sidecar")
+	deployDir = file("${liferayHome}/elasticsearch-sidecar")
 }

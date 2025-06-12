@@ -33,7 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -380,7 +379,6 @@ public class Sidecar {
 		if (JavaDetector.isJDK21() && OSDetector.isLinux()) {
 			arguments.add("-XX:-UseContainerSupport");
 		}
-
 
 		// Modules
 
