@@ -22,6 +22,10 @@ public class SidecarClassFileTransformer implements ClassFileTransformer {
 		ClassLoader loader, String className, Class<?> classBeingRedefined,
 		ProtectionDomain protectionDomain, byte[] classFileBuffer) {
 
+		if (!className.equals(_CONSTANT_A) && !className.equals(_CONSTANT_B)) {
+			return null;
+		}
+
 		Class<?> clazz = SidecarClassFileTransformer.class;
 
 		try (InputStream inputStream = clazz.getResourceAsStream(
@@ -39,5 +43,11 @@ public class SidecarClassFileTransformer implements ClassFileTransformer {
 
 		return null;
 	}
+
+	private static final String _CONSTANT_A =
+		"org/elasticsearch/bootstrap/Elasticsearch";
+
+	private static final String _CONSTANT_B =
+		"org/elasticsearch/common/settings/KeyStoreWrapper";
 
 }
