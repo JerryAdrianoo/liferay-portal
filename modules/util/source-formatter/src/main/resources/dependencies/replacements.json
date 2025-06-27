@@ -148,6 +148,7 @@
 	},
 	{
 		"from": "new InfoItemFormVariation(String paramName, InfoLocalizedValue<String> paramName)",
+		"hasMessage": true,
 		"issueKey": "LPD-8024"
 	},
 	{
@@ -3299,6 +3300,7 @@
 			"JournalArticle"
 		],
 		"from": "setDDMStructureKey(String paramName)",
+		"hasMessage": true,
 		"issueKey": "LPD-30559"
 	},
 	{
@@ -4285,6 +4287,14 @@
 		"to": "updateCommercePriceList(param#0#, CommerceCurrencyLocalServiceUtil.fetchCommerceCurrency(param#1#).getCode(), true, param#2#, param#3#, param#4#, param#5#, param#6#, param#7#, param#8#, param#9#, param#10#, param#11#, param#12#, param#13#, param#14#, param#15#, param#16#, param#17#, param#18#)"
 	},
 	{
+		"from": "Liferay.Notification",
+		"hasMessage": true,
+		"issueKey": "LPD-44043",
+		"validExtensions": [
+			"jsp"
+		]
+	},
+	{
 		"classNames": [
 			"DDMTemplateLocalService",
 			"DDMTemplateLocalServiceUtil"
@@ -5225,6 +5235,7 @@
 			"AssetCategoryLocalServiceUtil"
 		],
 		"from": "fetchAssetCategoryByExternalReferenceCode(long paramName, String paramName)",
+		"hasMessage": true,
 		"issueKey": "LPS-196608"
 	},
 	{
@@ -5479,6 +5490,7 @@
 			"AssetVocabularyLocalServiceUtil"
 		],
 		"from": "fetchAssetVocabularyByExternalReferenceCode(long paramName, String paramName)",
+		"hasMessage": true,
 		"issueKey": "LPS-198292"
 	},
 	{
@@ -5499,6 +5511,7 @@
 	},
 	{
 		"from": "ConfigurationBeanDeclaration",
+		"hasMessage": true,
 		"issueKey": "LPS-198405"
 	},
 	{

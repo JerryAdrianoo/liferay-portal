@@ -13,13 +13,24 @@ type Spaces = 'all' | string[];
 export type ReferencedStructure = {
 	erc: string;
 	name: string;
+	parent: Uuid;
 	type: 'referenced-structure';
+	uuid: Uuid;
+};
+
+export type RepeatableGroup = {
+	erc: string;
+	fields: Map<Uuid, Field | ReferencedStructure | RepeatableGroup>;
+	label: Liferay.Language.LocalizedValue<string>;
+	name: string;
+	parent: Uuid;
+	type: 'repeatable-group';
 	uuid: Uuid;
 };
 
 export type Structure = {
 	erc: string;
-	fields: Map<Uuid, Field | ReferencedStructure>;
+	fields: Map<Uuid, Field | ReferencedStructure | RepeatableGroup>;
 	id: number | null;
 	label: Liferay.Language.LocalizedValue<string>;
 	name: string;

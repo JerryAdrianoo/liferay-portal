@@ -37,7 +37,9 @@ import java.util.regex.Pattern;
  */
 public class UpgradeCatchAllCheck extends BaseFileCheck {
 
-	public static String[] getExpectedMessages() throws Exception {
+	public static String[] getExpectedMessages(String fileName)
+		throws Exception {
+
 		List<String> expectedMessages = new ArrayList<>();
 
 		JSONArray jsonArray = _getReplacementsJSONArray("replacements.json");
@@ -48,8 +50,12 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 			String[] validExtensions = JSONUtil.toStringArray(
 				jsonObject.getJSONArray("validExtensions"));
 
+			String extension = StringUtil.removeSubstring(
+				fileName.substring(fileName.lastIndexOf(CharPool.PERIOD) + 1),
+				"test");
+
 			if ((validExtensions.length > 0) &&
-				!ArrayUtil.contains(validExtensions, "java")) {
+				!ArrayUtil.contains(validExtensions, extension)) {
 
 				continue;
 			}
@@ -73,8 +79,8 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 			}
 
 			if ((from.contains(StringPool.OPEN_PARENTHESIS) &&
-				 !skipValidation) ||
-				(keys.contains("from") && !keys.contains("to"))) {
+				 !skipValidation && fileName.endsWith("java")) ||
+				keys.contains("hasMessage")) {
 
 				expectedMessages.add(_getMessage(jsonObject));
 			}
@@ -137,10 +143,15 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 				content = _formatGeneral(content, fileName, jsonObject);
 			}
 
-			if (_testMode && oldContent.equals(content)) {
-				String to = jsonObject.getString("to");
+			if (_testMode) {
+				boolean hasMessage = jsonObject.getBoolean("hasMessage");
 
-				if (to.isEmpty() && _newMessage) {
+				if (!oldContent.equals(content) && !hasMessage) {
+					continue;
+				}
+				else if (oldContent.equals(content) && hasMessage &&
+						 _newMessage) {
+
 					continue;
 				}
 
@@ -507,7 +518,7 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 		else if (!_newMessage) {
 			Set<String> keys = jsonObject.keySet();
 
-			if (!keys.contains("to")) {
+			if (keys.contains("hasMessage")) {
 				Pattern pattern = _getPattern(jsonObject);
 
 				Matcher matcher = pattern.matcher(content);
@@ -549,7 +560,7 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 			else {
 				Set<String> keys = jsonObject.keySet();
 
-				if (!keys.contains("to")) {
+				if (keys.contains("hasMessage")) {
 					addMessage(fileName, _getMessage(jsonObject));
 
 					_newMessage = true;
@@ -809,12 +820,12 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 			return true;
 		}
 
-		boolean sendMessage = false;
+		boolean hasMessage = false;
 
 		Set<String> keys = jsonObject.keySet();
 
-		if (!keys.contains("to")) {
-			sendMessage = true;
+		if (keys.contains("hasMessage")) {
+			hasMessage = true;
 		}
 		else if (fileName.endsWith(".java")) {
 			for (int i = 0; i < fromParameters.size(); i++) {
@@ -825,7 +836,7 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 					parameterName.trim(), true, false);
 
 				if (variableTypeName == null) {
-					sendMessage = true;
+					hasMessage = true;
 				}
 				else if (!StringUtil.equals(
 							fromParameters.get(i), variableTypeName)) {
@@ -835,7 +846,7 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 			}
 		}
 
-		if (sendMessage) {
+		if (hasMessage) {
 			addMessage(fileName, _getMessage(jsonObject));
 
 			_newMessage = true;

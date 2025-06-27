@@ -12,19 +12,17 @@ import com.liferay.portal.kernel.feature.flag.constants.FeatureFlagConstants;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
-import com.liferay.portal.util.PropsImpl;
-import com.liferay.portal.util.PropsUtil;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -51,11 +49,6 @@ public class FeatureFlagsBagProviderTest {
 			_featureFlagPreferencesManager);
 		ReflectionTestUtil.setFieldValue(
 			_featureFlagsBagProvider, "_language", _language);
-	}
-
-	@Before
-	public void setUp() {
-		com.liferay.portal.kernel.util.PropsUtil.setProps(new PropsImpl());
 	}
 
 	@Test

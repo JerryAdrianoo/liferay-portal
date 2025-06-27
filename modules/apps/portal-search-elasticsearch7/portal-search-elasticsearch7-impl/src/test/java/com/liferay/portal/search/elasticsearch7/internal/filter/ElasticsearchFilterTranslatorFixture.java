@@ -22,24 +22,7 @@ public class ElasticsearchFilterTranslatorFixture {
 
 		_elasticsearchFilterTranslator = new ElasticsearchFilterTranslator() {
 			{
-				booleanFilterTranslator = new BooleanFilterTranslatorImpl();
-				dateRangeFilterTranslator = new DateRangeFilterTranslatorImpl();
-				dateRangeTermFilterTranslator =
-					new DateRangeTermFilterTranslatorImpl();
-				existsFilterTranslator = new ExistsFilterTranslatorImpl();
-				geoBoundingBoxFilterTranslator =
-					new GeoBoundingBoxFilterTranslatorImpl();
-				geoDistanceFilterTranslator =
-					new GeoDistanceFilterTranslatorImpl();
-				geoDistanceRangeFilterTranslator =
-					new GeoDistanceRangeFilterTranslatorImpl();
 				indexNameBuilder = _createIndexNameBuilder();
-				missingFilterTranslator = new MissingFilterTranslatorImpl();
-				prefixFilterTranslator = new PrefixFilterTranslatorImpl();
-				rangeTermFilterTranslator = new RangeTermFilterTranslatorImpl();
-				termFilterTranslator = new TermFilterTranslatorImpl();
-				termsFilterTranslator = new TermsFilterTranslatorImpl();
-				termsSetFilterTranslator = new TermsSetFilterTranslatorImpl();
 
 				activate();
 			}

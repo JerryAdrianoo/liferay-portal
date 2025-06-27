@@ -69,7 +69,7 @@ public class ObjectDefinitionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(81);
+		StringBundler sb = new StringBundler(83);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -119,6 +119,8 @@ public class ObjectDefinitionCacheModel
 		sb.append(enableObjectEntryDraft);
 		sb.append(", enableObjectEntryHistory=");
 		sb.append(enableObjectEntryHistory);
+		sb.append(", enableObjectEntrySchedule=");
+		sb.append(enableObjectEntrySchedule);
 		sb.append(", enableObjectEntryVersioning=");
 		sb.append(enableObjectEntryVersioning);
 		sb.append(", friendlyURLSeparator=");
@@ -234,6 +236,8 @@ public class ObjectDefinitionCacheModel
 		objectDefinitionImpl.setEnableObjectEntryDraft(enableObjectEntryDraft);
 		objectDefinitionImpl.setEnableObjectEntryHistory(
 			enableObjectEntryHistory);
+		objectDefinitionImpl.setEnableObjectEntrySchedule(
+			enableObjectEntrySchedule);
 		objectDefinitionImpl.setEnableObjectEntryVersioning(
 			enableObjectEntryVersioning);
 
@@ -364,6 +368,8 @@ public class ObjectDefinitionCacheModel
 
 		enableObjectEntryHistory = objectInput.readBoolean();
 
+		enableObjectEntrySchedule = objectInput.readBoolean();
+
 		enableObjectEntryVersioning = objectInput.readBoolean();
 		friendlyURLSeparator = objectInput.readUTF();
 		label = objectInput.readUTF();
@@ -460,6 +466,8 @@ public class ObjectDefinitionCacheModel
 		objectOutput.writeBoolean(enableObjectEntryDraft);
 
 		objectOutput.writeBoolean(enableObjectEntryHistory);
+
+		objectOutput.writeBoolean(enableObjectEntrySchedule);
 
 		objectOutput.writeBoolean(enableObjectEntryVersioning);
 
@@ -568,6 +576,7 @@ public class ObjectDefinitionCacheModel
 	public boolean enableLocalization;
 	public boolean enableObjectEntryDraft;
 	public boolean enableObjectEntryHistory;
+	public boolean enableObjectEntrySchedule;
 	public boolean enableObjectEntryVersioning;
 	public String friendlyURLSeparator;
 	public String label;
