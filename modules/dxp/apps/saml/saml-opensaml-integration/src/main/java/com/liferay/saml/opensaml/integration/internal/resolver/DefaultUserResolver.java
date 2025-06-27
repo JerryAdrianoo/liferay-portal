@@ -6,6 +6,11 @@
 package com.liferay.saml.opensaml.integration.internal.resolver;
 
 import com.liferay.expando.kernel.model.ExpandoColumn;
+import com.liferay.expando.kernel.model.ExpandoColumnConstants;
+import com.liferay.expando.kernel.model.ExpandoTable;
+import com.liferay.expando.kernel.model.ExpandoTableConstants;
+import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
+import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.expando.kernel.service.ExpandoValueLocalService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -24,12 +29,12 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.opensaml.integration.field.expression.handler.UserFieldExpressionHandler;
 import com.liferay.saml.opensaml.integration.field.expression.handler.registry.UserFieldExpressionHandlerRegistry;
 import com.liferay.saml.opensaml.integration.field.expression.resolver.UserFieldExpressionResolver;
 import com.liferay.saml.opensaml.integration.field.expression.resolver.registry.UserFieldExpressionResolverRegistry;
-import com.liferay.saml.opensaml.integration.internal.util.SamlProvisioningUtil;
 import com.liferay.saml.opensaml.integration.processor.UserProcessor;
 import com.liferay.saml.opensaml.integration.processor.factory.UserProcessorFactory;
 import com.liferay.saml.opensaml.integration.resolver.UserResolver;
@@ -132,9 +137,8 @@ public class DefaultUserResolver implements UserResolver {
 			_log.debug("Added user " + user.toString());
 		}
 
-		ExpandoColumn expandoColumn =
-			SamlProvisioningUtil.getOrAddExpandoColumn(
-				serviceContext.getCompanyId(), User.class.getName(), "idpId");
+		ExpandoColumn expandoColumn = _getOrAddExpandoColumn(
+			User.class.getName(), serviceContext.getCompanyId());
 
 		_expandoValueLocalService.addValue(
 			_classNameLocalService.getClassNameId(User.class.getName()),
@@ -173,6 +177,43 @@ public class DefaultUserResolver implements UserResolver {
 		}
 
 		return format;
+	}
+
+	private ExpandoColumn _getOrAddExpandoColumn(
+			String className, long companyId)
+		throws Exception {
+
+		ExpandoTable expandoTable = _expandoTableLocalService.fetchTable(
+			companyId, _classNameLocalService.getClassNameId(className),
+			ExpandoTableConstants.DEFAULT_TABLE_NAME);
+
+		if (expandoTable == null) {
+			expandoTable = _expandoTableLocalService.addTable(
+				companyId, className, ExpandoTableConstants.DEFAULT_TABLE_NAME);
+		}
+
+		ExpandoColumn expandoColumn = _expandoColumnLocalService.fetchColumn(
+			expandoTable.getTableId(), "idpId");
+
+		if (expandoColumn != null) {
+			return expandoColumn;
+		}
+
+		expandoColumn = _expandoColumnLocalService.addColumn(
+			expandoTable.getTableId(), "idpId", ExpandoColumnConstants.LONG);
+
+		UnicodeProperties unicodeProperties =
+			expandoColumn.getTypeSettingsProperties();
+
+		unicodeProperties.setProperty(
+			ExpandoColumnConstants.INDEX_TYPE,
+			String.valueOf(ExpandoColumnConstants.INDEX_TYPE_KEYWORD));
+		unicodeProperties.setProperty(
+			ExpandoColumnConstants.PROPERTY_HIDDEN, Boolean.TRUE.toString());
+
+		expandoColumn.setTypeSettingsProperties(unicodeProperties);
+
+		return _expandoColumnLocalService.updateExpandoColumn(expandoColumn);
 	}
 
 	private String _getPrefix(String userFieldExpression) {
@@ -412,6 +453,12 @@ public class DefaultUserResolver implements UserResolver {
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
+
+	@Reference
+	private ExpandoColumnLocalService _expandoColumnLocalService;
+
+	@Reference
+	private ExpandoTableLocalService _expandoTableLocalService;
 
 	@Reference
 	private ExpandoValueLocalService _expandoValueLocalService;

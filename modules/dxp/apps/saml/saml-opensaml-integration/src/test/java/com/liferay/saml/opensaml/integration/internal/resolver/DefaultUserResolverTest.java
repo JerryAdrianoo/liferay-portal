@@ -6,6 +6,9 @@
 package com.liferay.saml.opensaml.integration.internal.resolver;
 
 import com.liferay.expando.kernel.model.ExpandoColumn;
+import com.liferay.expando.kernel.model.ExpandoTable;
+import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
+import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.expando.kernel.service.ExpandoValueLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
@@ -39,7 +42,6 @@ import com.liferay.saml.opensaml.integration.internal.field.expression.handler.D
 import com.liferay.saml.opensaml.integration.internal.field.expression.handler.MembershipsUserFieldExpressionHandler;
 import com.liferay.saml.opensaml.integration.internal.processor.factory.UserProcessorFactoryImpl;
 import com.liferay.saml.opensaml.integration.internal.util.OpenSamlUtil;
-import com.liferay.saml.opensaml.integration.internal.util.SamlProvisioningUtil;
 import com.liferay.saml.opensaml.integration.resolver.UserResolver;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlPeerBindingLocalService;
@@ -57,14 +59,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.internal.util.collections.Sets;
 import org.mockito.stubbing.Answer;
@@ -101,7 +101,6 @@ public class DefaultUserResolverTest extends BaseSamlTestCase {
 		_company = _mockCompany();
 		_expandoValueLocalService = _mockExpandoValueLocalService();
 		_mockLanguageUtil();
-		_mockSamlProvisioningUtil();
 		_prefsProps = _mockPrefsProps();
 		_samlProviderConfigurationHelper =
 			_mockSamlProviderConfigurationHelper();
@@ -117,6 +116,12 @@ public class DefaultUserResolverTest extends BaseSamlTestCase {
 		ReflectionTestUtil.setFieldValue(
 			_defaultUserResolver, "_companyLocalService",
 			_mockCompanyLocalService(_company));
+		ReflectionTestUtil.setFieldValue(
+			_defaultUserResolver, "_expandoColumnLocalService",
+			_mockExpandoColumnLocalService());
+		ReflectionTestUtil.setFieldValue(
+			_defaultUserResolver, "_expandoTableLocalService",
+			_mockExpandoTableLocalService());
 		ReflectionTestUtil.setFieldValue(
 			_defaultUserResolver, "_expandoValueLocalService",
 			_expandoValueLocalService);
@@ -145,11 +150,6 @@ public class DefaultUserResolverTest extends BaseSamlTestCase {
 		ReflectionTestUtil.setFieldValue(
 			_defaultUserResolver, "_userProcessorFactory",
 			new UserProcessorFactoryImpl());
-	}
-
-	@After
-	public void tearDown() {
-		_samlProvisioningUtilMockedStatic.close();
 	}
 
 	@Test
@@ -837,6 +837,75 @@ public class DefaultUserResolverTest extends BaseSamlTestCase {
 		return userFieldExpressionHandlerRegistry;
 	}
 
+	private void _mockDigesterUtil() {
+		DigesterUtil digesterUtil = new DigesterUtil();
+
+		Digester digester = Mockito.mock(Digester.class);
+
+		Mockito.when(
+			digester.digest(Mockito.nullable(String.class))
+		).thenReturn(
+			RandomTestUtil.randomString()
+		);
+
+		digesterUtil.setDigester(digester);
+	}
+
+	private ExpandoColumnLocalService _mockExpandoColumnLocalService()
+		throws Exception {
+
+		ExpandoColumnLocalService expandoColumnLocalService = Mockito.mock(
+			ExpandoColumnLocalService.class);
+
+		ExpandoColumn expandoColumn = Mockito.mock(ExpandoColumn.class);
+
+		Mockito.when(
+			expandoColumn.getColumnId()
+		).thenReturn(
+			_EXPANDO_COLUMN_ID
+		);
+
+		Mockito.when(
+			expandoColumn.getTableId()
+		).thenReturn(
+			_EXPANDO_TABLE_ID
+		);
+
+		Mockito.when(
+			expandoColumnLocalService.fetchColumn(
+				Mockito.any(Long.class), Mockito.any(String.class))
+		).thenReturn(
+			expandoColumn
+		);
+
+		return expandoColumnLocalService;
+	}
+
+	private ExpandoTableLocalService _mockExpandoTableLocalService()
+		throws Exception {
+
+		ExpandoTableLocalService expandoTableLocalService = Mockito.mock(
+			ExpandoTableLocalService.class);
+
+		ExpandoTable expandoTable = Mockito.mock(ExpandoTable.class);
+
+		Mockito.when(
+			expandoTable.getTableId()
+		).thenReturn(
+			_EXPANDO_TABLE_ID
+		);
+
+		Mockito.when(
+			expandoTableLocalService.fetchTable(
+				Mockito.any(Long.class), Mockito.any(Long.class),
+				Mockito.any(String.class))
+		).thenReturn(
+			expandoTable
+		);
+
+		return expandoTableLocalService;
+	}
+
 	private ExpandoValueLocalService _mockExpandoValueLocalService()
 		throws Exception {
 
@@ -894,33 +963,6 @@ public class DefaultUserResolverTest extends BaseSamlTestCase {
 		);
 
 		return samlProviderConfigurationHelper;
-	}
-
-	private void _mockSamlProvisioningUtil() {
-		_samlProvisioningUtilMockedStatic = Mockito.mockStatic(
-			SamlProvisioningUtil.class);
-
-		ExpandoColumn expandoColumn = Mockito.mock(ExpandoColumn.class);
-
-		Mockito.when(
-			expandoColumn.getColumnId()
-		).thenReturn(
-			_EXPANDO_COLUMN_ID
-		);
-
-		Mockito.when(
-			expandoColumn.getTableId()
-		).thenReturn(
-			_EXPANDO_TABLE_ID
-		);
-
-		_samlProvisioningUtilMockedStatic.when(
-			() -> SamlProvisioningUtil.getOrAddExpandoColumn(
-				Mockito.any(Long.class), Mockito.any(String.class),
-				Mockito.any(String.class))
-		).thenReturn(
-			expandoColumn
-		);
 	}
 
 	private SamlSpIdpConnection _mockSamlSpIdConnection() throws Exception {
@@ -1096,8 +1138,6 @@ public class DefaultUserResolverTest extends BaseSamlTestCase {
 	private MessageContext<Response> _messageContext;
 	private PrefsProps _prefsProps;
 	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;
-	private MockedStatic<SamlProvisioningUtil>
-		_samlProvisioningUtilMockedStatic;
 	private SamlSpIdpConnection _samlSpIdpConnection;
 	private TestUserFieldExpressionResolver _testUserFieldExpressionResolver;
 	private UserGroupLocalService _userGroupLocalService;
