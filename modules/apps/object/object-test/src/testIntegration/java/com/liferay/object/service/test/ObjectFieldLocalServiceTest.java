@@ -255,7 +255,7 @@ public class ObjectFieldLocalServiceTest {
 				"attachment business types",
 			() -> _objectDefinitionLocalService.addCustomObjectDefinition(
 				TestPropsValues.getUserId(), 0, null, false, false, true, true,
-				false, false, null,
+				false, false, false, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				ObjectDefinitionTestUtil.getRandomName(), null, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
@@ -298,7 +298,7 @@ public class ObjectFieldLocalServiceTest {
 				"attachment business types",
 			() -> _objectDefinitionLocalService.addCustomObjectDefinition(
 				TestPropsValues.getUserId(), 0, null, false, false, true, true,
-				false, false, null,
+				false, false, false, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				ObjectDefinitionTestUtil.getRandomName(), null, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
@@ -1071,7 +1071,7 @@ public class ObjectFieldLocalServiceTest {
 		ObjectField objectField2 = _objectFieldLocalService.getObjectField(
 			objectRelationship.getObjectFieldId2());
 
-		objectField2.setRequired(false);
+		objectField2.setRequired(true);
 
 		AssertUtils.assertFailure(
 			ObjectFieldRequiredException.class, null,
@@ -2161,7 +2161,7 @@ public class ObjectFieldLocalServiceTest {
 			algorithm, enabled, key,
 			() -> _objectDefinitionLocalService.addCustomObjectDefinition(
 				TestPropsValues.getUserId(), 0, null, false, false, true, true,
-				false, false, null,
+				false, false, false, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				ObjectDefinitionTestUtil.getRandomName(), null, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
@@ -2807,7 +2807,7 @@ public class ObjectFieldLocalServiceTest {
 		objectDefinition1 =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
 				TestPropsValues.getUserId(), 0, null, false, false, true, true,
-				false, false, null,
+				false, false, false, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"Test", null, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),

@@ -2088,9 +2088,14 @@ public abstract class BaseObjectEntryResourceImpl
 				"updateStrategy", "UPDATE");
 
 			if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
-				objectEntryUnsafeFunction =
-					objectEntry -> putByExternalReferenceCode(
+				objectEntryUnsafeFunction = objectEntry -> {
+					ObjectEntry persistedObjectEntry = null;
+
+					persistedObjectEntry = putByExternalReferenceCode(
 						objectEntry.getExternalReferenceCode(), objectEntry);
+
+					return persistedObjectEntry;
+				};
 			}
 		}
 
@@ -2244,16 +2249,12 @@ public abstract class BaseObjectEntryResourceImpl
 
 		if (StringUtil.equalsIgnoreCase(updateStrategy, "PARTIAL_UPDATE")) {
 			objectEntryUnsafeFunction = objectEntry -> patchObjectEntry(
-				objectEntry.getId() != null ? objectEntry.getId() :
-					_parseLong((String)parameters.get("objectEntryId")),
-				objectEntry);
+				objectEntry.getId(), objectEntry);
 		}
 
 		if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
 			objectEntryUnsafeFunction = objectEntry -> putObjectEntry(
-				objectEntry.getId() != null ? objectEntry.getId() :
-					_parseLong((String)parameters.get("objectEntryId")),
-				objectEntry);
+				objectEntry.getId(), objectEntry);
 		}
 
 		if (objectEntryUnsafeFunction == null) {
@@ -2280,14 +2281,6 @@ public abstract class BaseObjectEntryResourceImpl
 	private Boolean _parseBoolean(String value) {
 		if (value != null) {
 			return Boolean.parseBoolean(value);
-		}
-
-		return null;
-	}
-
-	private Long _parseLong(String value) {
-		if (value != null) {
-			return Long.parseLong(value);
 		}
 
 		return null;

@@ -94,6 +94,7 @@ import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.servlet.InitialRequestSyncUtil;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -1094,20 +1095,27 @@ public class ObjectRelationshipLocalServiceImpl
 	}
 
 	private void _addArguments(
-			List<Object> arguments, ObjectDefinition objectDefinition)
+			List<Object> arguments, ObjectDefinition objectDefinition,
+			long[] rootObjectDefinitionIds)
 		throws PortalException {
 
 		int incompleteWorkflowInstancesCount = 0;
 
-		if (objectDefinition.isRootDescendantNode()) {
-			incompleteWorkflowInstancesCount =
-				_getIncompleteWorkflowInstancesCount(
-					_objectDefinitionPersistence.fetchByPrimaryKey(
-						objectDefinition.getRootObjectDefinitionId()));
-		}
-		else {
+		if (ArrayUtil.isEmpty(rootObjectDefinitionIds)) {
 			incompleteWorkflowInstancesCount =
 				_getIncompleteWorkflowInstancesCount(objectDefinition);
+		}
+		else {
+			for (long rootObjectDefinitionId : rootObjectDefinitionIds) {
+				incompleteWorkflowInstancesCount =
+					_getIncompleteWorkflowInstancesCount(
+						_objectDefinitionPersistence.fetchByPrimaryKey(
+							rootObjectDefinitionId));
+
+				if (incompleteWorkflowInstancesCount > 0) {
+					break;
+				}
+			}
 		}
 
 		if (incompleteWorkflowInstancesCount > 0) {
@@ -1381,9 +1389,6 @@ public class ObjectRelationshipLocalServiceImpl
 			objectRelationshipLocalService.updateObjectRelationship(
 				objectRelationship);
 
-		_objectFieldLocalService.updateRequired(
-			objectRelationship.getObjectFieldId2(), true);
-
 		ObjectDefinition objectDefinition1 =
 			_objectDefinitionPersistence.findByPrimaryKey(
 				objectRelationship.getObjectDefinitionId1());
@@ -1392,15 +1397,13 @@ public class ObjectRelationshipLocalServiceImpl
 			objectDefinition1.getRESTContextPath();
 
 		if (objectDefinition1.getRootObjectDefinitionId() == 0) {
-			objectDefinition1.setRootObjectDefinitionId(
-				objectDefinition1.getObjectDefinitionId());
+			objectDefinition1.setRootObjectDefinitionIds(
+				new long[] {objectDefinition1.getObjectDefinitionId()},
+				new long[0]);
 		}
 
 		ObjectDefinitionLocalService objectDefinitionLocalService =
 			_objectDefinitionLocalServiceSnapshot.get();
-
-		objectDefinition1 = objectDefinitionLocalService.updateObjectDefinition(
-			objectDefinition1);
 
 		ObjectDefinition objectDefinition2 =
 			_objectDefinitionPersistence.findByPrimaryKey(
@@ -1429,7 +1432,7 @@ public class ObjectRelationshipLocalServiceImpl
 					objectRelationshipLocalService);
 
 			Tree tree = objectDefinitionTreeFactory.create(
-				objectDefinition2.getObjectDefinitionId());
+				false, true, objectDefinition2.getObjectDefinitionId());
 
 			Iterator<Node> iterator = tree.iterator();
 
@@ -1443,11 +1446,9 @@ public class ObjectRelationshipLocalServiceImpl
 				String nodeObjectDefinitionPreviousRESTContextPath =
 					nodeObjectDefinition.getRESTContextPath();
 
-				nodeObjectDefinition =
-					objectDefinitionLocalService.
-						updateRootDescendantNodeObjectDefinition(
-							nodeObjectDefinition,
-							objectDefinition1.getRootObjectDefinitionId());
+				nodeObjectDefinition.setRootObjectDefinitionIds(
+					objectDefinition1.getRootObjectDefinitionIds(),
+					new long[] {objectDefinition2.getObjectDefinitionId()});
 
 				if (nodeObjectDefinition.isApproved() &&
 					objectDefinition1.isApproved()) {
@@ -1465,12 +1466,9 @@ public class ObjectRelationshipLocalServiceImpl
 				return;
 			}
 
-			objectDefinition2.setRootObjectDefinitionId(
-				objectDefinition2.getObjectDefinitionId());
-
-			objectDefinition2 =
-				objectDefinitionLocalService.updateObjectDefinition(
-					objectDefinition2);
+			objectDefinition2.setRootObjectDefinitionIds(
+				new long[] {objectDefinition2.getObjectDefinitionId()},
+				new long[0]);
 
 			if (objectDefinition2.isApproved()) {
 				objectDefinitionLocalService.deployObjectDefinition(
@@ -2006,14 +2004,25 @@ public class ObjectRelationshipLocalServiceImpl
 			return;
 		}
 
-		String previousRESTContextPath = objectDefinition.getRESTContextPath();
+		long[] addRootObjectDefinitionIds = new long[0];
 
-		objectDefinition.setRootObjectDefinitionId(newRootObjectDefinitionId);
+		if (newRootObjectDefinitionId != 0) {
+			addRootObjectDefinitionIds = new long[] {newRootObjectDefinitionId};
+		}
 
-		objectDefinition = _objectDefinitionPersistence.update(
-			objectDefinition);
+		long[] removeRootObjectDefinitionIds = new long[0];
 
-		objectDefinition.setPreviousRESTContextPath(previousRESTContextPath);
+		if (oldRootObjectDefinitionId != 0) {
+			removeRootObjectDefinitionIds = new long[] {
+				oldRootObjectDefinitionId
+			};
+		}
+
+		objectDefinition.setRootObjectDefinitionIds(
+			addRootObjectDefinitionIds, removeRootObjectDefinitionIds);
+
+		objectDefinition.setPreviousRESTContextPath(
+			objectDefinition.getRESTContextPath());
 
 		_deployObjectDefinition(objectDefinition);
 	}
@@ -2045,15 +2054,17 @@ public class ObjectRelationshipLocalServiceImpl
 			return;
 		}
 
+		long[] objectDefinition1RootObjectDefinitionIds =
+			objectDefinition1.getRootObjectDefinitionIds();
+
 		if (!edge && (objectRelationship != null) &&
 			objectRelationship.isEdge()) {
 
 			List<Object> arguments = new ArrayList<>();
 
 			_addArguments(
-				arguments,
-				_objectDefinitionPersistence.fetchByPrimaryKey(
-					objectDefinition1.getRootObjectDefinitionId()));
+				arguments, objectDefinition1,
+				objectDefinition1RootObjectDefinitionIds);
 
 			if (ListUtil.isNotEmpty(arguments)) {
 				throw new ObjectRelationshipEdgeException(
@@ -2116,8 +2127,8 @@ public class ObjectRelationshipLocalServiceImpl
 		// Circular reference in a root context must be validated before
 		// the tree maximum height
 
-		if ((objectDefinition1.getRootObjectDefinitionId() != 0) &&
-			(objectDefinition1.getRootObjectDefinitionId() ==
+		if (ArrayUtil.contains(
+				objectDefinition1RootObjectDefinitionIds,
 				objectDefinition2.getObjectDefinitionId())) {
 
 			throw new ObjectRelationshipEdgeException(
@@ -2127,27 +2138,46 @@ public class ObjectRelationshipLocalServiceImpl
 					"reference-in-a-root-context");
 		}
 
+		long[] objectDefinition2RootObjectDefinitionIds =
+			objectDefinition2.getRootObjectDefinitionIds();
+
 		int treeHeight = 1;
 
 		ObjectDefinitionTreeFactory objectDefinitionTreeFactory =
 			new ObjectDefinitionTreeFactory(
 				_objectDefinitionPersistence, objectRelationshipLocalService);
 
-		if (objectDefinition1.getRootObjectDefinitionId() != 0) {
+		int objectDefinition1MaxDepth = 0;
+
+		for (long objectDefinition1RootObjectDefinitionId :
+				objectDefinition1RootObjectDefinitionIds) {
+
 			Tree tree = objectDefinitionTreeFactory.create(
-				objectDefinition1.getRootObjectDefinitionId());
+				objectDefinition1RootObjectDefinitionId);
 
 			Node node = tree.getNode(objectDefinition1.getObjectDefinitionId());
 
-			treeHeight += node.getDepth();
+			if (node.getDepth() > objectDefinition1MaxDepth) {
+				objectDefinition1MaxDepth = node.getDepth();
+			}
 		}
 
-		if (objectDefinition2.getRootObjectDefinitionId() != 0) {
+		int objectDefinition2MaxHeight = 0;
+
+		for (long objectDefinition2RootObjectDefinitionId :
+				objectDefinition2RootObjectDefinitionIds) {
+
 			Tree tree = objectDefinitionTreeFactory.create(
-				objectDefinition2.getRootObjectDefinitionId());
+				objectDefinition2RootObjectDefinitionId);
 
-			treeHeight += tree.getHeight(tree.getRootNode());
+			int height = tree.getHeight(tree.getRootNode());
+
+			if (height > objectDefinition2MaxHeight) {
+				objectDefinition2MaxHeight = height;
+			}
 		}
+
+		treeHeight += objectDefinition1MaxDepth + objectDefinition2MaxHeight;
 
 		if (treeHeight > TreeConstants.MAX_HEIGHT) {
 			throw new ObjectRelationshipEdgeException(
@@ -2184,8 +2214,12 @@ public class ObjectRelationshipLocalServiceImpl
 
 			List<Object> arguments = new ArrayList<>();
 
-			_addArguments(arguments, objectDefinition1);
-			_addArguments(arguments, objectDefinition2);
+			_addArguments(
+				arguments, objectDefinition1,
+				objectDefinition1RootObjectDefinitionIds);
+			_addArguments(
+				arguments, objectDefinition2,
+				objectDefinition2RootObjectDefinitionIds);
 
 			if (arguments.size() == 2) {
 				throw new ObjectRelationshipEdgeException(
@@ -2211,20 +2245,6 @@ public class ObjectRelationshipLocalServiceImpl
 						"enable-inheritance-x-(x-object-entries)-and-x-(x-" +
 							"object-entries)");
 			}
-		}
-
-		long objectDefinition2RootObjectDefinitionId =
-			objectDefinition2.getRootObjectDefinitionId();
-
-		if ((objectDefinition2RootObjectDefinitionId != 0) &&
-			(objectDefinition2RootObjectDefinitionId !=
-				objectDefinition2.getObjectDefinitionId())) {
-
-			throw new ObjectRelationshipEdgeException(
-				"Unable to bind the object definitions when the child object " +
-					"definition is bound to another object definition",
-				"unable-to-bind-the-object-definitions-when-the-child-object-" +
-					"definition-is-bound-to-another-object-definition");
 		}
 
 		if (!StringUtil.equals(

@@ -35,6 +35,7 @@
 			"enableLocalization"?: boolean;
 			"enableObjectEntryDraft"?: boolean;
 			"enableObjectEntryHistory"?: boolean;
+			"enableObjectEntrySchedule"?: boolean;
 			"enableObjectEntryVersioning"?: boolean;
 			"externalReferenceCode"?: string;
 			"friendlyURLSeparator"?: string;
@@ -148,6 +149,11 @@
 		{
 			baseName: "enableObjectEntryHistory",
 			name: "enableObjectEntryHistory",
+			type: "boolean",
+		},
+		{
+			baseName: "enableObjectEntrySchedule",
+			name: "enableObjectEntrySchedule",
 			type: "boolean",
 		},
 		{

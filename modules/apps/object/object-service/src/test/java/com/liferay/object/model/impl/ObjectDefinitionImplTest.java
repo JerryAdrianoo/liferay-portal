@@ -123,13 +123,22 @@ public class ObjectDefinitionImplTest {
 		ObjectDefinition objectDefinition = _createObjectDefinition(
 			modifiable, name, system);
 
+		objectDefinition = Mockito.spy(objectDefinition);
+
+		Mockito.doReturn(
+			false
+		).when(
+			objectDefinition
+		).isRootDescendantNode();
+
 		if (rootName != null) {
 			ObjectDefinition rootObjectDefinition = _createObjectDefinition(
 				modifiable, rootName, system);
 
 			long rootObjectDefinitionId = RandomTestUtil.randomLong();
 
-			objectDefinition.setRootObjectDefinitionId(rootObjectDefinitionId);
+			objectDefinition.setRootObjectDefinitionIds(
+				new long[] {rootObjectDefinitionId}, new long[0]);
 
 			ObjectDefinitionLocalService objectDefinitionLocalService =
 				Mockito.mock(ObjectDefinitionLocalService.class);
@@ -153,8 +162,6 @@ public class ObjectDefinitionImplTest {
 			).thenReturn(
 				rootObjectDefinition
 			);
-
-			objectDefinition = Mockito.spy(objectDefinition);
 
 			Mockito.doReturn(
 				true

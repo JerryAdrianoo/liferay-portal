@@ -734,18 +734,16 @@ public abstract class BaseAssetLibraryResourceImpl
 
 			if (StringUtil.equalsIgnoreCase(updateStrategy, "PARTIAL_UPDATE")) {
 				assetLibraryUnsafeFunction = assetLibrary -> {
+					AssetLibrary getAssetLibrary = null;
 					AssetLibrary persistedAssetLibrary = null;
 
 					try {
-						AssetLibrary getAssetLibrary =
+						getAssetLibrary =
 							getAssetLibraryByExternalReferenceCode(
 								assetLibrary.getExternalReferenceCode());
 
 						persistedAssetLibrary = patchAssetLibrary(
-							getAssetLibrary.getId() != null ?
-								getAssetLibrary.getId() :
-									(Long)parameters.get("assetLibraryId"),
-							assetLibrary);
+							getAssetLibrary.getId(), assetLibrary);
 					}
 					catch (NoSuchModelException noSuchModelException) {
 						persistedAssetLibrary = postAssetLibrary(assetLibrary);
@@ -756,9 +754,16 @@ public abstract class BaseAssetLibraryResourceImpl
 			}
 
 			if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
-				assetLibraryUnsafeFunction =
-					assetLibrary -> putAssetLibraryByExternalReferenceCode(
-						assetLibrary.getExternalReferenceCode(), assetLibrary);
+				assetLibraryUnsafeFunction = assetLibrary -> {
+					AssetLibrary persistedAssetLibrary = null;
+
+					persistedAssetLibrary =
+						putAssetLibraryByExternalReferenceCode(
+							assetLibrary.getExternalReferenceCode(),
+							assetLibrary);
+
+					return persistedAssetLibrary;
+				};
 			}
 		}
 
@@ -912,9 +917,7 @@ public abstract class BaseAssetLibraryResourceImpl
 
 		if (StringUtil.equalsIgnoreCase(updateStrategy, "PARTIAL_UPDATE")) {
 			assetLibraryUnsafeFunction = assetLibrary -> patchAssetLibrary(
-				assetLibrary.getId() != null ? assetLibrary.getId() :
-					(Long)parameters.get("assetLibraryId"),
-				assetLibrary);
+				assetLibrary.getId(), assetLibrary);
 		}
 
 		if (assetLibraryUnsafeFunction == null) {

@@ -380,11 +380,16 @@ public abstract class BaseBatchTestEntityResourceImpl
 				"updateStrategy", "UPDATE");
 
 			if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
-				batchTestEntityUnsafeFunction =
-					batchTestEntity ->
+				batchTestEntityUnsafeFunction = batchTestEntity -> {
+					BatchTestEntity persistedBatchTestEntity = null;
+
+					persistedBatchTestEntity =
 						putBatchTestEntityByExternalReferenceCode(
 							batchTestEntity.getExternalReferenceCode(),
 							batchTestEntity);
+
+					return persistedBatchTestEntity;
+				};
 			}
 		}
 

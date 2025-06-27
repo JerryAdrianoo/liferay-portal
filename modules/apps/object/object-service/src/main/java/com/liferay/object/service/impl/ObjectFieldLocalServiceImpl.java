@@ -780,7 +780,7 @@ public class ObjectFieldLocalServiceImpl
 					oldObjectField.getObjectFieldId());
 
 			if ((objectRelationship != null) && objectRelationship.isEdge() &&
-				!required) {
+				required) {
 
 				throw new ObjectFieldRequiredException();
 			}

@@ -18,7 +18,12 @@ import {
 	FieldType,
 } from '../../structure_builder/utils/field';
 import {useCache} from '../contexts/CacheContext';
-import {State, useSelector, useStateDispatch} from '../contexts/StateContext';
+import {
+	Action,
+	State,
+	useSelector,
+	useStateDispatch,
+} from '../contexts/StateContext';
 import selectInvalids from '../selectors/selectInvalids';
 import selectSelection from '../selectors/selectSelection';
 import selectStructureERC from '../selectors/selectStructureERC';
@@ -26,7 +31,12 @@ import selectStructureError from '../selectors/selectStructureError';
 import selectStructureFields from '../selectors/selectStructureFields';
 import selectStructureLocalizedLabel from '../selectors/selectStructureLocalizedLabel';
 import selectStructureUuid from '../selectors/selectStructureUuid';
-import {ReferencedStructure, Structure, Structures} from '../types/Structure';
+import {
+	ReferencedStructure,
+	RepeatableGroup,
+	Structure,
+	Structures,
+} from '../types/Structure';
 import {Uuid} from '../types/Uuid';
 import getFieldsArray from '../utils/getFieldsArray';
 import getReferencedStructureLabel from '../utils/getReferencedStructureLabel';
@@ -39,7 +49,7 @@ type TreeItem = {
 	id: string;
 	label: string;
 	name?: string;
-	type?: FieldType | 'referenced-structure';
+	type?: FieldType | 'referenced-structure' | 'repeatable-group';
 	uuid: Uuid;
 };
 
@@ -78,7 +88,12 @@ export default function FieldsTree({search}: {search: string}) {
 
 		return [
 			{
-				children: buildItems(fields, structures, structureERC, search),
+				children: buildItems({
+					fields,
+					search,
+					structureERC,
+					structures,
+				}),
 				icon: 'edit-layout',
 				id: structureUuid,
 				label: structureLabel,
@@ -127,7 +142,7 @@ export default function FieldsTree({search}: {search: string}) {
 			selection.includes(item.uuid) &&
 			selection.length > 1
 		) {
-			nextSelection = selection.filter((id) => id !== item.id);
+			nextSelection = selection.filter((uuid) => uuid !== item.uuid);
 		}
 
 		dispatch({
@@ -135,12 +150,6 @@ export default function FieldsTree({search}: {search: string}) {
 			type: 'set-selection',
 		});
 	};
-
-	const deleteField = (uuid: Uuid) =>
-		dispatch({
-			type: 'delete-field',
-			uuid,
-		});
 
 	useEffect(() => {
 		if (structuresStatus === 'stale' && hasReferencedStructure) {
@@ -178,6 +187,8 @@ export default function FieldsTree({search}: {search: string}) {
 								'structure-builder__fields-tree-node--field-icon':
 									item.type &&
 									item.type !== 'referenced-structure',
+								'structure-builder__fields-tree-node--group-icon':
+									item.type === 'repeatable-group',
 								'structure-builder__fields-tree-node--structure-icon':
 									item.type === 'referenced-structure',
 							})}
@@ -200,8 +211,8 @@ export default function FieldsTree({search}: {search: string}) {
 					<ClayTreeView.Group items={item.children}>
 						{(childItem, selectedKeys) => {
 							const actions = getItemActions({
+								dispatch,
 								item: childItem,
-								onDelete: deleteField,
 								parent: item,
 								structures,
 							});
@@ -298,15 +309,24 @@ function useSelectionMode() {
 	return multiple ? 'multiple' : 'single';
 }
 
-function buildItems(
-	fields: (Field | ReferencedStructure)[],
-	structures: Structures,
-	structureERC: Structure['erc'],
-	search: string,
-	path: string[] = []
-): TreeItem[] {
+function buildItems({
+	fields,
+	path = [],
+	search,
+	structureERC,
+	structures,
+}: {
+	fields: (Field | ReferencedStructure | RepeatableGroup)[];
+	path?: string[];
+	search: string;
+	structureERC: Structure['erc'];
+	structures: Structures;
+}): TreeItem[] {
 	return fields.reduce(
-		(items: TreeItem[], field: Field | ReferencedStructure) => {
+		(
+			items: TreeItem[],
+			field: Field | ReferencedStructure | RepeatableGroup
+		) => {
 			if (field.type === 'referenced-structure') {
 				const structure = structures.get(field.erc)!;
 				const label = getReferencedStructureLabel(
@@ -314,17 +334,17 @@ function buildItems(
 					structures
 				);
 
-				const item = {
+				const item: TreeItem = {
 					children:
 						field.erc === structureERC
 							? []
-							: buildItems(
-									getFieldsArray(structure),
-									structures,
-									structureERC,
+							: buildItems({
+									fields: getFieldsArray(structure),
+									path: [...path, field.name],
 									search,
-									[...path, field.name]
-								),
+									structureERC,
+									structures,
+								}),
 					erc: field.erc,
 					icon: 'edit-layout',
 					id: buildId(path, field),
@@ -333,7 +353,31 @@ function buildItems(
 					uuid: field.uuid,
 				};
 
-				if (match(label, search) || item.children.length) {
+				if (match(label, search) || item.children?.length) {
+					items.push(item);
+				}
+			}
+			else if (field.type === 'repeatable-group') {
+				const label =
+					field.label[Liferay.ThemeDisplay.getDefaultLanguageId()]!;
+
+				const item: TreeItem = {
+					children: buildItems({
+						fields: getFieldsArray(field),
+						path: [...path, field.name],
+						search,
+						structureERC,
+						structures,
+					}),
+					erc: field.erc,
+					icon: 'fieldset',
+					id: buildId(path, field),
+					label,
+					type: field.type,
+					uuid: field.uuid,
+				};
+
+				if (match(label, search) || item.children?.length) {
 					items.push(item);
 				}
 			}
@@ -360,7 +404,10 @@ function buildItems(
 	);
 }
 
-function buildId(path: string[], field: Field | ReferencedStructure) {
+function buildId(
+	path: string[],
+	field: Field | ReferencedStructure | RepeatableGroup
+) {
 	return [...path, field.name].join('_');
 }
 
@@ -373,13 +420,13 @@ function match(value: string, keyword: string) {
 }
 
 function getItemActions({
+	dispatch,
 	item,
-	onDelete,
 	parent,
 	structures,
 }: {
+	dispatch: React.Dispatch<Action>;
 	item: TreeItem;
-	onDelete: (id: Uuid) => void;
 	parent: TreeItem;
 	structures: Structures;
 }) {
@@ -400,9 +447,27 @@ function getItemActions({
 	}
 
 	if (parent.type !== 'referenced-structure') {
+		if (
+			item.type !== 'referenced-structure' &&
+			item.type !== 'repeatable-group'
+		) {
+			actions.push({
+				label: Liferay.Language.get('create-repeatable-group'),
+				onClick: () =>
+					dispatch({
+						type: 'add-repeatable-group',
+					}),
+				symbolLeft: 'repeat',
+			});
+		}
+
 		actions.push({
 			label: Liferay.Language.get('delete-field'),
-			onClick: () => onDelete(item.uuid),
+			onClick: () =>
+				dispatch({
+					type: 'delete-field',
+					uuid: item.uuid,
+				}),
 			symbolLeft: 'trash',
 		});
 	}

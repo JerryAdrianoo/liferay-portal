@@ -67,11 +67,11 @@ public interface ObjectDefinitionLocalService
 			long userId, long objectFolderId, String className,
 			boolean enableComments, boolean enableFriendlyURLCustomization,
 			boolean enableIndexSearch, boolean enableLocalization,
-			boolean enableObjectEntryDraft, boolean enableObjectEntryVersioning,
-			String friendlyURLSeparator, Map<Locale, String> labelMap,
-			String name, String panelAppOrder, String panelCategoryKey,
-			Map<Locale, String> pluralLabelMap, boolean portlet, String scope,
-			String storageType,
+			boolean enableObjectEntryDraft, boolean enableObjectEntrySchedule,
+			boolean enableObjectEntryVersioning, String friendlyURLSeparator,
+			Map<Locale, String> labelMap, String name, String panelAppOrder,
+			String panelCategoryKey, Map<Locale, String> pluralLabelMap,
+			boolean portlet, String scope, String storageType,
 			List<ObjectDefinitionSetting> objectDefinitionSettings,
 			List<ObjectField> objectFields)
 		throws PortalException;
@@ -108,6 +108,7 @@ public interface ObjectDefinitionLocalService
 			String className, String dbTableName, boolean enableComments,
 			boolean enableFriendlyURLCustomization, boolean enableIndexSearch,
 			boolean enableLocalization, boolean enableObjectEntryDraft,
+			boolean enableObjectEntrySchedule,
 			boolean enableObjectEntryVersioning, String friendlyURLSeparator,
 			Map<Locale, String> labelMap, boolean modifiable, String name,
 			String panelAppOrder, String panelCategoryKey,
@@ -432,6 +433,7 @@ public interface ObjectDefinitionLocalService
 			boolean enableComments, boolean enableFriendlyURLCustomization,
 			boolean enableIndexSearch, boolean enableLocalization,
 			boolean enableObjectEntryDraft, boolean enableObjectEntryHistory,
+			boolean enableObjectEntrySchedule,
 			boolean enableObjectEntryVersioning, String friendlyURLSeparator,
 			Map<Locale, String> labelMap, String name, String panelAppOrder,
 			String panelCategoryKey, boolean portlet,
@@ -466,10 +468,6 @@ public interface ObjectDefinitionLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectDefinition updatePortlet(long objectDefinitionId)
 		throws PortalException;
-
-	@Indexable(type = IndexableType.REINDEX)
-	public ObjectDefinition updateRootDescendantNodeObjectDefinition(
-		ObjectDefinition objectDefinition, long rootObjectDefinitionId);
 
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectDefinition updateSystemObjectDefinition(

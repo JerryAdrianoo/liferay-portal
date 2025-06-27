@@ -1097,11 +1097,16 @@ public class FreeMarkerTool {
 	public boolean isExternalReferenceCodeParameter(
 		JavaMethodParameter javaMethodParameter, String schemaName) {
 
-		if (StringUtil.equals(
-				javaMethodParameter.getParameterName(),
-				"externalReferenceCode") ||
+		return isExternalReferenceCodeParameterName(
+			javaMethodParameter.getParameterName(), schemaName);
+	}
+
+	public boolean isExternalReferenceCodeParameterName(
+		String parameterName, String schemaName) {
+
+		if (StringUtil.equals(parameterName, "externalReferenceCode") ||
 			StringUtil.equals(
-				javaMethodParameter.getParameterName(),
+				parameterName,
 				TextFormatter.format(schemaName, TextFormatter.I) +
 					"ExternalReferenceCode")) {
 
@@ -1172,9 +1177,14 @@ public class FreeMarkerTool {
 	public boolean isIdParameter(
 		JavaMethodParameter javaMethodParameter, String schemaName) {
 
-		if (StringUtil.equals(javaMethodParameter.getParameterName(), "id") ||
+		return isIdParameterName(
+			javaMethodParameter.getParameterName(), schemaName);
+	}
+
+	public boolean isIdParameterName(String parameterName, String schemaName) {
+		if (StringUtil.equals(parameterName, "id") ||
 			StringUtil.equals(
-				javaMethodParameter.getParameterName(),
+				parameterName,
 				TextFormatter.format(schemaName, TextFormatter.I) + "Id")) {
 
 			return true;
@@ -1207,12 +1217,7 @@ public class FreeMarkerTool {
 			schemaName, TextFormatter.I);
 
 		if (StringUtil.equals(
-				parameterName, "assetLibraryExternalReferenceCode") ||
-			StringUtil.equals(parameterName, "assetLibraryId") ||
-			StringUtil.equals(parameterName, "siteExternalReferenceCode") ||
-			StringUtil.equals(parameterName, "siteId") ||
-			StringUtil.equals(
-				parameterName, schemaVarName + "externalReferenceCode") ||
+				parameterName, schemaVarName + "ExternalReferenceCode") ||
 			StringUtil.equals(parameterName, schemaVarName + "Id")) {
 
 			return true;
@@ -1271,6 +1276,19 @@ public class FreeMarkerTool {
 				formattedParameterSchemaName, formattedSchemaNamePlural) ||
 			StringUtil.equals(
 				formattedParameterSchemaName, formattedSchemaNameSingular)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isParameterNameScopeRelated(String parameterName) {
+		if (StringUtil.equals(
+				parameterName, "assetLibraryExternalReferenceCode") ||
+			StringUtil.equals(parameterName, "assetLibraryId") ||
+			StringUtil.equals(parameterName, "siteExternalReferenceCode") ||
+			StringUtil.equals(parameterName, "siteId")) {
 
 			return true;
 		}
