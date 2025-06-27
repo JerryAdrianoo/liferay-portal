@@ -142,6 +142,7 @@ import com.liferay.portal.kernel.portlet.constants.FriendlyURLResolverConstants;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActions;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
@@ -1283,6 +1284,30 @@ public class ObjectDefinitionLocalServiceImpl
 
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
+	public ObjectDefinition updateRootDescendantNodeObjectDefinition(
+		ObjectDefinition objectDefinition, long rootObjectDefinitionId) {
+
+		objectDefinition.setPanelCategoryKey(StringPool.BLANK);
+		objectDefinition.setPortlet(false);
+		objectDefinition.setRootObjectDefinitionId(rootObjectDefinitionId);
+
+		objectDefinition = objectDefinitionPersistence.update(objectDefinition);
+
+		_resourceActions.removeModelResource(
+			objectDefinition.getClassName(), ActionKeys.DELETE);
+		_resourceActions.removeModelResource(
+			objectDefinition.getClassName(), ActionKeys.UPDATE);
+		_resourceActions.removeModelResource(
+			objectDefinition.getClassName(), ActionKeys.VIEW);
+
+		_workflowDefinitionLinkLocalService.deleteWorkflowDefinitionLinks(
+			objectDefinition.getCompanyId(), objectDefinition.getClassName());
+
+		return objectDefinition;
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
 	public ObjectDefinition updateSystemObjectDefinition(
 			String externalReferenceCode, long objectDefinitionId,
 			long objectFolderId, long titleObjectFieldId,
@@ -1636,11 +1661,13 @@ public class ObjectDefinitionLocalServiceImpl
 		for (ObjectDefinitionSetting objectDefinitionSetting :
 				objectDefinitionSettings) {
 
-			if (!objectDefinitionSetting.isReadOnly()) {
-				objectDefinitionSettingsValuesMap.put(
-					objectDefinitionSetting.getName(),
-					objectDefinitionSetting.getValue());
+			if (objectDefinitionSetting.isReadOnly()) {
+				continue;
 			}
+
+			objectDefinitionSettingsValuesMap.put(
+				objectDefinitionSetting.getName(),
+				objectDefinitionSetting.getValue());
 		}
 
 		_validateObjectDefinitionSettings(
@@ -2395,11 +2422,17 @@ public class ObjectDefinitionLocalServiceImpl
 					objectDefinitionLocalService.getObjectDefinition(
 						node.getPrimaryKey());
 
-				nodeObjectDefinition.setRootObjectDefinitionIds(
-					objectDefinition1.getRootObjectDefinitionIds(),
-					new long[] {objectDefinition2.getObjectDefinitionId()});
+				String previousRESTContextPath =
+					nodeObjectDefinition.getRESTContextPath();
+
+				nodeObjectDefinition =
+					objectDefinitionLocalService.
+						updateRootDescendantNodeObjectDefinition(
+							nodeObjectDefinition,
+							objectDefinition1.getRootObjectDefinitionId());
+
 				nodeObjectDefinition.setPreviousRESTContextPath(
-					nodeObjectDefinition.getRESTContextPath());
+					previousRESTContextPath);
 
 				deployObjectDefinition(nodeObjectDefinition);
 			}
@@ -2407,7 +2440,7 @@ public class ObjectDefinitionLocalServiceImpl
 
 		if (containsDraftDescendantNodeObjectDefinitions) {
 			Tree tree = objectDefinitionTreeFactory.create(
-				true, false, objectDefinition1.getObjectDefinitionId());
+				false, objectDefinition1.getObjectDefinitionId());
 
 			Node rootNode = tree.getRootNode();
 
@@ -2422,9 +2455,10 @@ public class ObjectDefinitionLocalServiceImpl
 						objectDefinitionLocalService.getObjectDefinition(
 							node.getPrimaryKey());
 
-					nodeObjectDefinition.setRootObjectDefinitionIds(
-						new long[] {childNode.getPrimaryKey()},
-						new long[] {objectDefinition1.getObjectDefinitionId()});
+					nodeObjectDefinition.setRootObjectDefinitionId(
+						childNode.getPrimaryKey());
+
+					objectDefinitionPersistence.update(nodeObjectDefinition);
 				}
 			}
 		}
@@ -2449,14 +2483,18 @@ public class ObjectDefinitionLocalServiceImpl
 		String previousRESTContextPath = objectDefinition2.getRESTContextPath();
 
 		if (objectDefinition1.isApproved()) {
-			objectDefinition2.setRootObjectDefinitionIds(
-				objectDefinition1.getRootObjectDefinitionIds(),
-				new long[] {objectDefinition2.getObjectDefinitionId()});
+			objectDefinition2 =
+				objectDefinitionLocalService.
+					updateRootDescendantNodeObjectDefinition(
+						objectDefinition2,
+						objectDefinition1.getRootObjectDefinitionId());
 		}
 		else {
-			objectDefinition2.setRootObjectDefinitionIds(
-				new long[] {objectDefinition2.getObjectDefinitionId()},
-				objectDefinition2.getRootObjectDefinitionIds());
+			objectDefinition2.setRootObjectDefinitionId(
+				objectDefinition2.getObjectDefinitionId());
+
+			objectDefinition2 = objectDefinitionPersistence.update(
+				objectDefinition2);
 		}
 
 		objectDefinition2.setPreviousRESTContextPath(previousRESTContextPath);
