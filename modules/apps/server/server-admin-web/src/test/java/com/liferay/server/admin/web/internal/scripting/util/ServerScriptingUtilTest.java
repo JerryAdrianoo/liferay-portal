@@ -24,6 +24,12 @@ public class ServerScriptingUtilTest {
 		new LiferayUnitTestRule();
 
 	@Test
+	public void testExecuteGroovyScript() throws ScriptingException {
+		ServerScriptingUtil.execute(
+			Collections.emptyMap(), "groovy", "return 1 + 1");
+	}
+
+	@Test
 	public void testExecuteGroovyScriptWithException() {
 		try {
 			ServerScriptingUtil.execute(
@@ -39,6 +45,21 @@ public class ServerScriptingUtilTest {
 			Assert.assertTrue(
 				message.contains(
 					"Line 1: throw new UnsupportedOperationException();"));
+		}
+	}
+
+	@Test
+	public void testExecuteWithUnsupportedLanguage() {
+		try {
+			ServerScriptingUtil.execute(
+				Collections.emptyMap(), "shell", "return 1 + 1");
+
+			Assert.fail();
+		}
+		catch (ScriptingException scriptingException) {
+			String message = scriptingException.getMessage();
+
+			Assert.assertTrue(message.contains("shell"));
 		}
 	}
 
