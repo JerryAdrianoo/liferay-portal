@@ -7,6 +7,8 @@ package com.liferay.server.admin.web.internal.scripting.util;
 
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.lang.reflect.Method;
+
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -18,7 +20,7 @@ public class ServerScriptingUtilTest {
 
 	@ClassRule
 	public static final LiferayUnitTestRule liferayUnitTestRule =
-			new LiferayUnitTestRule();
+		new LiferayUnitTestRule();
 
 	@Test
 	public void testGetErrorMessageIncludesScriptLinesAndException() {
@@ -30,27 +32,22 @@ public class ServerScriptingUtilTest {
 
 		Assert.assertNotNull(message);
 
-		Assert.assertTrue(
-				message.contains("Unable to execute script:"));
+		Assert.assertTrue(message.contains("Unable to execute script:"));
 
-		Assert.assertTrue(
-				message.contains(runtimeException.toString()));
+		Assert.assertTrue(message.contains(runtimeException.toString()));
 	}
 
-	private String _invokeGetErrorMessage(
-			Exception exception, String script) {
-
+	private String _invokeGetErrorMessage(Exception exception1, String script) {
 		try {
-			java.lang.reflect.Method method =
-					ServerScriptingUtil.class.getDeclaredMethod(
-							"_getErrorMessage", Exception.class, String.class);
+			Method method = ServerScriptingUtil.class.getDeclaredMethod(
+				"_getErrorMessage", Exception.class, String.class);
 
 			method.setAccessible(true);
 
-			return (String)method.invoke(null, exception, script);
+			return (String)method.invoke(null, exception1, script);
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
+		catch (Exception exception2) {
+			throw new RuntimeException(exception2);
 		}
 	}
 
