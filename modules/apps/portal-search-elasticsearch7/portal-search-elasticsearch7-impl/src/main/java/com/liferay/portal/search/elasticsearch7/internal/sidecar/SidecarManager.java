@@ -205,8 +205,10 @@ public class SidecarManager implements ElasticsearchConfigurationObserver {
 
 		if (_sidecar == null) {
 			try {
+				long before = System.currentTimeMillis();
 				Sidecar sidecar =
 					SearchElasticsearch7ImplBundleActivator.getSidecar();
+					System.out.println(System.currentTimeMillis() - before);
 
 				if ((sidecar != null) && !sidecar.isStopped() &&
 					(checksum.getValue() ==
