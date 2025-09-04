@@ -85,24 +85,30 @@ export default function SaveButtons({
 		});
 	}, [portletNamespace]);
 
-	const onClick = (action) => {
+	const onClick = async (action) => {
 		const titleInputComponent = Liferay.component(
 			`${portletNamespace}titleMapAsXML`
 		);
 
-		if (titleInputComponent?.getValue(defaultLanguageId)) {
-			if (articleId && !showPublishModal) {
-				handleButtonClick(action);
-			}
-			else {
-				setPublishModalState({
-					publishModalAction: action,
-					publishModalVisible: true,
-				});
-			}
+		if (!titleInputComponent?.getValue(defaultLanguageId)) {
+			await validateRequiredFields(formId);
+
+			return;
 		}
-		else {
-			validateRequiredFields(formId);
+
+		if (articleId && !showPublishModal) {
+			handleButtonClick(action);
+
+			await validateRequiredFields(formId);
+
+			return;
+		}
+
+		if (await validateRequiredFields(formId)) {
+			setPublishModalState({
+				publishModalAction: action,
+				publishModalVisible: true,
+			});
 		}
 	};
 
@@ -174,16 +180,20 @@ export default function SaveButtons({
 		);
 	};
 
-	const validateRequiredFields = (formId) => {
-		Liferay.Form.get(formId).formValidator.validate();
-		Liferay.componentReady(
-			`${portletNamespace}dataEngineLayoutRenderer`
-		).then((dataEngineLayoutRenderer) => {
-			const dataEngineLayoutRendererRef =
-				dataEngineLayoutRenderer?.reactComponentRef;
+	const validateRequiredFields = async (formId) => {
+		const formValidator = Liferay.Form?.get(formId)?.formValidator;
 
-			return dataEngineLayoutRendererRef.current.validate();
-		});
+		formValidator.validate();
+
+		if (formValidator.hasErrors()) {
+			return false;
+		}
+
+		const renderer = await Liferay.componentReady(
+			`${portletNamespace}dataEngineLayoutRenderer`
+		);
+
+		return renderer.reactComponentRef.current.validate();
 	};
 
 	useEffect(() => {
@@ -283,20 +293,12 @@ export default function SaveButtons({
 					</ClayDropDown.Item>
 
 					<ClayDropDown.Item
-						onClick={() => {
-							const titleInputComponent = Liferay.component(
-								`${portletNamespace}titleMapAsXML`
-							);
-							if (
-								titleInputComponent?.getValue(defaultLanguageId)
-							) {
+						onClick={async () => {
+							if (await validateRequiredFields(formId)) {
 								setPublishModalState({
 									publishModalAction: ACTION_SCHEDULE,
 									publishModalVisible: true,
 								});
-							}
-							else {
-								validateRequiredFields(formId);
 							}
 						}}
 						symbolLeft="date-time"

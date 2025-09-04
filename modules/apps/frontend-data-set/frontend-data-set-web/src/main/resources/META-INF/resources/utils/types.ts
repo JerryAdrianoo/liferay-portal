@@ -64,6 +64,21 @@ export enum DisplayType {
 	WARNING = 'warning',
 }
 
+export interface IEmptyState {
+	description?: string;
+	image?: string;
+	imageReducedMotion?: string;
+	title?: string;
+}
+
+export interface IEmptyStateConfiguration extends IEmptyState {
+	filtered?: {
+		filters?: IEmptyState;
+		search?: IEmptyState;
+		searchAndFilters?: IEmptyState;
+	};
+}
+
 export enum ESelectionTrigger {
 	CONTAINER = 'container',
 	INPUT = 'input',
@@ -246,9 +261,12 @@ export interface IView {
 	views?: Array<any>;
 }
 
+export type TOnFileDrop = (droppedFiles: File[], dropTarget: any) => void;
+
 export interface IFileDropSettings {
 	enabled: boolean;
 	isDropTarget: ({item}: {item: any}) => boolean;
+	onFileDrop?: TOnFileDrop;
 }
 
 export interface IFrontendDataSetProps {
@@ -271,11 +289,7 @@ export interface IFrontendDataSetProps {
 	};
 	customViews?: string;
 	customViewsEnabled?: boolean;
-	emptyState?: {
-		description?: string;
-		image?: string;
-		title?: string;
-	};
+	emptyState?: IEmptyStateConfiguration;
 	enableInlineAddModeSetting?: {
 		defaultBodyContent?: object;
 	};

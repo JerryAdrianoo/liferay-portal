@@ -5959,6 +5959,8 @@ public class ObjectEntryResourceTest {
 	public void testGetObjectEntryActionsWithSystemSharingDisabled()
 		throws Exception {
 
+		_addCMSGroup();
+
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
 				new ConfigurationTemporarySwapper(
 					"com.liferay.sharing.internal.configuration." +
@@ -8623,7 +8625,8 @@ public class ObjectEntryResourceTest {
 
 		com.liferay.object.rest.dto.v1_0.FileEntry fileEntry = _toFileEntry(
 			Base64::encode, RandomTestUtil.randomString(),
-			RandomTestUtil.randomString() + ".txt", null, null, null);
+			RandomTestUtil.randomString() + ".txt", null, null,
+			ContentTypes.TEXT_PLAIN);
 
 		JSONObject objectEntryJSONObject = HTTPTestUtil.invokeToJSONObject(
 			JSONUtil.put(
@@ -10960,7 +10963,8 @@ public class ObjectEntryResourceTest {
 
 		com.liferay.object.rest.dto.v1_0.FileEntry fileEntry1 = _toFileEntry(
 			Base64::encode, fileContent1,
-			RandomTestUtil.randomString() + ".txt", null, null, null);
+			RandomTestUtil.randomString() + ".txt", null, null,
+			ContentTypes.TEXT_PLAIN);
 
 		fileEntry1.setExternalReferenceCode(RandomTestUtil.randomString());
 
@@ -10975,7 +10979,8 @@ public class ObjectEntryResourceTest {
 
 		com.liferay.object.rest.dto.v1_0.FileEntry fileEntry2 = _toFileEntry(
 			Base64::encode, fileContent2,
-			RandomTestUtil.randomString() + ".txt", null, null, null);
+			RandomTestUtil.randomString() + ".txt", null, null,
+			ContentTypes.TEXT_PLAIN);
 
 		fileEntry2.setExternalReferenceCode(RandomTestUtil.randomString());
 		fileEntry2.setScope(scope);
@@ -11024,7 +11029,8 @@ public class ObjectEntryResourceTest {
 
 		com.liferay.object.rest.dto.v1_0.FileEntry fileEntry3 = _toFileEntry(
 			content -> null, StringPool.BLANK,
-			existingDLFileEntry.getFileName(), null, _testGroupId, null);
+			existingDLFileEntry.getFileName(), null, _testGroupId,
+			existingDLFileEntry.getMimeType());
 
 		fileEntry3.setExternalReferenceCode(
 			existingDLFileEntry.getExternalReferenceCode());
@@ -15653,6 +15659,15 @@ public class ObjectEntryResourceTest {
 			ObjectDefinition objectDefinition2, Object scopeKey)
 		throws Exception {
 
+		objectDefinition1 = _objectDefinitionLocalService.getObjectDefinition(
+			objectDefinition1.getObjectDefinitionId());
+
+		objectDefinition1.setEnableObjectEntryDraft(true);
+
+		objectDefinition1 =
+			_objectDefinitionLocalService.updateObjectDefinition(
+				objectDefinition1);
+
 		_objectEntry2 = ObjectEntryTestUtil.addObjectEntry(
 			objectDefinition2, _OBJECT_FIELD_NAME_2, _OBJECT_FIELD_VALUE_2);
 		_objectEntry3 = ObjectEntryTestUtil.addObjectEntry(
@@ -15740,6 +15755,8 @@ public class ObjectEntryResourceTest {
 				_objectEntry2.getObjectEntryId()
 			).put(
 				"externalReferenceCode", randomExternalReferenceCode
+			).put(
+				"status", JSONUtil.put("code", WorkflowConstants.STATUS_DRAFT)
 			).toString(),
 			_getEndpoint(objectDefinition1, scopeKey), Http.Method.POST);
 
@@ -15798,6 +15815,8 @@ public class ObjectEntryResourceTest {
 			"externalReferenceCode", randomExternalReferenceCode
 		).put(
 			"id", (Object)jsonObject.getLong("id")
+		).put(
+			"status", JSONUtil.put("code", WorkflowConstants.STATUS_DRAFT)
 		);
 
 		String endpoint = endpointFunction.apply(jsonObject);
@@ -16812,6 +16831,8 @@ public class ObjectEntryResourceTest {
 					).put(
 						"folder",
 						JSONFactoryUtil.createJSONObject(folder.toString())
+					).put(
+						"mimeType", customFileEntry1.getMimeType()
 					));
 			},
 			_toFileEntry(
@@ -16877,7 +16898,8 @@ public class ObjectEntryResourceTest {
 				objectFieldName,
 				_toFileEntryJSONObject(
 					RandomTestUtil.randomString(),
-					RandomTestUtil.randomString() + ".txt", objectFieldName)
+					RandomTestUtil.randomString() + ".txt",
+					ContentTypes.TEXT_PLAIN, objectFieldName)
 			).toString(),
 			_getEndpoint(objectDefinition, _testGroupId), Http.Method.POST);
 
@@ -17603,6 +17625,8 @@ public class ObjectEntryResourceTest {
 					).put(
 						"folder",
 						JSONFactoryUtil.createJSONObject(folder.toString())
+					).put(
+						"mimeType", fileEntry.getMimeType()
 					));
 			},
 			_toFileEntry(
@@ -18991,13 +19015,15 @@ public class ObjectEntryResourceTest {
 	}
 
 	private JSONObject _toFileEntryJSONObject(
-			String fileContent, String fileName, String objectFieldName)
+			String fileContent, String fileName, String mimeType,
+			String objectFieldName)
 		throws Exception {
 
 		com.liferay.object.rest.dto.v1_0.FileEntry fileEntry =
 			new com.liferay.object.rest.dto.v1_0.FileEntry();
 
 		fileEntry.setFileBase64(Base64.encode(fileContent.getBytes()));
+		fileEntry.setMimeType(mimeType);
 
 		if (StringUtil.equals(
 				objectFieldName,

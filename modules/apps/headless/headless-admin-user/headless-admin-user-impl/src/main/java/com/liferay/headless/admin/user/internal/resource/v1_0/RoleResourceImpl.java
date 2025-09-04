@@ -15,7 +15,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.NoSuchRoleException;
 import com.liferay.portal.kernel.exception.RoleAssignmentException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.role.RoleConstants;
@@ -169,14 +168,20 @@ public class RoleResourceImpl
 	}
 
 	@Override
-	public String getPortletId() {
-		if (FeatureFlagManagerUtil.isEnabled(
-				CompanyConstants.SYSTEM, "LPD-35914")) {
+	public ExportImportDescriptor getExportImportDescriptor() {
+		return new ExportImportDescriptor() {
 
-			return RolesAdminPortletKeys.ROLES_ADMIN;
-		}
+			@Override
+			public String getPortletId() {
+				return RolesAdminPortletKeys.ROLES_ADMIN;
+			}
 
-		return null;
+			@Override
+			public Scope getScope() {
+				return Scope.COMPANY;
+			}
+
+		};
 	}
 
 	@Override
@@ -248,11 +253,6 @@ public class RoleResourceImpl
 						contextUriInfo, contextUser),
 					role);
 			});
-	}
-
-	@Override
-	public Scope getScope() {
-		return Scope.COMPANY;
 	}
 
 	@Override

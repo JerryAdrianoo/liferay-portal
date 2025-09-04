@@ -898,6 +898,14 @@ public class DataFactory {
 		return random.nextInt(count);
 	}
 
+	public String getRecentGroupIds() {
+		StringBundler sb = _customGroupIdsMap.get(_companyId);
+
+		sb.append(_guestGroupId);
+
+		return sb.toString();
+	}
+
 	public List<Integer> getSequence(int size) {
 		List<Integer> sequence = new ArrayList<>(size);
 
@@ -4613,6 +4621,14 @@ public class DataFactory {
 
 		for (int i = 1; i <= BenchmarksPropsValues.MAX_GROUP_COUNT; i++) {
 			long groupId = _groupCounter.get();
+
+			_customGroupIdsMap.computeIfAbsent(
+				_companyId, companyId -> new StringBundler()
+			).append(
+				groupId
+			).append(
+				StringPool.COMMA
+			);
 
 			groupModels.add(
 				newGroupModel(
@@ -9188,6 +9204,7 @@ public class DataFactory {
 	private final SimpleCounter _counter;
 	private final Map<Long, CPInstanceModel> _cpInstanceModels =
 		new HashMap<>();
+	private final Map<Long, StringBundler> _customGroupIdsMap = new HashMap<>();
 	private final PortletPreferencesImpl
 		_defaultAssetPublisherPortletPreferencesImpl;
 	private long _defaultDLDDMStructureId;

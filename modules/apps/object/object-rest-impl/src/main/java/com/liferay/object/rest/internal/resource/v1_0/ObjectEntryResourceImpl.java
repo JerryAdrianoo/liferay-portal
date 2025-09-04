@@ -30,7 +30,6 @@ import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -358,12 +357,35 @@ public class ObjectEntryResourceImpl
 	}
 
 	@Override
-	public List<String> getNestedFields() {
-		return transform(
-			_objectRelationshipLocalService.
-				getObjectRelationshipsByObjectDefinitionId2(
-					_objectDefinition.getObjectDefinitionId()),
-			ObjectRelationshipModel::getName);
+	public ExportImportDescriptor getExportImportDescriptor() {
+		return new ExportImportDescriptor() {
+
+			@Override
+			public List<String> getNestedFields() {
+				return transform(
+					_objectRelationshipLocalService.
+						getObjectRelationshipsByObjectDefinitionId2(
+							_objectDefinition.getObjectDefinitionId()),
+					ObjectRelationshipModel::getName);
+			}
+
+			@Override
+			public String getPortletId() {
+				return _objectDefinition.getPortletId();
+			}
+
+			@Override
+			public Scope getScope() {
+				if (StringUtil.equalsIgnoreCase(
+						_objectDefinition.getScope(), "company")) {
+
+					return Scope.COMPANY;
+				}
+
+				return Scope.SITE;
+			}
+
+		};
 	}
 
 	@Override
@@ -432,30 +454,8 @@ public class ObjectEntryResourceImpl
 	}
 
 	@Override
-	public String getPortletId() {
-		if (FeatureFlagManagerUtil.isEnabled(
-				CompanyConstants.SYSTEM, "LPD-35914")) {
-
-			return _objectDefinition.getPortletId();
-		}
-
-		return null;
-	}
-
-	@Override
 	public String getResourceName() {
 		return _objectDefinition.getShortName();
-	}
-
-	@Override
-	public Scope getScope() {
-		if (StringUtil.equalsIgnoreCase(
-				_objectDefinition.getScope(), "company")) {
-
-			return Scope.COMPANY;
-		}
-
-		return Scope.SITE;
 	}
 
 	@Override

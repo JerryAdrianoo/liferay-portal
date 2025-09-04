@@ -29,7 +29,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
@@ -203,24 +202,25 @@ public class AccountGroupResourceImpl
 	}
 
 	@Override
-	public List<String> getNestedFields() {
-		return List.of("accountBriefs");
-	}
+	public ExportImportDescriptor getExportImportDescriptor() {
+		return new ExportImportDescriptor() {
 
-	@Override
-	public String getPortletId() {
-		if (FeatureFlagManagerUtil.isEnabled(
-				CompanyConstants.SYSTEM, "LPD-35914")) {
+			@Override
+			public List<String> getNestedFields() {
+				return List.of("accountBriefs");
+			}
 
-			return AccountPortletKeys.ACCOUNT_GROUPS_ADMIN;
-		}
+			@Override
+			public String getPortletId() {
+				return AccountPortletKeys.ACCOUNT_GROUPS_ADMIN;
+			}
 
-		return null;
-	}
+			@Override
+			public Scope getScope() {
+				return Scope.COMPANY;
+			}
 
-	@Override
-	public Scope getScope() {
-		return Scope.COMPANY;
+		};
 	}
 
 	@Override

@@ -262,22 +262,11 @@ public class FragmentEntryProcessorHelperImpl
 			String className = _infoSearchClassMapperRegistry.getClassName(
 				_portal.fetchClassName(
 					editableValueJSONObject.getLong("classNameId")));
-			String externalReferenceCode = editableValueJSONObject.getString(
-				"externalReferenceCode");
 
 			fieldName = editableValueJSONObject.getString("fieldId");
 
 			InfoItemIdentifier infoItemIdentifier = null;
 			InfoItemObjectProvider<Object> infoItemObjectProvider = null;
-
-			if (Validator.isNotNull(externalReferenceCode)) {
-				infoItemIdentifier = new ERCInfoItemIdentifier(
-					externalReferenceCode);
-				infoItemObjectProvider =
-					_infoItemServiceRegistry.getFirstInfoItemService(
-						InfoItemObjectProvider.class, className,
-						ERCInfoItemIdentifier.INFO_ITEM_SERVICE_FILTER);
-			}
 
 			if ((fragmentEntryProcessorContext.getPreviewClassPK() > 0) &&
 				(fragmentEntryProcessorContext.getPreviewClassPK() ==
@@ -298,13 +287,32 @@ public class FragmentEntryProcessorHelperImpl
 						InfoItemObjectProvider.class, className,
 						ClassPKInfoItemIdentifier.INFO_ITEM_SERVICE_FILTER);
 			}
-			else if (infoItemObjectProvider == null) {
-				infoItemIdentifier = new ClassPKInfoItemIdentifier(
-					editableValueJSONObject.getLong("classPK"));
-				infoItemObjectProvider =
-					_infoItemServiceRegistry.getFirstInfoItemService(
-						InfoItemObjectProvider.class, className,
-						ClassPKInfoItemIdentifier.INFO_ITEM_SERVICE_FILTER);
+			else {
+				long classPK = editableValueJSONObject.getLong("classPK");
+
+				if (classPK > 0) {
+					infoItemIdentifier = new ClassPKInfoItemIdentifier(classPK);
+					infoItemObjectProvider =
+						_infoItemServiceRegistry.getFirstInfoItemService(
+							InfoItemObjectProvider.class, className,
+							ClassPKInfoItemIdentifier.INFO_ITEM_SERVICE_FILTER);
+				}
+
+				String externalReferenceCode =
+					editableValueJSONObject.getString("externalReferenceCode");
+
+				if ((infoItemObjectProvider == null) &&
+					Validator.isNotNull(externalReferenceCode)) {
+
+					infoItemIdentifier = new ERCInfoItemIdentifier(
+						externalReferenceCode,
+						editableValueJSONObject.getString(
+							"scopeExternalReferenceCode", null));
+					infoItemObjectProvider =
+						_infoItemServiceRegistry.getFirstInfoItemService(
+							InfoItemObjectProvider.class, className,
+							ERCInfoItemIdentifier.INFO_ITEM_SERVICE_FILTER);
+				}
 			}
 
 			infoItemReference = new InfoItemReference(
@@ -354,16 +362,27 @@ public class FragmentEntryProcessorHelperImpl
 
 			InfoItemIdentifier infoItemIdentifier = null;
 
-			if (Validator.isNotNull(
-					layoutDisplayPageObjectProvider.
-						getExternalReferenceCode())) {
-
-				infoItemIdentifier = new ERCInfoItemIdentifier(
-					layoutDisplayPageObjectProvider.getExternalReferenceCode());
-			}
-			else {
+			if (layoutDisplayPageObjectProvider.getClassPK() > 0) {
 				infoItemIdentifier = new ClassPKInfoItemIdentifier(
 					layoutDisplayPageObjectProvider.getClassPK());
+			}
+			else {
+				String scopeExternalReferenceCode = null;
+
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)httpServletRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
+
+				if (themeDisplay != null) {
+					scopeExternalReferenceCode =
+						layoutDisplayPageObjectProvider.
+							getScopeExternalReferenceCode(
+								themeDisplay.getScopeGroupId());
+				}
+
+				infoItemIdentifier = new ERCInfoItemIdentifier(
+					layoutDisplayPageObjectProvider.getExternalReferenceCode(),
+					scopeExternalReferenceCode);
 			}
 
 			infoItemReference = new InfoItemReference(

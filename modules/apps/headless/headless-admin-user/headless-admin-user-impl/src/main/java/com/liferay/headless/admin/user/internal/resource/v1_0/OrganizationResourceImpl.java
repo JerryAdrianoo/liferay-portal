@@ -47,7 +47,6 @@ import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Address;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ListTypeConstants;
 import com.liferay.portal.kernel.model.OrgLabor;
@@ -105,6 +104,8 @@ import com.liferay.roles.admin.role.type.contributor.provider.RoleTypeContributo
 import com.liferay.users.admin.constants.UsersAdminPortletKeys;
 
 import jakarta.ws.rs.core.MultivaluedMap;
+
+import java.io.Serializable;
 
 import java.text.DateFormat;
 import java.text.Format;
@@ -296,10 +297,33 @@ public class OrganizationResourceImpl
 	}
 
 	@Override
-	public List<String> getNestedFields() {
-		return List.of(
-			"accountBriefs", "imageBase64", "roleBriefs",
-			"taxonomyCategoryBriefs", "userAccountBriefs");
+	public ExportImportDescriptor getExportImportDescriptor() {
+		return new ExportImportDescriptor() {
+
+			@Override
+			public List<String> getNestedFields() {
+				return List.of(
+					"accountBriefs", "imageBase64", "roleBriefs",
+					"taxonomyCategoryBriefs", "userAccountBriefs");
+			}
+
+			public Map<String, Serializable> getParameters() {
+				return HashMapBuilder.<String, Serializable>put(
+					"flatten", "true"
+				).build();
+			}
+
+			@Override
+			public String getPortletId() {
+				return UsersAdminPortletKeys.ORGANIZATIONS_ADMIN;
+			}
+
+			@Override
+			public Scope getScope() {
+				return Scope.COMPANY;
+			}
+
+		};
 	}
 
 	@Override
@@ -401,22 +425,6 @@ public class OrganizationResourceImpl
 					0L)
 			).build(),
 			null, flatten, filter, search, pagination, sorts);
-	}
-
-	@Override
-	public String getPortletId() {
-		if (FeatureFlagManagerUtil.isEnabled(
-				CompanyConstants.SYSTEM, "LPD-35914")) {
-
-			return UsersAdminPortletKeys.ORGANIZATIONS_ADMIN;
-		}
-
-		return null;
-	}
-
-	@Override
-	public Scope getScope() {
-		return Scope.COMPANY;
 	}
 
 	@Override

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+export * from '../../../../../frontend-js/frontend-js-web/src/main/resources/META-INF/resources/main/index';
+
 export function buildFragment(html: string) {
 	const template = document.createElement('template');
 	template.innerHTML = html.trim();
@@ -35,6 +37,22 @@ function debounceFunction(fn: Function, delay: number) {
 	debouncedFunctions.set(fn, debounced);
 
 	return debounced;
+}
+
+export function getObjectValueFromPath({
+	object,
+	path = 'id',
+}: {
+	object: object;
+	path?: string | null;
+}): any {
+	if (!path) {
+		path = 'id';
+	}
+
+	return path.split('.').reduce((acc, currentPath) => {
+		return acc?.[currentPath as keyof typeof acc] ?? null;
+	}, object);
 }
 
 export function loadClientExtensions() {

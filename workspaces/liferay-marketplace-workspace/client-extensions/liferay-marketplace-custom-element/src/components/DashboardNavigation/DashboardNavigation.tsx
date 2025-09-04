@@ -8,8 +8,10 @@ import AccountSearchDropdown from './AccountSearchDropdown';
 import DashboardNavigationItem from './DashboardNavigationItem';
 
 import './DashboardNavigation.scss';
+import {useMarketplaceContext} from '../../context/MarketplaceContext';
 
 export type DashboardListItems = {
+	active?: boolean;
 	itemTitle: string;
 	path: string;
 	symbol: string;
@@ -31,18 +33,21 @@ export function DashboardNavigation({
 	currentAccount,
 	dashboardNavigationItems,
 }: DashboardNavigationProps) {
+	const {properties} = useMarketplaceContext();
+
 	return (
 		<div className="dashboard-navigation-container">
-			{accountsSearch && (
-				<AccountSearchDropdown
-					accountAppsNumber={accountAppsNumber}
-					accountIcon={accountIcon}
-					accountsSearch={accountsSearch}
-					currentAccount={currentAccount}
-				/>
-			)}
+			{!properties.featureFlags.includes('LPD-51092') &&
+				accountsSearch && (
+					<AccountSearchDropdown
+						accountAppsNumber={accountAppsNumber}
+						accountIcon={accountIcon}
+						accountsSearch={accountsSearch}
+						currentAccount={currentAccount}
+					/>
+				)}
 
-			<div className="dashboard-navigation-body">
+			<div className="dashboard-navigation-body dashboard-navigation-container-dropdown">
 				{dashboardNavigationItems.map((dashboardNavigation, index) => (
 					<DashboardNavigationItem
 						dashboardNavigation={dashboardNavigation}

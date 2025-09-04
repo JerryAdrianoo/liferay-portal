@@ -12,7 +12,9 @@ import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
 import {productMenuPageTest} from '../../../fixtures/productMenuPageTest';
 import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganizationsPagesTest';
 import {liferayConfig} from '../../../liferay.config';
+import fillAndClickOutside from '../../../utils/fillAndClickOutside';
 import getRandomString from '../../../utils/getRandomString';
+import {performUserSwitch, userData} from '../../../utils/performLogin';
 import {waitForAlert} from '../../../utils/waitForAlert';
 import {goToSegmentsAdmin} from '../../change-tracking-web/main/utils/segments';
 import {segmentsPageTest} from './fixtures/segmentsPageTest';
@@ -33,17 +35,26 @@ const siteName = 'My Site ' + randomString;
 
 let site;
 
-test.beforeEach(async ({apiHelpers}) => {
+test.beforeEach(async ({apiHelpers, page}) => {
+	page.on('dialog', async (dialog) => {
+		await dialog.accept();
+	});
+
 	site = await apiHelpers.headlessSite.createSite({
 		name: siteName,
 	});
 });
 
-test.afterEach(async ({apiHelpers, page}) => {
+test.afterEach(async ({apiHelpers, page, segmentsPage}) => {
 	await test.step('Delete site on the DXP side', async () => {
 		await page.goto(liferayConfig.environment.baseUrl);
 
 		await apiHelpers.headlessSite.deleteSite(String(site.id));
+	});
+
+	await test.step('Delete all segments created during test execution', async () => {
+		await goToSegmentsAdmin(page);
+		await segmentsPage.deleteAllSegmentEntries();
 	});
 });
 
@@ -107,7 +118,9 @@ test(
 
 			await segmentsPage.editSegmentsEntry(segmentName);
 
-			await segmentsPage.viewMembers('userea@liferay.com');
+			await segmentsPage.viewMembers({
+				expectedEmail: 'userea@liferay.com',
+			});
 		});
 
 		await test.step('Then can assert the segment is correctly created', async () => {
@@ -167,7 +180,9 @@ test(
 
 			await segmentsPage.clickLinkByText(segmentName);
 
-			await segmentsPage.viewMembers('userea@liferay.com');
+			await segmentsPage.viewMembers({
+				expectedEmail: 'userea@liferay.com',
+			});
 		});
 
 		await test.step('Then can assert the segment is correctly created', async () => {
@@ -224,7 +239,9 @@ test(
 
 			await segmentsPage.clickLinkByText(segmentName);
 
-			await segmentsPage.viewMembers('userea@liferay.com');
+			await segmentsPage.viewMembers({
+				expectedEmail: 'userea@liferay.com',
+			});
 		});
 
 		await test.step('Then can assert the segment is correctly created', async () => {
@@ -281,8 +298,6 @@ test(
 		const segmentName2 = 'Segment With User2';
 		const segmentName3 = 'AddSegmentByOtherSegmentsWarning Test';
 
-		page.on('dialog', async (dialog) => await dialog.accept());
-
 		await test.step('Given 2 users were created', async () => {
 			await apiHelpers.headlessAdminUser.postUserAccount({
 				emailAddress: `userea1@liferay.com`,
@@ -326,13 +341,13 @@ test(
 
 			await segmentsPage.selectButton.click();
 
-			await segmentsPage.selectSegment('Segment With User1');
+			await segmentsPage.selectEntry('Segment With User1');
 
 			await segmentsPage.clickDuplicateButton();
 
 			await page.getByRole('button', {name: 'Select'}).nth(1).click();
 
-			await segmentsPage.selectSegment('Segment With User2');
+			await segmentsPage.selectEntry('Segment With User2');
 
 			await segmentsPage.chooseLogic('Or');
 
@@ -373,7 +388,11 @@ test(
 
 			await segmentsPage.clickAddNewSegmentButton();
 
-			await segmentsPage.addSessionSegment('Browser', segmentName);
+			await segmentsPage.addSegmentField(
+				'Browser',
+				'Session',
+				segmentName
+			);
 
 			await segmentsPage.fillField('Chrome');
 
@@ -407,7 +426,11 @@ test(
 
 			await segmentsPage.clickAddNewSegmentButton();
 
-			await segmentsPage.addSessionSegment('Language', segmentName);
+			await segmentsPage.addSegmentField(
+				'Language',
+				'Session',
+				segmentName
+			);
 
 			await segmentsPage.selectOption('Spanish (Spain)');
 
@@ -439,7 +462,7 @@ test(
 
 			await segmentsPage.clickAddNewSegmentButton();
 
-			await segmentsPage.addSessionSegment('URL', segmentName);
+			await segmentsPage.addSegmentField('URL', 'Session', segmentName);
 
 			await segmentsPage.fillField('http://localhost:8080');
 
@@ -503,7 +526,7 @@ test(
 		await test.step('Then asserts that the segment is correctly created including the user', async () => {
 			await segmentsPage.clickLinkByText(segmentName);
 
-			await segmentsPage.viewMembers(undefined, `Shaquille O'Neal`);
+			await segmentsPage.viewMembers({expectedName: `Shaquille O'Neal`});
 		});
 	}
 );
@@ -518,8 +541,6 @@ test(
 	async ({apiHelpers, page, pageEditorPage, segmentsPage}) => {
 		const segmentName1 = 'First Segment';
 		const segmentName2 = 'Second Segment';
-
-		page.on('dialog', async (dialog) => await dialog.accept());
 
 		await test.step('Given a user is created', async () => {
 			await apiHelpers.headlessAdminUser.postUserAccount({
@@ -553,7 +574,7 @@ test(
 
 			await segmentsPage.selectButton.click();
 
-			await segmentsPage.selectSegment('First Segment');
+			await segmentsPage.selectEntry('First Segment');
 
 			await segmentsPage.saveButton.click();
 		});
@@ -655,11 +676,7 @@ test(
 
 			await segmentsPage.changeCriterionInput('contains');
 
-			const memberCountLocator = page.getByText('1 Member', {
-				exact: true,
-			});
-
-			await expect(memberCountLocator).toBeVisible();
+			await segmentsPage.viewMemberCount('1 Member');
 
 			await segmentsPage.saveButton.click();
 		});
@@ -667,7 +684,7 @@ test(
 		await test.step('Then asserts that the segment is correctly created including the user', async () => {
 			await segmentsPage.clickLinkByText(segmentName);
 
-			await segmentsPage.viewMembers(undefined, `User 1 + / ? # &`);
+			await segmentsPage.viewMembers({expectedName: `User 1 + / ? # &`});
 		});
 	}
 );
@@ -908,7 +925,7 @@ test(
 
 			await segmentsPage.selectButton.click();
 
-			await segmentsPage.selectSegment(teamName);
+			await segmentsPage.selectEntry(teamName);
 
 			await segmentsPage.saveButton.click();
 
@@ -986,6 +1003,8 @@ test(
 		});
 
 		await test.step('When a segment designer adds a segment with User Group criterion', async () => {
+			await productMenuPage.openProductMenuIfClosed();
+
 			await productMenuPage.goToSegments();
 
 			await segmentsPage.clickAddNewSegmentButton();
@@ -1150,6 +1169,486 @@ test(
 
 			expect(categoryFieldBox1).not.toBe(categoryFieldBox2);
 			expect(dateModifiedFieldBox1).not.toBe(dateModifiedFieldBox2);
+		});
+	}
+);
+
+test(
+	`Can edit segment with a select input.`,
+
+	{
+		tag: '@LPS-94874',
+	},
+
+	async ({page, pageEditorPage, segmentsPage}) => {
+		const segmentName1 = 'EditSegment Test';
+		const segmentName2 = 'EditSegmentIfHaveASelectInput Test';
+
+		await test.step('Given a segment designer creates a segment', async () => {
+			await goToSegmentsAdmin(page);
+
+			await segmentsPage.clickAddNewSegmentButton();
+
+			await pageEditorPage.segmentEditorPage.createSegment(segmentName1, {
+				user: ['Email Address'],
+			});
+
+			await segmentsPage.fillField('test@liferay.com');
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('When edits the segment with a criterion that has select input', async () => {
+			await segmentsPage.editSegmentsEntry(segmentName1);
+
+			await segmentsPage.deleteProperty();
+
+			await pageEditorPage.segmentEditorPage.createSegment(segmentName2, {
+				user: ['Regular Role'],
+			});
+
+			await segmentsPage.selectButton.click();
+
+			await segmentsPage.selectCheckboxItem('Administrator');
+
+			await page.waitForTimeout(3000);
+
+			await segmentsPage.viewMembers({expectedName: 'Test Test'});
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('Then asserts that the segment was edited and select button is not visible', async () => {
+			await segmentsPage.editSegmentsEntry(segmentName2);
+
+			await segmentsPage.selectButton.click();
+
+			await segmentsPage.selectCheckboxItem('Power User');
+
+			await segmentsPage.saveButton.click();
+
+			await segmentsPage.clickLinkByText(segmentName2);
+
+			await page.waitForLoadState('networkidle');
+
+			await segmentsPage.viewCriterionValue('Power User');
+
+			await expect(segmentsPage.selectButton).not.toBeVisible();
+		});
+	}
+);
+
+test(
+	`Can edit segment with Country criterion.`,
+
+	{
+		tag: '@LPS-102740',
+	},
+
+	async ({page, pageEditorPage, segmentsPage}) => {
+		const segmentName1 = 'EditSegment Test';
+		const segmentName2 = 'EditSegmentUserByCountry Test';
+
+		await test.step('Given a segment designer creates a segment', async () => {
+			await goToSegmentsAdmin(page);
+
+			await segmentsPage.clickAddNewSegmentButton();
+
+			await pageEditorPage.segmentEditorPage.createSegment(segmentName1, {
+				user: ['Email Address'],
+			});
+
+			await segmentsPage.fillField('test@liferay.com');
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('When edits the segment with Country criterion', async () => {
+			await segmentsPage.editSegmentsEntry(segmentName1);
+
+			await segmentsPage.deleteProperty();
+
+			await pageEditorPage.segmentEditorPage.createSegment(segmentName2, {
+				'user-organization': ['Country'],
+			});
+
+			await segmentsPage.editSegmentsEntry(segmentName2);
+
+			await segmentsPage.selectOption('China');
+		});
+
+		await test.step('Then asserts that the segment was edited', async () => {
+			await segmentsPage.clickLinkByText(segmentName2);
+
+			await page.waitForLoadState('networkidle');
+
+			await segmentsPage.viewCriterionValue('china');
+		});
+	}
+);
+
+test(
+	`Can edit segment with Region criterion.`,
+
+	{
+		tag: '@LPS-102740',
+	},
+
+	async ({page, pageEditorPage, segmentsPage}) => {
+		const segmentName1 = 'EditSegment Test';
+		const segmentName2 = 'EditSegmentUserByRegion Test';
+
+		await test.step('Given a segment designer creates a segment', async () => {
+			await goToSegmentsAdmin(page);
+
+			await segmentsPage.clickAddNewSegmentButton();
+
+			await pageEditorPage.segmentEditorPage.createSegment(segmentName1, {
+				user: ['Email Address'],
+			});
+
+			await segmentsPage.fillField('test@liferay.com');
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('When edits the segment with Region criterion', async () => {
+			await segmentsPage.editSegmentsEntry(segmentName1);
+
+			await segmentsPage.deleteProperty();
+
+			await segmentsPage.addSegmentField(
+				'Region',
+				'Organization',
+				segmentName2
+			);
+
+			await segmentsPage.selectOption('Italy - Lombardia');
+		});
+
+		await test.step('Then asserts that the segment was edited', async () => {
+			await segmentsPage.clickLinkByText(segmentName2);
+
+			await page.waitForLoadState('networkidle');
+
+			await segmentsPage.viewCriterionValue('lombardia');
+		});
+	}
+);
+
+test(
+	`Can edit segment with Session > URL criterion.`,
+
+	{
+		tag: '@LPS-102743',
+	},
+
+	async ({page, pageEditorPage, segmentsPage}) => {
+		const segmentName1 = 'EditSegment Test';
+		const segmentName2 = 'EditSegmentUserBySessionURL Test';
+
+		await test.step('Given a segment designer creates a segment', async () => {
+			await goToSegmentsAdmin(page);
+
+			await segmentsPage.clickAddNewSegmentButton();
+
+			await pageEditorPage.segmentEditorPage.createSegment(segmentName1, {
+				user: ['Email Address'],
+			});
+
+			await segmentsPage.fillField('test@liferay.com');
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('When edits the segment with Session > URL criterion', async () => {
+			await segmentsPage.editSegmentsEntry(segmentName1);
+
+			await segmentsPage.deleteProperty();
+
+			await segmentsPage.addSegmentField('URL', 'Session', segmentName2);
+
+			await segmentsPage.fillField('http://localhost:8080');
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('Then asserts that the segment was edited', async () => {
+			await segmentsPage.clickLinkByText(segmentName2);
+
+			await page.waitForLoadState('networkidle');
+
+			await segmentsPage.viewCriterionValue('http://localhost:8080');
+		});
+	}
+);
+
+test(
+	`Can edit segment with User > Tag criterion.`,
+
+	{
+		tag: '@LPS-102742',
+	},
+
+	async ({
+		editUserPage,
+		page,
+		pageEditorPage,
+		segmentsPage,
+		usersAndOrganizationsPage,
+	}) => {
+		const segmentName1 = 'EditSegment Test';
+		const segmentName2 = 'EditSegmentUserByUserTag Test';
+
+		await test.step('Given a user is created', async () => {
+			await usersAndOrganizationsPage.goToUsers();
+			await usersAndOrganizationsPage.addUserButton.click();
+
+			await editUserPage.emailAddressInput.fill('userea@liferay.com');
+			await editUserPage.firstNameInput.fill('userfn');
+			await editUserPage.lastNameInput.fill('userln');
+			await editUserPage.screenNameInput.fill('usersn');
+
+			const tagInputFied = page.getByLabel('Tags', {exact: true});
+			await tagInputFied.fill('tagName');
+			await tagInputFied.press('Enter');
+			await page.locator('body').click();
+
+			await editUserPage.saveButton.click();
+		});
+
+		await test.step('And the segment designer creates a segment', async () => {
+			await goToSegmentsAdmin(page);
+
+			await segmentsPage.clickAddNewSegmentButton();
+
+			await pageEditorPage.segmentEditorPage.createSegment(segmentName1, {
+				user: ['Email Address'],
+			});
+
+			await segmentsPage.fillField('test@liferay.com');
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('When edits the segment with User > Tag criterion', async () => {
+			await segmentsPage.editSegmentsEntry(segmentName1);
+
+			await segmentsPage.deleteProperty();
+
+			await pageEditorPage.segmentEditorPage.createSegment(segmentName2, {
+				user: ['Tag'],
+			});
+
+			await segmentsPage.selectButton.click();
+
+			await segmentsPage.selectEntry('tagName');
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('Then asserts that the segment was edited', async () => {
+			await segmentsPage.clickLinkByText(segmentName2);
+
+			await page.waitForLoadState('networkidle');
+
+			await segmentsPage.viewCriterionValue('tagName');
+		});
+	}
+);
+
+test(
+	`Can edit segment condition from Equals to Contains option.`,
+
+	{
+		tag: '@LPS-97141',
+	},
+
+	async ({page, pageEditorPage, segmentsPage}) => {
+		const segmentName1 = 'EditSegment Test';
+		const segmentName2 = 'EditSegmentUserEmailAddressEqualsToContains Test';
+
+		await test.step('Given a segment designer creates a segment', async () => {
+			await goToSegmentsAdmin(page);
+
+			await segmentsPage.clickAddNewSegmentButton();
+
+			await pageEditorPage.segmentEditorPage.createSegment(segmentName1, {
+				user: ['Email Address'],
+			});
+
+			await segmentsPage.fillField('test@liferay.com');
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('When edits the segment condition', async () => {
+			await segmentsPage.editSegmentsEntry(segmentName1);
+
+			await segmentsPage.changeCriterionInput('Contains');
+
+			await fillAndClickOutside(
+				page,
+				page.getByPlaceholder('Untitled Segment'),
+				segmentName2
+			);
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('Then asserts that the segment was edited', async () => {
+			await segmentsPage.clickLinkByText(segmentName2);
+
+			await page.waitForLoadState('networkidle');
+
+			await expect(page.locator('.operator')).toContainText('Contains');
+		});
+	}
+);
+
+test(
+	'Segment member preview count shows the correct number of users when segments are combined',
+	{
+		tag: '@LPS-130344',
+	},
+
+	async ({apiHelpers, page, pageEditorPage, segmentsPage}) => {
+		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
+			groupId: site.id,
+			options: {type: 'content'},
+			title: getRandomString(),
+		});
+
+		const user1 = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user1.alternateName] = {
+			name: user1.givenName,
+			password: 'test',
+			surname: user1.familyName,
+		};
+
+		const user2 = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user2.alternateName] = {
+			name: user2.givenName,
+			password: 'test',
+			surname: user2.familyName,
+		};
+
+		await test.step('Create two segments', async () => {
+			await apiHelpers.jsonWebServicesSegmentsEntry.addSegmentsEntry({
+				criteria: {
+					criteria: {
+						user: {
+							conjunction: 'and',
+							filterString: `(lastName eq '${user1.familyName}')`,
+							typeValue: 'model',
+						},
+					},
+					filterString: {
+						model: `(lastName eq 'userln1')`,
+					},
+				},
+				groupId: site.id,
+				name: 'Segment With User1',
+			});
+
+			await apiHelpers.jsonWebServicesSegmentsEntry.addSegmentsEntry({
+				criteria: {
+					criteria: {
+						user: {
+							conjunction: 'and',
+							filterString: `(lastName eq '${user2.familyName}')`,
+							typeValue: 'model',
+						},
+					},
+					filterString: {
+						model: `(lastName eq 'userln2')`,
+					},
+				},
+				groupId: site.id,
+				name: 'Segment With User2',
+			});
+		});
+
+		await test.step('Combine the two segments', async () => {
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
+
+			await segmentsPage.clickAddNewSegmentButton();
+
+			await pageEditorPage.segmentEditorPage.createSegment(
+				'Segment Title',
+				{
+					segments: ['Segments'],
+				}
+			);
+
+			await segmentsPage.selectButton.click();
+
+			await segmentsPage.selectEntry('Segment With User1');
+
+			await segmentsPage.clickDuplicateButton();
+
+			await page.getByRole('button', {name: 'Select'}).nth(1).click();
+
+			await segmentsPage.selectEntry('Segment With User2');
+
+			await segmentsPage.chooseLogic('Or');
+
+			await segmentsPage.saveButton.click();
+		});
+
+		await test.step('Create a segmented experience', async () => {
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			await pageEditorPage.addFragment('Basic Components', 'Heading');
+
+			const headingId = await pageEditorPage.getFragmentId('Heading');
+
+			await pageEditorPage.createExperience('Experience Content Page');
+
+			await expect(
+				page.getByLabel('Experience: Experience Content Page')
+			).toBeVisible();
+
+			await pageEditorPage.editExperienceSegment(
+				'Experience Content Page',
+				'Segment Title'
+			);
+
+			await pageEditorPage.editTextEditable(
+				headingId,
+				'element-text',
+				'User1 and User2'
+			);
+		});
+
+		await test.step('Prioritize experience and publish', async () => {
+			await pageEditorPage.openExperienceSelector();
+
+			const experience = page.locator('.dropdown-menu__experience', {
+				hasText: 'Experience Content Page',
+			});
+
+			await experience
+				.getByLabel('Prioritize Experience', {exact: true})
+				.click();
+
+			await pageEditorPage.publishPage();
+		});
+
+		await test.step('Check experience with both users', async () => {
+			await performUserSwitch(page, user1.alternateName);
+
+			await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyURL}`);
+
+			await expect(page.getByText('User1 and User2')).toBeVisible();
+
+			await performUserSwitch(page, user2.alternateName);
+
+			await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyURL}`);
+
+			await expect(page.getByText('User1 and User2')).toBeVisible();
 		});
 	}
 );

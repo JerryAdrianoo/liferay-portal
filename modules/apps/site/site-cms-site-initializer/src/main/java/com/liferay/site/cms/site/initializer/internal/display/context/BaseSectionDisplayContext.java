@@ -7,6 +7,7 @@ package com.liferay.site.cms.site.initializer.internal.display.context;
 
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.configuration.DLConfiguration;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
@@ -36,12 +37,15 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -50,6 +54,7 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.site.cms.site.initializer.internal.util.ActionUtil;
+import com.liferay.translation.constants.TranslationPortletKeys;
 
 import jakarta.portlet.ActionRequest;
 
@@ -69,7 +74,7 @@ public abstract class BaseSectionDisplayContext {
 
 	public BaseSectionDisplayContext(
 		DepotEntryLocalService depotEntryLocalService,
-		GroupLocalService groupLocalService,
+		DLConfiguration dlConfiguration, GroupLocalService groupLocalService,
 		HttpServletRequest httpServletRequest, Language language,
 		ObjectDefinitionService objectDefinitionService,
 		ObjectDefinitionSettingLocalService objectDefinitionSettingLocalService,
@@ -78,6 +83,9 @@ public abstract class BaseSectionDisplayContext {
 		Portal portal) {
 
 		this.depotEntryLocalService = depotEntryLocalService;
+
+		_dlConfiguration = dlConfiguration;
+
 		this.groupLocalService = groupLocalService;
 		this.httpServletRequest = httpServletRequest;
 		this.language = language;
@@ -147,17 +155,47 @@ public abstract class BaseSectionDisplayContext {
 
 				return collaboratorURLs;
 			}
+		).put(
+			"fileMimeTypeCssClasses",
+			() -> {
+				if (_dlConfiguration == null) {
+					return null;
+				}
+
+				return _getFileMimeTypeCssClasses();
+			}
+		).put(
+			"fileMimeTypeIcons",
+			() -> {
+				if (_dlConfiguration == null) {
+					return null;
+				}
+
+				return _getFileMimeTypeIcons();
+			}
 		).build();
 	}
 
 	public String getAPIURL() {
-		StringBundler sb = new StringBundler(4);
+		StringBundler sb = new StringBundler(7);
 
 		sb.append("/o/search/v1.0/search?emptySearch=true&filter=");
 
 		if (objectEntryFolder != null) {
 			sb.append("folderId eq ");
 			sb.append(objectEntryFolder.getObjectEntryFolderId());
+
+			if (objectEntryFolder.getStatus() ==
+					WorkflowConstants.STATUS_IN_TRASH) {
+
+				sb.append(" and status eq ");
+				sb.append(WorkflowConstants.STATUS_IN_TRASH);
+			}
+			else {
+				sb.append(" and status in (");
+				sb.append(StringUtil.merge(_statuses, ", "));
+				sb.append(")");
+			}
 		}
 		else {
 			sb.append(getCMSSectionFilterString());
@@ -269,6 +307,10 @@ public abstract class BaseSectionDisplayContext {
 				LanguageUtil.get(httpServletRequest, "edit"), "get", "update",
 				null),
 			new FDSActionDropdownItem(
+				null, "share", "share",
+				LanguageUtil.get(httpServletRequest, "share"), "get", "share",
+				"link"),
+			new FDSActionDropdownItem(
 				"{actions.expire.href}", "time", "expire",
 				LanguageUtil.get(httpServletRequest, "expire"), "post",
 				"expire", "headless"),
@@ -294,6 +336,44 @@ public abstract class BaseSectionDisplayContext {
 				"date-time", "version-history",
 				LanguageUtil.get(httpServletRequest, "view-history"), "get",
 				"versions", null),
+			new FDSActionDropdownItem(
+				PortletURLBuilder.create(
+					portal.getControlPanelPortletURL(
+						httpServletRequest, TranslationPortletKeys.TRANSLATION,
+						ActionRequest.RENDER_PHASE)
+				).setMVCRenderCommandName(
+					"/translation/import_translation"
+				).setParameter(
+					"className", "{entryClassName}"
+				).setParameter(
+					"classPK", "{embedded.id}"
+				).setParameter(
+					"groupId", "{embedded.scopeId}"
+				).setWindowState(
+					LiferayWindowState.POP_UP
+				).buildString(),
+				"upload", "export-for-translation",
+				LanguageUtil.get(httpServletRequest, "export-for-translation"),
+				null, null, null),
+			new FDSActionDropdownItem(
+				PortletURLBuilder.create(
+					portal.getControlPanelPortletURL(
+						httpServletRequest, TranslationPortletKeys.TRANSLATION,
+						ActionRequest.RENDER_PHASE)
+				).setMVCRenderCommandName(
+					"/translation/import_translation"
+				).setParameter(
+					"className", "{entryClassName}"
+				).setParameter(
+					"classPK", "{embedded.id}"
+				).setParameter(
+					"groupId", "{embedded.scopeId}"
+				).setWindowState(
+					LiferayWindowState.POP_UP
+				).buildString(),
+				"download", "import-translation",
+				LanguageUtil.get(httpServletRequest, "import-translation"),
+				null, null, null),
 			new FDSActionDropdownItem(
 				PortletURLBuilder.create(
 					portal.getControlPanelPortletURL(
@@ -326,6 +406,38 @@ public abstract class BaseSectionDisplayContext {
 				null, "trash", "delete",
 				language.get(httpServletRequest, "delete"), "delete", "delete",
 				"headless"));
+	}
+
+	public Map<String, Object> getToolbarProps() throws PortalException {
+		return HashMapBuilder.<String, Object>put(
+			"title",
+			() -> {
+				Layout layout = themeDisplay.getLayout();
+
+				if (layout == null) {
+					return null;
+				}
+
+				return layout.getName(themeDisplay.getLocale(), true);
+			}
+		).put(
+			"toolbarClassName", "section-toolbar tbar-light"
+		).put(
+			"toolbarTitleClassName", "section-toolbar-title"
+		).build();
+	}
+
+	protected void addBreadcrumbItem(
+		JSONArray jsonArray, boolean active, String friendlyURL, String label) {
+
+		jsonArray.put(
+			JSONUtil.put(
+				"active", active
+			).put(
+				"href", friendlyURL
+			).put(
+				"label", label
+			));
 	}
 
 	protected void addStructureContentDropdownItems(CreationMenu creationMenu) {
@@ -471,6 +583,102 @@ public abstract class BaseSectionDisplayContext {
 		return _getDepotEntriesJSONArray(acceptedGroupIds);
 	}
 
+	private Map<String, String> _getFileMimeTypeCssClasses() {
+		return HashMapBuilder.put(
+			"default", "file-icon-color-0"
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.codeFileMimeTypes(), "file-icon-color-7")
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.compressedFileMimeTypes(), "file-icon-color-1")
+		).putAll(
+			_getFileMimeTypeValues(
+				ArrayUtil.append(
+					_dlConfiguration.multimediaFileMimeTypes(),
+					ContentTypes.
+						APPLICATION_VND_LIFERAY_VIDEO_EXTERNAL_SHORTCUT_HTML),
+				"file-icon-color-3")
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.presentationFileMimeTypes(),
+				"file-icon-color-4")
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.spreadSheetFileMimeTypes(),
+				"file-icon-color-2")
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.textFileMimeTypes(), "file-icon-color-6")
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.vectorialFileMimeTypes(), "file-icon-color-5")
+		).build();
+	}
+
+	private Map<String, String> _getFileMimeTypeIcons() {
+		return HashMapBuilder.put(
+			"default", "document-default"
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.codeFileMimeTypes(), "document-code")
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.compressedFileMimeTypes(),
+				"document-compressed")
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.presentationFileMimeTypes(),
+				"document-presentation")
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.spreadSheetFileMimeTypes(), "document-table")
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.textFileMimeTypes(), "document-text")
+		).putAll(
+			_getFileMimeTypeValues(
+				_dlConfiguration.vectorialFileMimeTypes(), "document-vector")
+		).putAll(
+			_getFileMimeTypeMultimediaCssClasses(
+				ArrayUtil.append(
+					_dlConfiguration.multimediaFileMimeTypes(),
+					ContentTypes.
+						APPLICATION_VND_LIFERAY_VIDEO_EXTERNAL_SHORTCUT_HTML))
+		).build();
+	}
+
+	private Map<String, String> _getFileMimeTypeMultimediaCssClasses(
+		String[] mimeTypes) {
+
+		Map<String, String> fileMimeTypeMultimediaCssClasses = new HashMap<>();
+
+		for (String mimeType : mimeTypes) {
+			if (mimeType.startsWith("image")) {
+				fileMimeTypeMultimediaCssClasses.put(
+					mimeType, "document-image");
+			}
+			else {
+				fileMimeTypeMultimediaCssClasses.put(
+					mimeType, "document-multimedia");
+			}
+		}
+
+		return fileMimeTypeMultimediaCssClasses;
+	}
+
+	private Map<String, String> _getFileMimeTypeValues(
+		String[] mimeTypes, String value) {
+
+		Map<String, String> fileMimeTypeValues = new HashMap<>();
+
+		for (String mimeType : mimeTypes) {
+			fileMimeTypeValues.put(mimeType, value);
+		}
+
+		return fileMimeTypeValues;
+	}
+
 	private JSONObject _getJSONObject(long groupId) {
 		Group group = groupLocalService.fetchGroup(groupId);
 
@@ -593,6 +801,7 @@ public abstract class BaseSectionDisplayContext {
 		WorkflowConstants.STATUS_APPROVED, WorkflowConstants.STATUS_DRAFT,
 		WorkflowConstants.STATUS_EXPIRED);
 
+	private final DLConfiguration _dlConfiguration;
 	private final ObjectDefinitionService _objectDefinitionService;
 	private final ObjectDefinitionSettingLocalService
 		_objectDefinitionSettingLocalService;

@@ -5,6 +5,7 @@
 
 import {ClayCardWithInfo} from '@clayui/card';
 import classNames from 'classnames';
+import {getObjectValueFromPath} from 'frontend-js-web';
 import React, {forwardRef, useContext, useRef} from 'react';
 
 import FrontendDataSetContext, {
@@ -17,7 +18,6 @@ import formatActionURL from '../../utils/actionItems/formatActionURL';
 import handleActionClick from '../../utils/actionItems/handleActionClick';
 import {getLocalizedValue} from '../../utils/getLocalizedValue';
 import getRandomId from '../../utils/getRandomId';
-import getSelectedItemValue from '../../utils/getSelectedItemValue';
 import isLink from '../../utils/isLink';
 import {
 	DisplayType,
@@ -34,9 +34,15 @@ const Card = forwardRef<HTMLDivElement, any>(
 	(
 		{
 			item,
+			items,
 			onItemSelectionChange,
 			schema,
-		}: {item: any; onItemSelectionChange: Function; schema: ICardSchema},
+		}: {
+			item: any;
+			items: any[];
+			onItemSelectionChange: Function;
+			schema: ICardSchema;
+		},
 		ref
 	) => {
 		const {
@@ -77,7 +83,7 @@ const Card = forwardRef<HTMLDivElement, any>(
 
 		const selectedItemKey =
 			selectedItemsKey &&
-			getSelectedItemValue({item, path: selectedItemsKey});
+			getObjectValueFromPath({object: item, path: selectedItemsKey});
 
 		const getLabels = (
 			item: any
@@ -124,7 +130,10 @@ const Card = forwardRef<HTMLDivElement, any>(
 				return ESelectionTrigger.INPUT;
 			}
 
-			if (target.closest('.dropdown-toggle')) {
+			if (
+				target.closest('.dropdown-toggle') ||
+				target.closest('.dropdown-item')
+			) {
 				return false;
 			}
 
@@ -143,11 +152,14 @@ const Card = forwardRef<HTMLDivElement, any>(
 						event,
 						executeAsyncItemAction,
 						highlightItems,
+						infoPanelOpen,
 						itemData: item,
 						itemId: selectedItemKey,
+						items,
 						loadData,
 						onActionDropdownItemClick,
 						onInfoPanelToggleButtonClick,
+						onItemSelectionChange,
 						openModal,
 						openSidePanel,
 						toggleItemInlineEdit,
@@ -189,7 +201,10 @@ const Card = forwardRef<HTMLDivElement, any>(
 					(element) =>
 						selectedItemsKey &&
 						element ===
-							getSelectedItemValue({item, path: selectedItemsKey})
+							getObjectValueFromPath({
+								object: item,
+								path: selectedItemsKey,
+							})
 				),
 			stickerProps: (schema.sticker && item[schema.sticker]) || null,
 			symbol: schema.symbol && item[schema.symbol],
@@ -212,6 +227,7 @@ const Card = forwardRef<HTMLDivElement, any>(
 
 function ClayCardOptionalDropTarget({
 	item,
+	items,
 	onItemSelectionChange,
 	schema,
 }: React.ComponentProps<typeof Card>) {
@@ -230,6 +246,7 @@ function ClayCardOptionalDropTarget({
 		<div className="col-md-3">
 			<Card
 				item={item}
+				items={items}
 				onItemSelectionChange={onItemSelectionChange}
 				ref={cardRef}
 				schema={schema}
@@ -268,10 +285,11 @@ const Cards = ({
 						return (
 							<ClayCardOptionalDropTarget
 								item={item}
+								items={items}
 								key={
 									selectedItemsKey
-										? getSelectedItemValue({
-												item,
+										? getObjectValueFromPath({
+												object: item,
 												path: selectedItemsKey,
 											})
 										: getRandomId()

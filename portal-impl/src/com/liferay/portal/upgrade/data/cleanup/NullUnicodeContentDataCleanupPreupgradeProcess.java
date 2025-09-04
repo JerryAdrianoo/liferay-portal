@@ -62,14 +62,15 @@ public class NullUnicodeContentDataCleanupPreupgradeProcess
 					columnName, ", ", oldData, ", ", newData, ") where ",
 					columnName, " like ", likeClause))) {
 
-			int rowCount = preparedStatement.executeUpdate();
+			int count = preparedStatement.executeUpdate();
 
-			if (_log.isInfoEnabled() && (rowCount > 0)) {
+			if (_log.isInfoEnabled() && (count > 0)) {
 				_log.info(
 					StringBundler.concat(
-						"Updated ", rowCount, " row", (rowCount > 1) ? "s" : "",
-						" in ", dbInspector.normalizeName(tableName),
-						" because ", dbInspector.normalizeName(columnName),
+						"Table ", dbInspector.normalizeName(tableName), ", ",
+						count, " row", (count > 1) ? "s " : " ",
+						"updated because ",
+						dbInspector.normalizeName(columnName),
 						" had invalid characters"));
 			}
 		}

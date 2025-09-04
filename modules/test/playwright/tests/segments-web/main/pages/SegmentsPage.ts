@@ -53,18 +53,20 @@ export class SegmentsPage {
 		return this.page.locator('tr', {has: this.page.getByText(segmentName)});
 	}
 
-	async addSessionSegment(property: string, segmentName: string) {
-		const dropzone = this.page.locator(`.drop-zone-session`);
+	async addSegmentField(
+		criterion: string,
+		property: string,
+		segmentName: string
+	) {
+		const dropzone = this.page.locator(`.drop-zone-root`);
 		const target =
 			(await dropzone.count()) === 0
 				? this.page.locator('.empty-drop-zone')
 				: dropzone.last();
 
-		await this.page.getByRole('button', {name: 'User'}).click();
+		await this.page.getByRole('button', {name: property}).click();
 
-		await this.page.getByRole('button', {name: 'Session'}).click();
-
-		await this.page.getByLabel(`Drag ${property}`).press('Enter');
+		await this.page.getByLabel(`Drag ${criterion}`).press('Enter');
 
 		await target.press('Enter');
 
@@ -142,6 +144,25 @@ export class SegmentsPage {
 			await this.clickToggleButton();
 			await expect(this.panelLocator).toBeHidden({timeout: 10000});
 		}
+	}
+
+	async deleteAllSegmentEntries() {
+		const noSegmentsText = await this.page.locator(
+			'text=There are no segments.'
+		);
+		const isNoSegmentsVisible = await noSegmentsText.isVisible();
+
+		if (isNoSegmentsVisible) {
+			return;
+		}
+
+		await this.page.getByLabel('Select All Items on the Page').click();
+		await this.page.getByRole('button', {name: 'Delete'}).click();
+	}
+
+	async deleteProperty() {
+		const deleteButton = this.page.getByTitle('Delete Segment Property');
+		await deleteButton.click();
 	}
 
 	async deleteUnavailableProperty() {
@@ -255,17 +276,32 @@ export class SegmentsPage {
 		await this.saveButton.click();
 	}
 
-	async selectSegment(segmentName: string) {
+	async selectEntry(entryName: string) {
 		const iframe = this.page.frameLocator('iframe#selectEntity_iframe_');
-		const segmentElement = iframe.locator('td.lfr-title-column', {
-			hasText: segmentName,
+
+		const titleColumnLocator = iframe.locator('td.lfr-title-column', {
+			hasText: entryName,
+		});
+
+		const nameColumnLocator = iframe.locator('td.lfr-name-column', {
+			hasText: entryName,
 		});
 
 		await this.page.waitForLoadState('networkidle');
 		await this.page.waitForTimeout(5000);
 
-		await segmentElement.waitFor({state: 'visible'});
-		await segmentElement.click();
+		let targetElement: Locator;
+
+		if (await titleColumnLocator.first().isVisible()) {
+			targetElement = titleColumnLocator.first();
+		}
+		else if (await nameColumnLocator.first().isVisible()) {
+			targetElement = nameColumnLocator.first();
+		}
+
+		if (targetElement) {
+			await targetElement.click();
+		}
 	}
 
 	async selectCardItem(itemName: string) {
@@ -310,14 +346,61 @@ export class SegmentsPage {
 		await expect(fieldTypeLocator).toBeVisible();
 	}
 
-	async viewMembers(expectedEmail?: string, expectedName?: string) {
+	async viewMemberCount(memberCount: string) {
+		const memberCountLocator = this.page.locator('div.btn-group-item b');
+
+		await expect(memberCountLocator).toHaveText(memberCount);
+	}
+
+	async viewMembers({
+		expectedEmail,
+		expectedName,
+	}: {
+		expectedEmail?: string;
+		expectedName?: string;
+	}) {
 		await this.viewMembersButton.click();
 
-		const memberLocator = this.page
-			.frameLocator('iframe#segment-members-dialog_iframe_')
-			.locator('tr', {hasText: expectedEmail || expectedName});
+		const frame = this.page.frameLocator(
+			'iframe#segment-members-dialog_iframe_'
+		);
 
-		await expect(memberLocator).toBeVisible();
+		let memberLocator;
+
+		if (expectedEmail && expectedName) {
+			memberLocator = frame
+				.locator('tr', {
+					has: frame.locator('td.lfr-email-address-column', {
+						hasText: expectedEmail,
+					}),
+				})
+				.filter({
+					has: frame.locator('td.lfr-name-column', {
+						hasText: expectedName,
+					}),
+				});
+		}
+		else if (expectedEmail) {
+			memberLocator = frame.locator('tr', {
+				has: frame.locator('td.lfr-email-address-column', {
+					hasText: expectedEmail,
+				}),
+			});
+		}
+		else if (expectedName) {
+			memberLocator = frame.locator('tr', {
+				has: frame.locator('td.lfr-name-column', {
+					hasText: expectedName,
+				}),
+			});
+		}
+		else {
+			throw new Error(
+				'Must provide either expectedEmail or expectedName'
+			);
+		}
+
+		await expect(memberLocator).toBeVisible({timeout: 15000});
 
 		if (expectedEmail) {
 			await expect(

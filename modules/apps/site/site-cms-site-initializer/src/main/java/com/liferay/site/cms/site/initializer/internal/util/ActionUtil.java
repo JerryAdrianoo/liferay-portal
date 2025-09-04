@@ -166,7 +166,8 @@ public class ActionUtil {
 
 		LayoutPageTemplateStructureLocalServiceUtil.
 			updateLayoutPageTemplateStructureData(
-				layout.getGroupId(), layout.getPlid(), segmentsExperienceId,
+				serviceContext.getUserId(), layout.getGroupId(),
+				layout.getPlid(), segmentsExperienceId,
 				layoutStructure.toString());
 
 		for (FragmentEntryLink addedFragmentEntryLink :
@@ -200,6 +201,16 @@ public class ActionUtil {
 			themeDisplay.getPathFriendlyURLPublic(),
 			GroupConstants.CMS_FRIENDLY_URL, "/e/space/",
 			PortalUtil.getClassNameId(DepotEntry.class), StringPool.SLASH);
+	}
+
+	public static String getBaseViewFolderRecycleBinURL(
+		ThemeDisplay themeDisplay) {
+
+		return StringBundler.concat(
+			themeDisplay.getPathFriendlyURLPublic(),
+			GroupConstants.CMS_FRIENDLY_URL, "/e/recycle-bin/",
+			PortalUtil.getClassNameId(ObjectEntryFolder.class),
+			StringPool.SLASH);
 	}
 
 	public static String getBaseViewFolderURL(ThemeDisplay themeDisplay) {
@@ -308,6 +319,12 @@ public class ActionUtil {
 		return StringPool.BLANK;
 	}
 
+	public static String getRecycleBinURL(ThemeDisplay themeDisplay) {
+		return StringBundler.concat(
+			themeDisplay.getPathFriendlyURLPublic(),
+			GroupConstants.CMS_FRIENDLY_URL, "/recycle-bin");
+	}
+
 	public static String getSpaceSettingsURL(
 		long classPK, String redirectURL, ThemeDisplay themeDisplay) {
 
@@ -324,7 +341,14 @@ public class ActionUtil {
 		return getBaseSpaceURL(themeDisplay) + classPK;
 	}
 
-	public static String geViewFolderURL(
+	public static String getViewFolderRecycleBinURL(
+		long objectEntryFolderId, ThemeDisplay themeDisplay) {
+
+		return getBaseViewFolderRecycleBinURL(themeDisplay) +
+			objectEntryFolderId;
+	}
+
+	public static String getViewFolderURL(
 		long objectEntryFolderId, ThemeDisplay themeDisplay) {
 
 		return getBaseViewFolderURL(themeDisplay) + objectEntryFolderId;

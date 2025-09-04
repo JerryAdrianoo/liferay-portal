@@ -20,6 +20,7 @@ import {systemSettingsPageTest} from '../../../fixtures/systemSettingsPageTest';
 import {uiElementsPageTest} from '../../../fixtures/uiElementsTest';
 import {webContentDisplayPageTest} from '../../../fixtures/webContentDisplayPageTest';
 import getRandomString from '../../../utils/getRandomString';
+import {reloadUntilVisible} from '../../../utils/reloadUntilVisible';
 import getBasicWebContentStructureId from '../../../utils/structured-content/getBasicWebContentStructureId';
 import {journalPagesTest} from '../../journal-web/main/fixtures/journalPagesTest';
 import {exportImportConfig} from './export_import.config';
@@ -50,7 +51,7 @@ export const test = mergeTests(
 );
 
 test(
-	'exporting a page with a manual collection that contains a link to the page',
+	'Exporting a page with a manual collection that contains a link to the page',
 	{tag: '@LPD-57344'},
 	async ({
 		apiHelpers,
@@ -176,7 +177,7 @@ classTypeIdsJournalArticleAssetRendererFactory=${basicWebcontntStructureId}`,
 );
 
 test(
-	'non modified referred content cannot publish to live when enable include if modified option',
+	'Non modified referred content cannot publish to live when enable include if modified option',
 	{tag: '@LPS-167777'},
 	async ({apiHelpers, stagingConfigurationPage, stagingPage}) => {
 		const site = await apiHelpers.headlessSite.createSite({
@@ -301,15 +302,16 @@ test(
 		);
 		await journalEditArticlePage.publishArticle(true);
 
-		expect(
-			await page.getByText(
+		await reloadUntilVisible({
+			myLocator: page.getByText(
 				'Close Error: Unable to validate referenced document because it cannot be found with the following parameters'
-			)
-		).toBeVisible();
+			),
+			page,
+		});
 	}
 );
 
-test('staging publish template with smoke', async ({
+test('Staging publish template with smoke', async ({
 	apiHelpers,
 	page,
 	stagingPage,

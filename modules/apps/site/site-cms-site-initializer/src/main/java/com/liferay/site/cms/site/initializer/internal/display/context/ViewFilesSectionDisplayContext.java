@@ -6,8 +6,8 @@
 package com.liferay.site.cms.site.initializer.internal.display.context;
 
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.configuration.DLConfiguration;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
-import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.service.ObjectDefinitionService;
 import com.liferay.object.service.ObjectDefinitionSettingLocalService;
@@ -33,7 +33,7 @@ public class ViewFilesSectionDisplayContext
 
 	public ViewFilesSectionDisplayContext(
 		DepotEntryLocalService depotEntryLocalService,
-		GroupLocalService groupLocalService,
+		DLConfiguration dlConfiguration, GroupLocalService groupLocalService,
 		HttpServletRequest httpServletRequest, Language language,
 		ObjectDefinitionService objectDefinitionService,
 		ObjectDefinitionSettingLocalService objectDefinitionSettingLocalService,
@@ -42,29 +42,10 @@ public class ViewFilesSectionDisplayContext
 		Portal portal) {
 
 		super(
-			depotEntryLocalService, groupLocalService, httpServletRequest,
-			language, objectDefinitionService,
+			depotEntryLocalService, dlConfiguration, groupLocalService,
+			httpServletRequest, language, objectDefinitionService,
 			objectDefinitionSettingLocalService,
 			objectEntryFolderModelResourcePermission, portal);
-	}
-
-	@Override
-	public List<DropdownItem> getBulkActionDropdownItems() {
-		List<DropdownItem> fdsBulkActionDropdownItems =
-			super.getBulkActionDropdownItems();
-
-		fdsBulkActionDropdownItems.add(
-			new FDSActionDropdownItem(
-				"#", "download", "download",
-				LanguageUtil.get(httpServletRequest, "download"), null, null,
-				null));
-		fdsBulkActionDropdownItems.add(
-			new FDSActionDropdownItem(
-				"#", "password-policies", "permissions",
-				LanguageUtil.get(httpServletRequest, "permissions"), null, null,
-				null));
-
-		return fdsBulkActionDropdownItems;
 	}
 
 	@Override
@@ -85,12 +66,6 @@ public class ViewFilesSectionDisplayContext
 		List<FDSActionDropdownItem> fdsActionDropdownItems =
 			super.getFDSActionDropdownItems();
 
-		fdsActionDropdownItems.add(
-			3,
-			new FDSActionDropdownItem(
-				null, "share", "share",
-				LanguageUtil.get(httpServletRequest, "share"), "get", "share",
-				"link"));
 		fdsActionDropdownItems.add(
 			5,
 			new FDSActionDropdownItem(

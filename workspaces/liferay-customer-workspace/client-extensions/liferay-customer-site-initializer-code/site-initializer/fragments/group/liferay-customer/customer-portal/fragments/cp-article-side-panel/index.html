@@ -18,7 +18,6 @@
 		baseURL = themeDisplay.getURLCurrent()?replace('/[wv]/.*', '', 'r')
 		categoryId = displayObject.categoryId!""
 		currentCategoryId = ""
-		folderId = displayObject.folderId!""
 		navItems = []
 		parentCategoryId = ""
 		parentCategory = {}
@@ -32,6 +31,7 @@
 			[#list restArticle.taxonomyCategoryBriefs as taxonomyCategoryBrief]
 				[#if taxonomyCategoryBrief.embeddedTaxonomyCategory.parentTaxonomyVocabulary.name == "Article Categories"]
 					[#assign currentCategoryId = taxonomyCategoryBrief.embeddedTaxonomyCategory.id!"" /]
+
 					[#break /]
 				[/#if]
 			[/#list]
@@ -60,6 +60,7 @@
 	[#if configuration.showCategories && parentCategoryId?has_content]
 		[#attempt]
 			[#assign siblingCategories = restClient.get("/headless-admin-taxonomy/v1.0/taxonomy-categories/" + parentCategoryId + "/taxonomy-categories") /]
+
 			[#if siblingCategories.items?has_content]
 				[#list siblingCategories.items as siblingCategory]
 					[#assign navItems = navItems + [{"data": siblingCategory, "name": siblingCategory.name, "type": "category", "url": "${baseURL}/v/${siblingCategory.id}"}] /]
@@ -70,6 +71,7 @@
 	[#elseif configuration.showCategories && currentCategoryId?has_content]
 		[#attempt]
 			[#assign siblingCategories = restClient.get("/headless-admin-taxonomy/v1.0/taxonomy-vocabularies/${vocabularyId}/taxonomy-categories") /]
+
 			[#if siblingCategories.items?has_content]
 				[#list siblingCategories.items as siblingCategory]
 					[#assign navItems = navItems + [{"data": siblingCategory, "name": siblingCategory.name, "type": "category", "url": "${baseURL}/v/${siblingCategory.id}"}] /]
@@ -94,7 +96,8 @@
 
 		[#if articleFetchCategoryId?has_content]
 			[#attempt]
-				[#assign articles = restClient.get("/headless-delivery/v1.0/sites/${themeDisplay.getScopeGroupId()}/structured-contents?filter=taxonomyCategoryIds/any(t:t eq ${articleFetchCategoryId})&flatten=true") /]
+				[#assign articles = restClient.get("/headless-delivery/v1.0/sites/${themeDisplay.getScopeGroupId()}/structured-contents?search=${articleFetchCategoryId}&flatten=true") /]
+
 				[#if articles.items?has_content]
 					[#list articles.items as article]
 						[#assign navItems = navItems + [{"data": article, "name": article.title, "type": "article", "url": "${baseURL}/w/${article.friendlyUrlPath}"}] /]
@@ -109,7 +112,7 @@
 		[#if configuration.showParentCategory && parentCategory?has_content]
 			<a class="border border-neutral-3 border-radius-lg cp-article-side-panel-back-link cp-article-side-panel-item cp-article-side-panel-link mb-0 p-3" href="${baseURL}/v/${parentCategory.id}">
 				[@clay["icon"] symbol="angle-left-small" /]
-				<span>${parentCategory.name}</span>
+				<span>${htmlUtil.escape(parentCategory.name)}</span>
 			</a>
 		[/#if]
 
@@ -147,7 +150,7 @@
 
 							[#if configuration.showArticles]
 								[#attempt]
-									[#assign articles = restClient.get("/headless-delivery/v1.0/sites/${themeDisplay.getScopeGroupId()}/structured-contents?filter=taxonomyCategoryIds/any(t:t eq ${siblingCategory.id})&flatten=true") /]
+									[#assign articles = restClient.get("/headless-delivery/v1.0/sites/${themeDisplay.getScopeGroupId()}/structured-contents?search=${siblingCategory.id}&flatten=true") /]
 
 									[#if articles?has_content && articles.items?has_content]
 										[#list articles.items as article]
@@ -169,29 +172,29 @@
 									collapsible=true
 									cssClass="bg-transparent ${isCurrentActive?then('active', '')}"
 									extended=isCurrentParent
-									title=siblingCategory.name
+									title='${htmlUtil.escape(siblingCategory.name)}'
 								]
 									<ul class="cp-article-side-panel-list list-unstyled m-0">
 										[#list childNavItems?sort_by("name") as item]
 											<li>
-												<a class="cp-article-side-panel-${item.type} cp-article-side-panel-item cp-article-side-panel-link ${item.active?then('active', '')}" href="${item.url}">
-													${item.name}
+												<a class="cp-article-side-panel-${item.type} cp-article-side-panel-item cp-article-side-panel-link ${item.active?then('active', '')}" href="${htmlUtil.escape(item.url)}">
+													${htmlUtil.escape(item.name)}
 												</a>
 											</li>
 										[/#list]
 									</ul>
 								[/@]
 							[#else]
-								<a class="cp-article-side-panel-item cp-article-side-panel-link ${isCurrentActive?then('active', '')}" href="${sibling.url}">
-									${sibling.name}
+								<a class="cp-article-side-panel-item cp-article-side-panel-link ${isCurrentActive?then('active', '')}" href="${htmlUtil.escape(sibling.url)}">
+									${htmlUtil.escape(sibling.name)}
 								</a>
 							[/#if]
 						[#elseif sibling.type == "article"]
 							[#assign article = sibling.data /]
 							[#assign isCurrentArticleActive = (articleId?has_content && article.id?number == displayObject.resourcePrimKey?number) /]
 
-							<a class="cp-article-side-panel-article cp-article-side-panel-item cp-article-side-panel-link ${isCurrentArticleActive?then('active', '')}" href="${sibling.url}">
-								${sibling.name}
+							<a class="cp-article-side-panel-article cp-article-side-panel-item cp-article-side-panel-link ${isCurrentArticleActive?then('active', '')}" href="${htmlUtil.escape(sibling.url)}">
+								${htmlUtil.escape(sibling.name)}
 							</a>
 						[/#if]
 					[/#list]

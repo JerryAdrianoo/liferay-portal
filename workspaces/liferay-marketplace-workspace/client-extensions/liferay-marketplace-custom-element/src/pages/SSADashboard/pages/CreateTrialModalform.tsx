@@ -10,7 +10,7 @@ import {Size} from '@clayui/modal/lib/types';
 import MultiSelect from '@clayui/multi-select';
 import {zodResolver} from '@hookform/resolvers/zod';
 import classNames from 'classnames';
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo} from 'react';
 import {useForm} from 'react-hook-form';
 
 import {Input} from '../../../components/Input/Input';
@@ -24,35 +24,14 @@ import {
 	OrderStatus as Status,
 	OrderWorkflowStatusCode,
 } from '../../../enums/Order';
+import {useDeliveryProduct} from '../../../hooks/data/useProduct';
 import i18n from '../../../i18n';
 import {Liferay} from '../../../liferay/liferay';
 import zodSchema, {z} from '../../../schema/zod';
 import trialOAuth2 from '../../../services/oauth/Trial';
-import HeadlessCommerceDeliveryCatalog from '../../../services/rest/HeadlessCommerceDeliveryCatalog';
 import ProductPurchaseSSATrial from '../../ProductPurchase/services/ProductPurchaseSSATrial';
 import {useSSADashboardOutlet} from '../SSADashboardOutlet';
-
-type CreateTrialModalFormProps = {
-	items?: PlacedOrder[];
-	modal: {
-		observer: any;
-		onClose: () => void;
-		open: boolean;
-	};
-	mutate: any;
-};
-
-export type FormFields = z.infer<typeof zodSchema.ssaTrialForm>;
-
-type Item = {
-	key: string;
-	label: string;
-	value: string;
-};
-
-const Label = (label: string) => (
-	<Form.Label className="mb-2">{label}</Form.Label>
-);
+import {siteInitializers, trialObjectives} from '../constants';
 
 const SectionTitle = ({title}: {title: string}) => (
 	<>
@@ -61,33 +40,30 @@ const SectionTitle = ({title}: {title: string}) => (
 	</>
 );
 
+type CreateTrialModalFormProps = {
+	modal: {
+		observer: any;
+		onClose: () => void;
+		open: boolean;
+	};
+	mutate: any;
+};
+
+type FormFields = z.infer<typeof zodSchema.ssaTrialForm>;
+
+type Item = {
+	key: string;
+	label: string;
+	value: string;
+};
+
 const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
-	items,
 	modal,
 	mutate,
 }) => {
-	const {properties} = useMarketplaceContext();
 	const {ssaAccount} = useSSADashboardOutlet();
-
-	const [order, setOrder] = useState<any>();
-	const [product, setProduct] = useState<DeliveryProduct | null>(null);
-	const [submitSuccessful, setSubmittingSuccessful] = useState(false);
-
-	useEffect(() => {
-		async function fetchProduct() {
-			const product = await HeadlessCommerceDeliveryCatalog.getProduct(
-				Liferay.CommerceContext.commerceChannelId,
-				properties.productId,
-				new URLSearchParams({
-					'accountId': '-1',
-					'nestedFields': 'skus',
-					'skus.accountId': '-1',
-				})
-			);
-			setProduct(product);
-		}
-		fetchProduct();
-	}, [properties]);
+	const {properties} = useMarketplaceContext();
+	const {data: product} = useDeliveryProduct(properties.productId);
 
 	const productPurchase = useMemo(() => {
 		if (!ssaAccount || !product) {
@@ -98,7 +74,6 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 	}, [ssaAccount, product]);
 
 	const {
-		clearErrors,
 		formState: {errors, isSubmitting},
 		handleSubmit,
 		register,
@@ -107,10 +82,11 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 		watch,
 	} = useForm<FormFields>({
 		defaultValues: {
-			demoDuration: 0,
+			duration: 1,
 			emailAddress: [],
 			objective: '',
 			projectId: '',
+			siteInitializerKey: siteInitializers[0].key,
 		},
 		resolver: zodResolver(zodSchema.ssaTrialForm),
 	});
@@ -119,14 +95,13 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 	const objective = watch('objective');
 	const projectId = watch('projectId');
 
-	const isTestTrial = objective === 'Test';
-
 	useEffect(() => {
-		if (isTestTrial) {
-			setValue('demoDuration', 1);
-			clearErrors('demoDuration');
-		}
-	}, [isTestTrial, setValue, clearErrors]);
+		const suggestedDuration = trialObjectives.find(
+			(trialObjective) => trialObjective.key === objective
+		);
+
+		setValue('duration', suggestedDuration?.days || 1);
+	}, [objective, setValue]);
 
 	const onSubmit = useCallback(
 		async (data: FormFields) => {
@@ -156,19 +131,18 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 			];
 
 			try {
-				const order = await productPurchase?.createOrder({
+				const order = await (
+					productPurchase as ProductPurchaseSSATrial
+				).createOrder({
 					customFields: {
 						[OrderCustomFields.TRIAL_SETTINGS]: JSON.stringify({
 							consoleInviteEmailAddresses,
-							duration: data.demoDuration,
+							duration: data.duration,
 							projectId: data.projectId,
+							siteInitializerKey: data.siteInitializerKey,
 						}),
 					},
 				} as Cart);
-
-				if (!order) {
-					return;
-				}
 
 				mutate(
 					(orders: APIResponse<PlacedOrder>) => ({
@@ -185,27 +159,24 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 							...orders.items,
 						],
 					}),
-					{revalidate: true}
+					{revalidate: false}
 				);
 
+				if (!order) {
+					return;
+				}
+
+				await trialOAuth2.provisioningTrial(order.id);
+
+				mutate((response: APIResponse<PlacedOrder>) => response, {
+					revalidate: true,
+				});
+
 				Liferay.Util.openToast({
-					message: 'Trial is being provisioned.',
+					message: 'Trial successfully provisioned.',
 					title: i18n.translate('success'),
 					type: 'success',
 				});
-
-				setOrder(order);
-				setSubmittingSuccessful(true);
-
-				Liferay.Util.openToast({
-					message: 'Trial is being provisioned.',
-					title: i18n.translate('success'),
-					type: 'success',
-				});
-
-				setOrder(order);
-
-				setSubmittingSuccessful(true);
 			}
 			catch (error) {
 				console.error(error);
@@ -214,40 +185,18 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 					message: i18n.translate('an-unexpected-error-occurred'),
 					type: 'danger',
 				});
-
-				modal.onClose();
 			}
+
+			modal.onClose();
 		},
 		[modal, mutate, productPurchase, setError]
 	);
-
-	useEffect(() => {
-		if (items && order && submitSuccessful) {
-			const inProgress = items.some(
-				(item: PlacedOrder) =>
-					item?.id === order?.id &&
-					item?.orderStatusInfo?.label === Status.PROCESSING
-			);
-
-			if (!inProgress) {
-				setSubmittingSuccessful(false);
-
-				modal.onClose();
-			}
-		}
-	}, [items, modal, order, submitSuccessful]);
-
-	useEffect(() => {
-		if (!modal.open) {
-			setSubmittingSuccessful(false);
-		}
-	}, [modal.open]);
 
 	if (!modal.open) {
 		return null;
 	}
 
-	if (submitSuccessful) {
+	if (isSubmitting) {
 		return (
 			<Modal
 				observer={modal.observer}
@@ -284,7 +233,9 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 			visible={modal.open}
 		>
 			<ClayForm.Group className="mb-3 pr-2 w-100">
-				{Label(i18n.translate('project-id'))}
+				<Form.Label className="mb-2">
+					{i18n.translate('project-id')}
+				</Form.Label>
 
 				<ClayInput.Group
 					className={classNames({
@@ -320,12 +271,14 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 			</ClayForm.Group>
 
 			<ClayForm.Group className="mb-3 mt-2 pr-2 w-100">
-				{Label(i18n.translate('solution'))}
+				<Form.Label className="mb-2">
+					{i18n.translate('solution')}
+				</Form.Label>
 
-				<Input
-					disabled
-					name="site"
-					placeholder={i18n.translate('blank-site')}
+				<Select
+					{...register('siteInitializerKey')}
+					name="siteInitializerKey"
+					options={siteInitializers}
 				/>
 			</ClayForm.Group>
 
@@ -334,32 +287,27 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 
 				<div className="d-flex">
 					<div className="pr-2 w-100">
-						{Label(i18n.translate('objective'))}
+						<Form.Label className="mb-2">
+							{i18n.translate('objective')}
+						</Form.Label>
 
 						<Select
 							{...register('objective')}
 							defaultOptionLabel="Select an option"
 							errors={errors}
 							name="objective"
-							options={[
-								{
-									key: 'Test',
-									name: 'Test',
-								},
-								{
-									key: 'Trial',
-									name: 'Trial',
-								},
-							]}
+							options={trialObjectives}
 						/>
 					</div>
 
 					<div className="pr-2 w-100">
-						{Label(i18n.translate('duration-days'))}
+						<Form.Label className="mb-2">
+							{i18n.translate('duration-days')}
+						</Form.Label>
 						<Input
-							{...register('demoDuration')}
-							disabled={isTestTrial}
-							errorMessage={errors.demoDuration?.message}
+							{...register('duration')}
+							disabled={!objective}
+							errorMessage={errors.duration?.message}
 							max={60}
 							min={1}
 							type="number"
@@ -371,7 +319,9 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 			<div className="mb-3 pr-2 w-100">
 				<SectionTitle title={i18n.translate('additional-admin')} />
 
-				{Label(i18n.translate('email-address'))}
+				<Form.Label className="mb-2">
+					{i18n.translate('email-address')}
+				</Form.Label>
 
 				<MultiSelect
 					className="bg-white marketplace-form-select"
@@ -399,6 +349,7 @@ const CreateTrialModalForm: React.FC<CreateTrialModalFormProps> = ({
 				>
 					{i18n.translate('cancel')}
 				</Button>
+
 				<Button
 					disabled={isSubmitting}
 					displayType="primary"

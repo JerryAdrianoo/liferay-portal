@@ -221,10 +221,33 @@ test('Behavior of item actions', async ({fdsSamplePage, page}) => {
 	});
 
 	await test.step('Sample view action opens an alert message', async () => {
-		await fdsSamplePage.clickItemAction(sampleView);
+		let dialogMessage = '';
 
 		page.on('dialog', async (dialog) => {
-			await expect(dialog.message).toBe('Hello Sample1!');
+			dialogMessage = dialog.message();
+			await dialog.accept();
+		});
+
+		for (const visualizationMode of Object.values(EFDSVisualizationMode)) {
+			await test.step(`Sample view action receives the list of items, ${visualizationMode}`, async () => {
+				await fdsSamplePage.changeVisualizationMode({
+					page,
+					visualizationMode,
+				});
+
+				await fdsSamplePage.clickItemAction(sampleView);
+				expect(dialogMessage).toContain('Hello Sample1!');
+				expect(dialogMessage).toContain('element #1');
+
+				await fdsSamplePage.clickItemAction(sampleView, 19);
+				expect(dialogMessage).toContain('Hello Sample32!');
+				expect(dialogMessage).toContain('element #20');
+			});
+		}
+
+		await fdsSamplePage.changeVisualizationMode({
+			page,
+			visualizationMode: EFDSVisualizationMode.TABLE,
 		});
 	});
 

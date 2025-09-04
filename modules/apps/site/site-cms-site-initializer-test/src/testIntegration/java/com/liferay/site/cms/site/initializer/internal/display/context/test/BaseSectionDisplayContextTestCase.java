@@ -31,6 +31,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -61,55 +62,77 @@ import org.junit.Test;
 public abstract class BaseSectionDisplayContextTestCase
 	extends BaseDisplayContextTestCase {
 
-	@Test
-	public void testGetAdditionalProps() throws Exception {
-		Assert.assertEquals(
-			HashMapBuilder.<String, Object>put(
-				"autocompleteURL",
-				() -> StringBundler.concat(
-					"/o/search/v1.0/search?emptySearch=",
-					"true&entryClassNames=com.liferay.portal.kernel.model.",
-					"User,com.liferay.portal.kernel.model.",
-					"UserGroup&nestedFields=embedded")
-			).put(
-				"cmsGroupId",
-				() -> {
-					try {
-						Group group = groupLocalService.getGroup(
-							TestPropsValues.getCompanyId(), GroupConstants.CMS);
+	public HashMap<String, Object> getAdditionalProps() throws Exception {
+		return ReflectionTestUtil.invoke(
+			getSectionDisplayContext(getMockHttpServletRequest()),
+			"getAdditionalProps", new Class<?>[0]);
+	}
 
-						return GetterUtil.getLong(group.getGroupId());
-					}
-					catch (PortalException portalException) {
-						return null;
-					}
+	public HashMap<String, Object> getBaseAdditionalProps() {
+		return HashMapBuilder.<String, Object>put(
+			"autocompleteURL",
+			() -> StringBundler.concat(
+				"/o/search/v1.0/search?emptySearch=",
+				"true&entryClassNames=com.liferay.portal.kernel.model.",
+				"User,com.liferay.portal.kernel.model.",
+				"UserGroup&nestedFields=embedded")
+		).put(
+			"cmsGroupId",
+			() -> {
+				try {
+					Group group = groupLocalService.getGroup(
+						TestPropsValues.getCompanyId(), GroupConstants.CMS);
+
+					return GetterUtil.getLong(group.getGroupId());
 				}
-			).put(
-				"collaboratorURLs",
-				() -> {
-					Map<String, String> collaboratorURL = new HashMap<>();
+				catch (PortalException portalException) {
+					return null;
+				}
+			}
+		).put(
+			"collaboratorURLs",
+			() -> {
+				Map<String, String> collaboratorURL = new HashMap<>();
 
-					for (ObjectDefinition objectDefinition :
-							objectDefinitionService.getCMSObjectDefinitions(
-								group.getCompanyId(),
-								getObjectFolderExternalReferenceCodes())) {
-
-						collaboratorURL.put(
-							objectDefinition.getClassName(),
-							StringBundler.concat(
-								"/o", objectDefinition.getRESTContextPath(),
-								"/{objectEntryId}/collaborators"));
-					}
+				for (ObjectDefinition objectDefinition :
+						objectDefinitionService.getCMSObjectDefinitions(
+							group.getCompanyId(),
+							getObjectFolderExternalReferenceCodes())) {
 
 					collaboratorURL.put(
-						ObjectEntryFolder.class.getName(),
-						"/o/headless-object/v1.0/object-entry-folders" +
-							"/{objectEntryFolderId}/collaborators");
-
-					return collaboratorURL;
+						objectDefinition.getClassName(),
+						StringBundler.concat(
+							"/o", objectDefinition.getRESTContextPath(),
+							"/{objectEntryId}/collaborators"));
 				}
+
+				collaboratorURL.put(
+					ObjectEntryFolder.class.getName(),
+					"/o/headless-object/v1.0/object-entry-folders" +
+						"/{objectEntryFolderId}/collaborators");
+
+				return collaboratorURL;
+			}
+		).build();
+	}
+
+	@Test
+	public void getToolbarProps() throws Exception {
+		AssertUtils.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"title", "test"
+			).put(
+				"toolbarClassName", "section-toolbar tbar-light"
+			).put(
+				"toolbarTitleClassName", "section-toolbar-title"
 			).build(),
-			getAdditionalProps());
+			_getToolbarProps());
+	}
+
+	@Test
+	public void testGetAdditionalProps() throws Exception {
+		AssertUtils.assertEquals(
+			getBaseAdditionalProps(), getAdditionalProps());
 	}
 
 	@Test
@@ -304,12 +327,6 @@ public abstract class BaseSectionDisplayContextTestCase
 		Assert.assertEquals(icon, fdsActionDropdownItem.get("icon"));
 		Assert.assertEquals(label, fdsActionDropdownItem.get("label"));
 		Assert.assertEquals(type, fdsActionDropdownItem.get("type"));
-	}
-
-	protected HashMap<String, Object> getAdditionalProps() throws Exception {
-		return ReflectionTestUtil.invoke(
-			getSectionDisplayContext(getMockHttpServletRequest()),
-			"getAdditionalProps", new Class<?>[0]);
 	}
 
 	protected CreationMenu getCreationMenu() throws Exception {
@@ -530,6 +547,12 @@ public abstract class BaseSectionDisplayContextTestCase
 		}
 
 		return ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES;
+	}
+
+	private HashMap<String, Object> _getToolbarProps() throws Exception {
+		return ReflectionTestUtil.invoke(
+			getSectionDisplayContext(getMockHttpServletRequest()),
+			"getToolbarProps", new Class<?>[0]);
 	}
 
 	private void _testGetCreationMenu(

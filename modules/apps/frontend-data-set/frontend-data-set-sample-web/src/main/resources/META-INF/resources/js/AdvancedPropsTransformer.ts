@@ -10,6 +10,7 @@ import {fetch} from 'frontend-js-web';
 
 import CustomAuthorTableCell from './CustomAuthorTableCell';
 import SampleInfoPanel from './SampleInfoPanel';
+import dummyUploader from './dummyUploader';
 
 import type {
 	ICardSchema,
@@ -32,6 +33,7 @@ export default function propsTransformer({
 	const fileDropSettings: IFileDropSettings = {
 		enabled: true,
 		isDropTarget: ({item}: {item: any}) => item.color !== 'Green',
+		onFileDrop: dummyUploader,
 	};
 
 	const views: Array<IView> = otherProps.views;
@@ -113,6 +115,7 @@ export default function propsTransformer({
 		onActionDropdownItemClick({
 			action,
 			itemData,
+			items,
 			loadData,
 			openSidePanel,
 		}: any) {
@@ -123,7 +126,16 @@ export default function propsTransformer({
 				loadData();
 			}
 			else if (action.data.id === 'sampleMessage') {
-				alert(`${greeting} ${itemData.title}!`);
+				const itemsIds = items
+					.map((item: any): string => item.id)
+					.join(',');
+
+				const currentItemPos =
+					items.findIndex((item: any) => item.id === itemData.id) + 1;
+
+				alert(
+					`${greeting} ${itemData.title}! You are ${itemData.id}, the element #${currentItemPos} in [${itemsIds}]`
+				);
 			}
 		},
 		onBulkActionItemClick({

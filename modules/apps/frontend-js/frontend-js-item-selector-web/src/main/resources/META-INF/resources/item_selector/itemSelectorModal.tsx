@@ -5,25 +5,36 @@
 
 import ClayButton from '@clayui/button';
 import ClayModal from '@clayui/modal';
+import {InternalDispatch} from '@clayui/shared';
 import {
 	FrontendDataSet,
 	IFrontendDataSetProps,
 } from '@liferay/frontend-data-set-web';
 import classNames from 'classnames';
-import {sub} from 'frontend-js-web';
-import React, {useState} from 'react';
+import {getObjectValueFromPath, sub} from 'frontend-js-web';
+import React, {useEffect, useState} from 'react';
 
 export interface IItemSelectorModalProps<T> {
 
 	/**
 	 * Configuration properties of the Frontend Data Set used to display data.
 	 */
-	fdsProps: IFrontendDataSetProps;
+	fdsProps: Omit<IFrontendDataSetProps, 'selectedItems' | 'selectedItemsKey'>;
 
 	/**
-	 * Fieldname from apiURL response used to display selection value in the modal.
+	 * Items that are currently selected (controlled).
 	 */
-	itemNameLocator: string | ((item: T) => any);
+	items: T[];
+
+	/**
+	 * A string key used to locate the id, label, or value within each item.
+	 * Can be used as a period separated path (e.g.: 'embedded.id').
+	 */
+	locator?: {
+		id: string;
+		label: string;
+		value: string;
+	};
 
 	/**
 	 * Expects the 'observer' property from the Clay useModal hook.
@@ -31,14 +42,14 @@ export interface IItemSelectorModalProps<T> {
 	observer: any;
 
 	/**
+	 * Callback for when items are added or removed. Only called when modal selection is confirmed (controlled).
+	 */
+	onItemsChange: InternalDispatch<T[]>;
+
+	/**
 	 * Expects the 'onOpenChange' property from the Clay useModal hook.
 	 */
 	onOpenChange: (value: boolean) => void;
-
-	/**
-	 * Callback function called when item selection is confirmed.
-	 */
-	onSelection: (item?: T | null) => void;
 
 	/**
 	 * Expects the 'open' property from the Clay useModal hook.
@@ -53,22 +64,33 @@ export interface IItemSelectorModalProps<T> {
 
 function ItemSelectorModal<T extends Record<string, any>>({
 	fdsProps,
-	itemNameLocator,
+	items: externalItems,
+	locator = {
+		id: 'id',
+		label: 'title',
+		value: 'id',
+	},
 	observer,
+	onItemsChange,
 	onOpenChange,
-	onSelection,
 	open,
 	type,
 }: IItemSelectorModalProps<T>) {
-	const [selectedItem, setSelectedItem] = useState<T | null>();
+	const [selectedItems, setSelectedItems] = useState(externalItems);
 
-	const getSelectedItemName = function (selectedItem: T) {
-		if (typeof itemNameLocator === 'string') {
-			return selectedItem[itemNameLocator];
+	useEffect(() => {
+		if (!open) {
+			setSelectedItems(externalItems);
 		}
-		else {
-			return itemNameLocator(selectedItem);
-		}
+	}, [externalItems, open]);
+
+	const hasSelectedItems = !!selectedItems.length;
+
+	const getSelectedItemLabel = function (selectedItem: T) {
+		return getObjectValueFromPath({
+			object: selectedItem,
+			path: locator.label,
+		});
 	};
 
 	return open ? (
@@ -81,29 +103,42 @@ function ItemSelectorModal<T extends Record<string, any>>({
 				<FrontendDataSet
 					{...fdsProps}
 					onSelect={({
-						selectedItems,
+						selectedItems: newSelectedItems,
 					}: {
-						selectedItems: Array<T> | T;
+						selectedItems: T[];
 					}) => {
-						fdsProps.selectionType === 'single'
-							? setSelectedItem((selectedItems as Array<T>)[0])
-							: setSelectedItem(selectedItems as T);
+						if (
+							fdsProps.selectionType === 'single' &&
+							newSelectedItems.length > 1
+						) {
+							setSelectedItems(newSelectedItems.slice(0, 1));
+						}
+						else {
+							setSelectedItems(newSelectedItems);
+						}
 					}}
+					selectedItems={selectedItems.map((item) =>
+						getObjectValueFromPath({
+							object: item,
+							path: locator.value,
+						})
+					)}
+					selectedItemsKey={locator.id}
 					style="fluid"
 				/>
 			</ClayModal.Body>
 
 			<ClayModal.Footer
 				className={classNames({
-					'bg-primary-l3 border-primary border-top': selectedItem,
+					'bg-primary-l3 border-primary border-top': hasSelectedItems,
 				})}
 				first={
-					selectedItem ? (
+					hasSelectedItems ? (
 						<>
 							{sub(
 								Liferay.Language.get('x-selected'),
 								<strong>
-									{getSelectedItemName(selectedItem)}
+									{getSelectedItemLabel(selectedItems[0])}
 								</strong>
 							)}
 						</>
@@ -115,8 +150,6 @@ function ItemSelectorModal<T extends Record<string, any>>({
 							className="btn-cancel"
 							displayType="secondary"
 							onClick={() => {
-								setSelectedItem(null);
-
 								onOpenChange(false);
 							}}
 						>
@@ -125,9 +158,13 @@ function ItemSelectorModal<T extends Record<string, any>>({
 
 						<ClayButton
 							className="item-preview selector-button"
-							disabled={!selectedItem}
+							disabled={!hasSelectedItems}
 							onClick={() => {
-								onSelection(selectedItem);
+								onItemsChange(
+									fdsProps.selectionType === 'single'
+										? selectedItems.slice(0, 1)
+										: selectedItems
+								);
 
 								onOpenChange(false);
 							}}

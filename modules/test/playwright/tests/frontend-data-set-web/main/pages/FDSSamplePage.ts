@@ -28,6 +28,7 @@ export class FDSSamplePage {
 	readonly customViewsDeleteAlert: Locator;
 	readonly customViewsSaveModal: Locator;
 	readonly customViewsSelectorButton: Locator;
+	readonly emptyStateContainer: Locator;
 	readonly fdsWrapper: Locator;
 	readonly fileDropModal: Locator;
 	readonly infoPanel: Locator;
@@ -40,6 +41,7 @@ export class FDSSamplePage {
 	};
 	readonly managementToolbar: {
 		container: Locator;
+		searchButton: Locator;
 		searchInput: Locator;
 	};
 	readonly page: Page;
@@ -94,9 +96,10 @@ export class FDSSamplePage {
 		this.customViewsSelectorButton = page.getByLabel('Views', {
 			exact: true,
 		});
+		this.emptyStateContainer = page.locator('.fds .c-empty-state');
 		this.fdsWrapper = page.locator('div.data-set-wrapper').first();
 		this.fileDropModal = page.getByRole('dialog', {
-			name: 'Files',
+			name: 'Custom dummy file uploader',
 		});
 		this.infoPanel = page.locator('.fds-info-panel');
 
@@ -117,11 +120,17 @@ export class FDSSamplePage {
 			items: listItems,
 		};
 
+		const managementToolbarContainer =
+			page.getByTestId('managementToolbar');
+
 		this.managementToolbar = {
-			container: page.getByTestId('managementToolbar'),
-			searchInput: page
-				.getByTestId('managementToolbar')
-				.locator('input[type="search"]'),
+			container: managementToolbarContainer,
+			searchButton: managementToolbarContainer.getByRole('button', {
+				name: 'Search',
+			}),
+			searchInput: managementToolbarContainer.locator(
+				'input[type="search"]'
+			),
 		};
 
 		this.page = page;

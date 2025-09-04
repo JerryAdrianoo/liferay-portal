@@ -76,25 +76,33 @@ const FDS_DEFAULT_PROPS: Partial<IFrontendDataSetProps> = {
 
 const assetLibrariesItemSelectorConfig = {
 	apiURL: `${location.origin}/o/headless-asset-library/v1.0/asset-libraries`,
-	itemNameLocator: 'name',
+	locator: {
+		id: 'id',
+		label: 'name',
+		value: 'id',
+	},
 	type: Liferay.Language.get('space'),
 	views: assetLibraryViews,
 };
 
 const documentsItemSelectorConfig = {
 	apiURL: `${location.origin}/o/headless-delivery/v1.0/sites/${Liferay.ThemeDisplay.getSiteGroupId()}/documents`,
-	itemNameLocator: 'fileName',
+	locator: {
+		id: 'id',
+		label: 'fileName',
+		value: 'id',
+	},
 	type: Liferay.Language.get('document'),
 	views: documentViews,
 };
 
 const userAccountsItemSelectorConfig = {
 	apiURL: `${location.origin}/o/headless-admin-user/v1.0/user-accounts`,
-	itemNameLocator: (item: User) =>
-		item.givenName +
-		' (' +
-		item.roleBriefs?.map((role) => role.name).join(', ') +
-		')',
+	locator: {
+		id: 'id',
+		label: 'givenName',
+		value: 'id',
+	},
 	type: Liferay.Language.get('user'),
 	views: userViews,
 };
@@ -163,7 +171,7 @@ export default function ItemSelectorSamples() {
 							apiURL={`${location.origin}/o/headless-asset-library/v1.0/asset-libraries`}
 							as={ClayInput}
 							items={space ? [space] : []}
-							onItemsChange={(items: Array<Space>) => {
+							onItemsChange={(items: Space[]) => {
 								if (items.length) {
 									setSpace(items[0]);
 								}
@@ -234,7 +242,7 @@ export default function ItemSelectorSamples() {
 					displaySelectedItems={false}
 					items={documents}
 					multiSelect
-					onItemsChange={(items: Array<Document>) => {
+					onItemsChange={(items: Document[]) => {
 						setDocuments(items);
 					}}
 					placeholder="Select a Document"
@@ -307,11 +315,13 @@ export default function ItemSelectorSamples() {
 									EItemSelectorModalViewsConfig.DOCUMENTS,
 							}),
 						},
-						itemNameLocator:
-							documentsItemSelectorConfig.itemNameLocator,
+						items: document ? [document] : [],
+						locator: documentsItemSelectorConfig.locator,
 						observer: fileItemSelectorObserver,
+						onItemsChange: (items: Document[]) => {
+							setDocument(items[0]);
+						},
 						onOpenChange: fileItemSelectorOpenChange,
-						onSelection: setDocument,
 						open: fileItemSelectorOpen,
 						type: documentsItemSelectorConfig.type,
 					}}
@@ -328,11 +338,13 @@ export default function ItemSelectorSamples() {
 									EItemSelectorModalViewsConfig.ASSET_LIBRARIES,
 							}),
 						},
-						itemNameLocator:
-							assetLibrariesItemSelectorConfig.itemNameLocator,
+						items: space2 ? [space2] : [],
+						locator: assetLibrariesItemSelectorConfig.locator,
 						observer: spaceItemSelectorObserver,
+						onItemsChange: (items: Space[]) => {
+							setSpace2(items[0]);
+						},
 						onOpenChange: spaceItemSelectorOpenChange,
-						onSelection: setSpace2,
 						open: spaceItemSelectorOpen,
 						type: assetLibrariesItemSelectorConfig.type,
 					}}
@@ -349,11 +361,13 @@ export default function ItemSelectorSamples() {
 									EItemSelectorModalViewsConfig.USER_ACCOUNTS,
 							}),
 						},
-						itemNameLocator:
-							userAccountsItemSelectorConfig.itemNameLocator,
+						items: user ? [user] : [],
+						locator: userAccountsItemSelectorConfig.locator,
 						observer: userItemSelectorObserver,
+						onItemsChange: (items: User[]) => {
+							setUser(items[0]);
+						},
 						onOpenChange: userItemSelectorOpenChange,
-						onSelection: setUser,
 						open: userItemSelectorOpen,
 						type: userAccountsItemSelectorConfig.type,
 					}}

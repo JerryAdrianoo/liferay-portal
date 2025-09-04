@@ -142,6 +142,12 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 			return;
 		}
 
+		boolean empty = false;
+
+		if (element.childNodeSize() == 0) {
+			empty = true;
+		}
+
 		linkElement.attr("href", href);
 
 		if (nofollow) {
@@ -149,15 +155,24 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 		}
 
 		_replaceLinkContent(
-			element, firstChildElement, linkElement, replaceLink);
+			element, empty, firstChildElement, linkElement, replaceLink);
 
-		if (((linkElement != element) || processEditableTag) &&
-			Validator.isNotNull(element.html())) {
+		if (((linkElement != element) || processEditableTag) && !empty &&
+			(linkElement.parent() != element)) {
 
-			element.html(linkElement.outerHtml());
+			element.empty();
+
+			element.appendChild(linkElement);
 		}
-		else if ((linkElement != element) && Validator.isNull(element.html())) {
-			element.replaceWith(linkElement);
+		else if ((linkElement != element) && empty) {
+			Element parentElement = element.parent();
+
+			if (element.parent() == parentElement) {
+				element.replaceWith(linkElement);
+			}
+			else {
+				parentElement.appendChild(linkElement);
+			}
 		}
 	}
 
@@ -211,20 +226,36 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 	}
 
 	private void _replaceLinkContent(
-		Element element, Element firstChildElement, Element linkElement,
-		boolean replaceLink) {
+		Element element, boolean empty, Element firstChildElement,
+		Element linkElement, boolean replaceLink) {
 
-		if (replaceLink && Validator.isNull(firstChildElement.html())) {
-			linkElement.html(firstChildElement.outerHtml());
-		}
-		else if (replaceLink && Validator.isNotNull(firstChildElement.html())) {
-			linkElement.html(firstChildElement.html());
-		}
-		else if (Validator.isNull(element.html())) {
-			linkElement.html(element.outerHtml());
+		if (replaceLink) {
+			if (linkElement == firstChildElement) {
+				return;
+			}
+
+			linkElement.empty();
+
+			if (firstChildElement.childNodeSize() == 0) {
+				linkElement.appendChild(firstChildElement);
+			}
+			else {
+				linkElement.appendChildren(firstChildElement.childNodes());
+			}
 		}
 		else {
-			linkElement.html(element.html());
+			if (linkElement == element) {
+				return;
+			}
+
+			linkElement.empty();
+
+			if (empty) {
+				linkElement.appendChild(element);
+			}
+			else {
+				linkElement.appendChildren(element.childNodes());
+			}
 		}
 	}
 

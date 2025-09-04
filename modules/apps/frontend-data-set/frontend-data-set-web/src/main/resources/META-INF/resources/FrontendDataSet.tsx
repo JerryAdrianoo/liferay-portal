@@ -12,6 +12,7 @@ import {
 	ClientExtensionDefinition,
 	ClientExtensionResolution,
 	fetch,
+	getObjectValueFromPath,
 	loadClientExtensions,
 	loadModule,
 } from 'frontend-js-web';
@@ -30,9 +31,6 @@ import FDSDndProvider from './dnd/FDSDndProvider';
 import isFileDropEnabled from './utils/isFileDropEnabled';
 
 import './styles/main.scss';
-
-import ClayEmptyState from '@clayui/empty-state';
-
 import DnDContext from './DnDContext';
 import FrontendDataSetContext, {
 	IDataSetData,
@@ -40,12 +38,12 @@ import FrontendDataSetContext, {
 } from './FrontendDataSetContext';
 import useFDSDrop from './dnd/useFDSDrop';
 import useFileUploader from './dnd/useFileUploader';
+import EmptyState from './empty_state/EmptyState';
 import {InfoPanel} from './info_panel/InfoPanel';
 
 // @ts-ignore
 
 import ManagementBar from './management_bar/ManagementBar';
-import CreationMenu from './management_bar/controls/CreationMenu';
 import {FILTER_IMPLEMENTATIONS} from './management_bar/controls/filters/Filter';
 
 // @ts-ignore
@@ -58,7 +56,6 @@ import SidePanel from './side_panel/SidePanel';
 import filterCreationActions from './utils/actionItems/filterCreationActions';
 import EVENTS from './utils/eventsDefinitions';
 import getRandomId from './utils/getRandomId';
-import getSelectedItemValue from './utils/getSelectedItemValue';
 
 // @ts-ignore
 
@@ -172,6 +169,8 @@ const FrontendDataSetContent = ({
 	const [total, setTotal] = useState(0);
 
 	const {fileDropSettings} = useContext(DnDContext);
+
+	const isMounted = useIsMounted();
 
 	const getInitialViewsState = () => {
 		const customInternalViews =
@@ -325,7 +324,43 @@ const FrontendDataSetContent = ({
 		sorts,
 	]);
 
-	const isMounted = useIsMounted();
+	const onSearch = useCallback(
+		({query}: {query: string}) => {
+			if (apiURL || appURL) {
+				setSearching(true);
+
+				setSearchParam(query);
+			}
+			else {
+				setItems(
+					itemsProp?.length
+						? itemsProp.filter((item) => {
+								return JSON.stringify(
+									Object.values(item)
+								).includes(query);
+							})
+						: []
+				);
+			}
+		},
+		[apiURL, appURL, itemsProp]
+	);
+
+	const onClearFilters = useCallback(() => {
+		setSearching(true);
+
+		viewsDispatch({
+			type: VIEWS_ACTION_TYPES.UPDATE_FILTERS,
+			value: filters.map((filter: any) => ({
+				...filter,
+				active: false,
+				odataFilterString: undefined,
+				selectedData: undefined,
+			})),
+		});
+
+		onSearch({query: ''});
+	}, [filters, onSearch, viewsDispatch]);
 
 	function updateDataSetItems(dataSetData: IDataSetData) {
 		const remappedItems = dataSetData.items.map((item) => {
@@ -580,8 +615,8 @@ const FrontendDataSetContent = ({
 
 						const itemKeys = new Set(
 							data.items.map((item: any) =>
-								getSelectedItemValue({
-									item,
+								getObjectValueFromPath({
+									object: item,
 									path: selectedItemsKey,
 								})
 							)
@@ -616,15 +651,17 @@ const FrontendDataSetContent = ({
 			selectedItemsValue.forEach((value) => {
 				let selectedItem = items.find(
 					(item) =>
-						getSelectedItemValue({item, path: selectedItemsKey}) ===
-						value
+						getObjectValueFromPath({
+							object: item,
+							path: selectedItemsKey,
+						}) === value
 				);
 
 				if (!selectedItem) {
 					selectedItem = selectedItems.find(
 						(item) =>
-							getSelectedItemValue({
-								item,
+							getObjectValueFromPath({
+								object: item,
 								path: selectedItemsKey,
 							}) === value
 					);
@@ -841,18 +878,18 @@ const FrontendDataSetContent = ({
 									items
 										.filter(
 											(item) =>
-												getSelectedItemValue({
-													item,
+												getObjectValueFromPath({
+													object: item,
 													path: selectedItemsKey,
 												}) !==
-												getSelectedItemValue({
-													item: selectedItem,
+												getObjectValueFromPath({
+													object: selectedItem,
 													path: selectedItemsKey,
 												})
 										)
 										.map((item) =>
-											getSelectedItemValue({
-												item,
+											getObjectValueFromPath({
+												object: item,
 												path: selectedItemsKey,
 											})
 										)
@@ -863,8 +900,8 @@ const FrontendDataSetContent = ({
 							else {
 								selectItems({
 									trigger,
-									value: getSelectedItemValue({
-										item: selectedItem,
+									value: getObjectValueFromPath({
+										object: selectedItem,
 										path: selectedItemsKey,
 									}),
 								});
@@ -874,24 +911,13 @@ const FrontendDataSetContent = ({
 						{...currentViewProps}
 					/>
 				) : (
-					<ClayEmptyState
-						description={
-							emptyState?.description ??
-							Liferay.Language.get('sorry,-no-results-were-found')
-						}
-						imgSrc={
-							Liferay.ThemeDisplay.getPathThemeImages() +
-							(emptyState?.image ?? '/states/search_state.svg')
-						}
-						title={
-							emptyState?.title ??
-							Liferay.Language.get('no-results-found')
-						}
-					>
-						{creationMenu && (
-							<CreationMenu {...creationMenu} inEmptyState />
-						)}
-					</ClayEmptyState>
+					<EmptyState
+						creationMenu={creationMenu}
+						emptyStateConfiguration={emptyState}
+						filters={filters}
+						onClearFilters={onClearFilters}
+						searchParam={searchParam}
+					/>
 				)}
 			</div>
 		) : (
@@ -1121,7 +1147,10 @@ const FrontendDataSetContent = ({
 	function applyItemInlineUpdates(itemKey: any) {
 		const itemToBeUpdated = items.find(
 			(item) =>
-				getSelectedItemValue({item, path: selectedItemsKey}) === itemKey
+				getObjectValueFromPath({
+					object: item,
+					path: selectedItemsKey,
+				}) === itemKey
 		);
 
 		const defaultBody = inlineEditingSettings?.defaultBodyContent || {};
@@ -1169,25 +1198,6 @@ const FrontendDataSetContent = ({
 				throw error;
 			});
 	}
-
-	const onSearch = ({query}: {query: string}) => {
-		if (apiURL || appURL) {
-			setSearching(true);
-
-			setSearchParam(query);
-		}
-		else {
-			setItems(
-				itemsProp?.length
-					? itemsProp.filter((item) => {
-							return JSON.stringify(Object.values(item)).includes(
-								query
-							);
-						})
-					: []
-			);
-		}
-	};
 
 	const selectable = Boolean(
 		selectedItemsKey && (bulkActions?.length || selectionType === 'single')
@@ -1345,7 +1355,7 @@ const FrontendDataSet = ({
 				isDropTarget: () => true,
 			};
 
-	const {onFileDrop} = useFileUploader({
+	const {handleFileDrop} = useFileUploader({
 		fileDropSettings,
 		selectedItemsKey,
 	});
@@ -1354,7 +1364,7 @@ const FrontendDataSet = ({
 		<DnDContext.Provider
 			value={{
 				fileDropSettings,
-				onFileDrop,
+				handleFileDrop,
 			}}
 		>
 			<FDSDndProvider>

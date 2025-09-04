@@ -8,12 +8,19 @@ import {openModal} from 'frontend-js-components-web';
 
 import formatActionURL from '../../common/utils/formatActionURL';
 import FilePreviewerModalContent from '../modal/FilePreviewerModalContent';
+import shareAction from './actions/shareAction';
 import AssetRenderer from './cell_renderers/AssetRenderer';
 
 export default function HomeRecentAssetsFDSPropsTransformer({
+	additionalProps,
 	itemsActions = [],
 	...otherProps
 }: {
+	additionalProps: {
+		autocompleteURL: string;
+		cmsGroupId?: number;
+		collaboratorURLs: Record<string, string>;
+	};
 	itemsActions?: any[];
 	otherProps: any;
 }) {
@@ -36,7 +43,11 @@ export default function HomeRecentAssetsFDSPropsTransformer({
 						Boolean(item?.embedded?.file?.link?.href),
 				};
 			}
-			else if (action?.data?.id === 'view-content') {
+			else if (
+				action?.data?.id === 'export-for-translation' ||
+				action?.data?.id === 'import-translation' ||
+				action?.data?.id === 'view-content'
+			) {
 				return {
 					...action,
 					isVisible: (item: any) => Boolean(!item?.embedded?.file),
@@ -60,7 +71,19 @@ export default function HomeRecentAssetsFDSPropsTransformer({
 			event: Event;
 			itemData: any;
 		}) => {
-			if (action?.data?.id === 'view-content') {
+			if (
+				action?.data?.id === 'export-for-translation' ||
+				action?.data?.id === 'import-translation'
+			) {
+				event?.preventDefault();
+
+				openModal({
+					size: 'full-screen',
+					title: action.label,
+					url: formatActionURL(itemData, action.href),
+				});
+			}
+			else if (action?.data?.id === 'view-content') {
 				event?.preventDefault();
 
 				openModal({
@@ -80,6 +103,17 @@ export default function HomeRecentAssetsFDSPropsTransformer({
 							headerName: itemData.embedded.title,
 						}),
 					size: 'full-screen',
+				});
+			}
+			else if (action?.data?.id === 'share') {
+				const {autocompleteURL, collaboratorURLs} = additionalProps;
+
+				shareAction({
+					autocompleteURL,
+					collaboratorURL: collaboratorURLs[itemData.entryClassName],
+					creator: itemData.embedded.creator,
+					itemId: itemData.embedded.id,
+					title: itemData.embedded?.title,
 				});
 			}
 		},

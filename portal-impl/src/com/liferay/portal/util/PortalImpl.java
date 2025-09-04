@@ -4719,11 +4719,8 @@ public class PortalImpl implements Portal {
 
 		Theme theme = themeDisplay.getTheme();
 
-		Map<String, String[]> parameterMap = null;
-
-		if (Validator.isNotNull(queryString)) {
-			parameterMap = HttpComponentsUtil.getParameterMap(queryString);
-		}
+		Set<String> parameterNames = HttpComponentsUtil.getParameterNames(
+			queryString);
 
 		StringBundler sb = new StringBundler(15);
 
@@ -4735,7 +4732,7 @@ public class PortalImpl implements Portal {
 
 		// Browser id
 
-		if ((parameterMap == null) || !parameterMap.containsKey("browserId")) {
+		if (!parameterNames.contains("browserId")) {
 			sb.append("?browserId=");
 			sb.append(BrowserSnifferUtil.getBrowserId(httpServletRequest));
 
@@ -4745,7 +4742,7 @@ public class PortalImpl implements Portal {
 		// Theme and color scheme
 
 		if ((uri.endsWith(".css") || uri.endsWith(".jsp")) &&
-			((parameterMap == null) || !parameterMap.containsKey("themeId"))) {
+			!parameterNames.contains("themeId")) {
 
 			if (firstParam) {
 				sb.append("?themeId=");
@@ -4759,10 +4756,7 @@ public class PortalImpl implements Portal {
 			sb.append(URLCodec.encodeURL(theme.getThemeId()));
 		}
 
-		if (uri.endsWith(".jsp") &&
-			((parameterMap == null) ||
-			 !parameterMap.containsKey("colorSchemeId"))) {
-
+		if (uri.endsWith(".jsp") && !parameterNames.contains("colorSchemeId")) {
 			if (firstParam) {
 				sb.append("?colorSchemeId=");
 
@@ -4779,9 +4773,7 @@ public class PortalImpl implements Portal {
 
 		// Minifier
 
-		if ((parameterMap == null) ||
-			!parameterMap.containsKey("minifierType")) {
-
+		if (!parameterNames.contains("minifierType")) {
 			String minifierType = StringPool.BLANK;
 
 			if (uri.endsWith(".css") || uri.endsWith("css.jsp") ||
@@ -4846,9 +4838,7 @@ public class PortalImpl implements Portal {
 
 		// Timestamp
 
-		if (((parameterMap == null) || !parameterMap.containsKey("t")) &&
-			!(timestamp < 0)) {
-
+		if (!parameterNames.contains("t") && !(timestamp < 0)) {
 			if (timestamp == 0) {
 				String portalURL = getPortalURL(httpServletRequest);
 
@@ -7302,12 +7292,16 @@ public class PortalImpl implements Portal {
 	}
 
 	protected String removeRedirectParameter(String url) {
-		Map<String, String[]> parameterMap = HttpComponentsUtil.getParameterMap(
+		if (!url.contains("redirect")) {
+			return url;
+		}
+
+		Set<String> parameterNames = HttpComponentsUtil.getParameterNames(
 			HttpComponentsUtil.getQueryString(url));
 
-		for (String parameter : parameterMap.keySet()) {
-			if (parameter.endsWith("redirect")) {
-				url = HttpComponentsUtil.removeParameter(url, parameter);
+		for (String parameterName : parameterNames) {
+			if (parameterName.endsWith("redirect")) {
+				url = HttpComponentsUtil.removeParameter(url, parameterName);
 			}
 		}
 

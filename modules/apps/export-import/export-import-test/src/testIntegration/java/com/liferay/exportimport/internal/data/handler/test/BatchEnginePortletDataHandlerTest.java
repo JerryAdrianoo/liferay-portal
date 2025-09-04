@@ -26,6 +26,9 @@ import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalSer
 import com.liferay.exportimport.kernel.service.ExportImportLocalService;
 import com.liferay.exportimport.kernel.service.StagingLocalService;
 import com.liferay.exportimport.portlet.data.handler.provider.PortletDataHandlerProvider;
+import com.liferay.exportimport.report.constants.ExportImportReportEntryConstants;
+import com.liferay.exportimport.report.model.ExportImportReportEntry;
+import com.liferay.exportimport.report.service.ExportImportReportEntryLocalService;
 import com.liferay.journal.constants.JournalContentPortletKeys;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.object.constants.ObjectDefinitionConstants;
@@ -288,6 +291,19 @@ public class BatchEnginePortletDataHandlerTest {
 		_testExportImportObjectEntriesWithRelatedObjectEntries(
 			group, ObjectDefinitionConstants.SCOPE_COMPANY,
 			ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+	}
+
+	@Test
+	@TestInfo("LPD-54863")
+	public void testExportImportObjectEntriesWithErrorReport()
+		throws Exception {
+
+		_testExportImportObjectEntriesWithErrorReport(
+			_stagingGroupHelper.fetchCompanyGroup(
+				TestPropsValues.getCompanyId()),
+			ObjectDefinitionConstants.SCOPE_COMPANY);
+		_testExportImportObjectEntriesWithErrorReport(
+			GroupTestUtil.addGroup(), ObjectDefinitionConstants.SCOPE_SITE);
 	}
 
 	@Ignore("LPD-40798")
@@ -1016,7 +1032,7 @@ public class BatchEnginePortletDataHandlerTest {
 		return groupId;
 	}
 
-	private void _importLayouts(
+	private ExportImportConfiguration _importLayouts(
 			boolean deletions, boolean expectError, File file, long groupId,
 			ObjectDefinition... objectDefinitions)
 		throws Exception {
@@ -1041,6 +1057,8 @@ public class BatchEnginePortletDataHandlerTest {
 
 			_exportImportLocalService.importLayouts(
 				exportImportConfiguration, file);
+
+			return exportImportConfiguration;
 		}
 	}
 
@@ -1064,6 +1082,48 @@ public class BatchEnginePortletDataHandlerTest {
 
 		_assertObjectEntries(
 			false, objectDefinition.getObjectDefinitionId(), objectEntries);
+	}
+
+	private void _testExportImportObjectEntriesWithErrorReport(
+			Group group, String scope)
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _addObjectDefinition(scope);
+
+		ObjectEntry objectEntry = _addObjectEntry(
+			_getObjectEntryGroupId(group.getGroupId(), scope), objectDefinition,
+			StringUtil.randomString());
+
+		String originalExternalReferenceCode =
+			objectEntry.getExternalReferenceCode();
+
+		File file = _exportLayouts(
+			false, group.getGroupId(), false, new long[0], objectDefinition);
+
+		objectEntry.setExternalReferenceCode(StringUtil.randomString());
+
+		_objectEntryLocalService.updateObjectEntry(objectEntry);
+
+		ExportImportConfiguration exportImportConfiguration = _importLayouts(
+			false, true, file, group.getGroupId(), objectDefinition);
+
+		List<ExportImportReportEntry> exportImportReportEntries =
+			_exportImportReportEntryLocalService.getExportImportReportEntries(
+				TestPropsValues.getCompanyId(),
+				exportImportConfiguration.getExportImportConfigurationId());
+
+		Assert.assertEquals(
+			exportImportReportEntries.toString(), 1,
+			exportImportReportEntries.size());
+		Assert.assertTrue(
+			ListUtil.exists(
+				exportImportReportEntries,
+				exportImportReportEntry ->
+					Objects.equals(
+						exportImportReportEntry.getClassExternalReferenceCode(),
+						originalExternalReferenceCode) &&
+					(exportImportReportEntry.getType() ==
+						ExportImportReportEntryConstants.TYPE_ERROR)));
 	}
 
 	private void _testExportImportObjectEntriesWithRelatedObjectEntries(
@@ -1265,6 +1325,10 @@ public class BatchEnginePortletDataHandlerTest {
 
 	@Inject
 	private ExportImportLocalService _exportImportLocalService;
+
+	@Inject
+	private ExportImportReportEntryLocalService
+		_exportImportReportEntryLocalService;
 
 	@Inject
 	private ObjectEntryLocalService _objectEntryLocalService;

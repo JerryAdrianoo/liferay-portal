@@ -8,7 +8,7 @@ import {FetchPolicy, useResource} from '@clayui/data-provider';
 import {ClayInput} from '@clayui/form';
 import ClayMultiSelect from '@clayui/multi-select';
 import {InternalDispatch, useControlledState} from '@clayui/shared';
-import {fetch} from 'frontend-js-web';
+import {fetch, getObjectValueFromPath} from 'frontend-js-web';
 import React, {useCallback, useEffect, useState} from 'react';
 
 const NETWORK_STATUS_UNUSED = 4;
@@ -22,10 +22,15 @@ const getNextPageURL = ({apiURL, page}: {apiURL: string; page: number}) => {
 	return url.toString();
 };
 
-type ChildrenFunction<T, P> =
-	P extends Array<unknown>
-		? (item: T, ...args: P) => React.ReactElement
-		: (item: T, index?: number) => React.ReactElement;
+type ChildrenFunction<T, P> = P extends unknown[]
+	? (item: T, ...args: P) => React.ReactElement
+	: (item: T, index?: number) => React.ReactElement;
+
+interface HeadlessPage<T = unknown> {
+	items: T[];
+	lastPage: number;
+	page: number;
+}
 
 export interface IItemSelectorProps<T>
 	extends Omit<
@@ -54,7 +59,7 @@ export interface IItemSelectorProps<T>
 	/**
 	 * Set the default selected items (uncontrolled).
 	 */
-	defaultItems?: Array<T>;
+	defaultItems?: T[];
 
 	/**
 	 * Property to set the default value (uncontrolled).
@@ -71,10 +76,11 @@ export interface IItemSelectorProps<T>
 	/**
 	 * Items that are currently selected (controlled).
 	 */
-	items?: Array<T>;
+	items?: T[];
 
 	/**
 	 * A string key used to locate the id, label, or value within each item.
+	 * Can be used as a period separated path (e.g.: 'embedded.id').
 	 */
 	locator?: {
 		id: string;
@@ -96,7 +102,7 @@ export interface IItemSelectorProps<T>
 	/**
 	 * Callback for when items are added or removed (controlled).
 	 */
-	onItemsChange?: InternalDispatch<Array<T>>;
+	onItemsChange?: InternalDispatch<T[]>;
 
 	/**
 	 * The current value of the input (controlled).
@@ -176,18 +182,14 @@ function ItemSelector<T extends Record<string, any>>({
 				return json;
 			}
 
-			const {items, lastPage, page} = json;
+			const {items, lastPage, page} = json as HeadlessPage<T>;
 
-			return {
-				cursor:
-					page < lastPage
-						? getNextPageURL({apiURL, page: page + 1})
-						: null,
-				items,
-			} as {
-				cursor: string | null;
-				items: T[];
-			};
+			const cursor =
+				page < lastPage
+					? getNextPageURL({apiURL, page: page + 1})
+					: null;
+
+			return {cursor, items};
 		},
 		fetchDelay: 500,
 		fetchPolicy: 'cache-first' as FetchPolicy.CacheFirst,
@@ -239,7 +241,45 @@ function ItemSelector<T extends Record<string, any>>({
 			<ClayMultiSelect
 				{...otherProps}
 				items={items}
-				locator={locator ? {...locator} : undefined}
+				locator={{
+					id: (item: T) => {
+						return getObjectValueFromPath({
+							object: item,
+							path: locator.id,
+						});
+					},
+					label: (item: T) => {
+						return getObjectValueFromPath({
+							object: item,
+							path: locator.label,
+						});
+					},
+					value: (item: T) => {
+						return getObjectValueFromPath({
+							object: item,
+							path: locator.value,
+						});
+					},
+				}}
+				messages={{
+					hotkeys: Liferay.Language.get(
+						'press-backspace-to-delete-the-current-row'
+					),
+					labelAdded: Liferay.Language.get(
+						'label-x-was-added-to-the-list'
+					),
+					labelRemoved: Liferay.Language.get(
+						'label-x-was-removed-from-the-list'
+					),
+					listCount: Liferay.Language.get(
+						'there-is-x-option-available'
+					),
+					listCountPlural: Liferay.Language.get(
+						'there-are-x-options-available'
+					),
+					loading: Liferay.Language.get('loading...'),
+					notFound: Liferay.Language.get('no-results-found'),
+				}}
 				onChange={setValue}
 				onItemsChange={setItems}
 				onLoadMore={async () => loadMore()}
@@ -255,10 +295,21 @@ function ItemSelector<T extends Record<string, any>>({
 		<ClayAutocomplete<T>
 			{...otherProps}
 			active={active}
-			filterKey={locator.label}
+			filterKey={(item: T) => {
+				return getObjectValueFromPath({
+					object: item,
+					path: locator.label,
+				});
+			}}
 			items={sourceItems}
 			loadingState={networkStatus}
 			menuTrigger="focus"
+			messages={{
+				listCount: Liferay.Language.get('x-list-option'),
+				listCountPlural: Liferay.Language.get('x-list-options'),
+				loading: Liferay.Language.get('loading...'),
+				notFound: Liferay.Language.get('no-results-found'),
+			}}
 			onActiveChange={setActive}
 			onChange={(value: string) => {
 				if (!value.length) {

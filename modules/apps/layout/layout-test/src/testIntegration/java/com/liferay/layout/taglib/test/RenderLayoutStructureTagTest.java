@@ -144,6 +144,7 @@ import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.servlet.HttpMethods;
+import com.liferay.portal.kernel.servlet.PortletServlet;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -195,6 +196,8 @@ import com.liferay.template.test.util.TemplateTestUtil;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.Serializable;
 
@@ -351,8 +354,9 @@ public class RenderLayoutStructureTagTest {
 
 		_layoutPageTemplateStructureLocalService.
 			updateLayoutPageTemplateStructureData(
-				draftLayout.getGroupId(), draftLayout.getPlid(),
-				segmentsExperienceId, layoutStructure.toString());
+				TestPropsValues.getUserId(), draftLayout.getGroupId(),
+				draftLayout.getPlid(), segmentsExperienceId,
+				layoutStructure.toString());
 
 		for (FragmentEntryLink addedFragmentEntryLink :
 				addedFragmentEntryLinks) {
@@ -1935,7 +1939,8 @@ public class RenderLayoutStructureTagTest {
 
 			_layoutPageTemplateStructureLocalService.
 				updateLayoutPageTemplateStructureData(
-					_group.getGroupId(), draftLayout.getPlid(),
+					TestPropsValues.getUserId(), _group.getGroupId(),
+					draftLayout.getPlid(),
 					_segmentsExperienceLocalService.
 						fetchDefaultSegmentsExperienceId(draftLayout.getPlid()),
 					layoutStructure.toString());
@@ -2445,8 +2450,9 @@ public class RenderLayoutStructureTagTest {
 
 			_layoutPageTemplateStructureLocalService.
 				updateLayoutPageTemplateStructureData(
-					_group.getGroupId(), draftLayout.getPlid(),
-					segmentsExperienceId, layoutStructure.toString());
+					TestPropsValues.getUserId(), _group.getGroupId(),
+					draftLayout.getPlid(), segmentsExperienceId,
+					layoutStructure.toString());
 
 			ContentLayoutTestUtil.publishLayout(draftLayout, layout);
 
@@ -3149,7 +3155,8 @@ public class RenderLayoutStructureTagTest {
 
 		_layoutPageTemplateStructureLocalService.
 			updateLayoutPageTemplateStructureData(
-				_group.getGroupId(), layout.getPlid(), segmentsExperienceId,
+				TestPropsValues.getUserId(), _group.getGroupId(),
+				layout.getPlid(), segmentsExperienceId,
 				layoutStructure.toString());
 	}
 
@@ -3174,10 +3181,23 @@ public class RenderLayoutStructureTagTest {
 			ContentLayoutTestUtil.getMVCActionCommand(
 				"/layout_content_page_editor/add_segments_experience");
 
+		Company company = _companyLocalService.getCompany(
+			_group.getCompanyId());
+
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
 			ContentLayoutTestUtil.getMockLiferayPortletActionRequest(
-				_companyLocalService.getCompany(_group.getCompanyId()), _group,
-				layout);
+				company, _group, layout);
+
+		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+
+		httpServletRequest.setAttribute(
+			WebKeys.THEME_DISPLAY,
+			ContentLayoutTestUtil.getThemeDisplay(company, _group, layout));
+		httpServletRequest.setAttribute(
+			WebKeys.USER_ID, TestPropsValues.getUserId());
+
+		mockLiferayPortletActionRequest.setAttribute(
+			PortletServlet.PORTLET_SERVLET_REQUEST, httpServletRequest);
 
 		mockLiferayPortletActionRequest.setParameter(
 			"groupId", String.valueOf(layout.getGroupId()));
@@ -3713,7 +3733,8 @@ public class RenderLayoutStructureTagTest {
 
 		_layoutPageTemplateStructureLocalService.
 			updateLayoutPageTemplateStructureData(
-				_group.getGroupId(), layout.getPlid(), segmentsExperienceId,
+				TestPropsValues.getUserId(), _group.getGroupId(),
+				layout.getPlid(), segmentsExperienceId,
 				layoutStructure.toString());
 	}
 

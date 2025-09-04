@@ -51,7 +51,6 @@ import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Address;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Contact;
 import com.liferay.portal.kernel.model.EmailAddress;
 import com.liferay.portal.kernel.model.Group;
@@ -316,10 +315,27 @@ public class AccountResourceImpl
 	}
 
 	@Override
-	public List<String> getNestedFields() {
-		return List.of(
-			"accountGroupBriefs", "accountRoles", "keywords", "logoBase64",
-			"postalAddresses", "taxonomyCategoryBriefs");
+	public ExportImportDescriptor getExportImportDescriptor() {
+		return new ExportImportDescriptor() {
+
+			@Override
+			public List<String> getNestedFields() {
+				return List.of(
+					"accountGroupBriefs", "accountRoles", "keywords",
+					"logoBase64", "postalAddresses", "taxonomyCategoryBriefs");
+			}
+
+			@Override
+			public String getPortletId() {
+				return AccountPortletKeys.ACCOUNT_ENTRIES_ADMIN;
+			}
+
+			@Override
+			public Scope getScope() {
+				return Scope.COMPANY;
+			}
+
+		};
 	}
 
 	@NestedField(
@@ -379,22 +395,6 @@ public class AccountResourceImpl
 		return getOrganizationAccountsPage(
 			String.valueOf(organization.getOrganizationId()), search, filter,
 			pagination, sorts);
-	}
-
-	@Override
-	public String getPortletId() {
-		if (FeatureFlagManagerUtil.isEnabled(
-				CompanyConstants.SYSTEM, "LPD-35914")) {
-
-			return AccountPortletKeys.ACCOUNT_ENTRIES_ADMIN;
-		}
-
-		return null;
-	}
-
-	@Override
-	public Scope getScope() {
-		return Scope.COMPANY;
 	}
 
 	@Override

@@ -1,11 +1,29 @@
 [
 	{
+		"key": "a-setup-guide-to-empower-yourself-and-your-team",
+		"value": {
+			"en-US": "A setup guide to empower yourself and your team."
+		}
+	},
+	{
 		"key": "account-settings",
 		"value": {
 			"en-US": "Account Settings",
 			"es-ES": "Configuraciones de la cuenta",
 			"ja-JP": "アカウント設定",
 			"pt-BR": "Configurações de Conta"
+		}
+	},
+	{
+		"key": "activate-your-liferay-saas-liferay-paas-or-liferay-self-hosted-instance",
+		"value": {
+			"en-US": "Activate your Liferay SaaS, Liferay PaaS, or Liferay Self-hosted Instance."
+		}
+	},
+	{
+		"key": "activation",
+		"value": {
+			"en-US": "Activation"
 		}
 	},
 	{
@@ -45,6 +63,12 @@
 		}
 	},
 	{
+		"key": "benefits-included-with-each-subscription-service-level",
+		"value": {
+			"en-US": "Benefits included with each subscription service level."
+		}
+	},
+	{
 		"key": "business-events",
 		"value": {
 			"en-US": "Business Events",
@@ -75,6 +99,18 @@
 			"es-ES": "",
 			"ja-JP": "",
 			"pt-BR": ""
+		}
+	},
+	{
+		"key": "customer-portal-first-steps-for-non-admin-and-non-partner-users",
+		"value": {
+			"en-US": "Customer Portal first steps for non-admin and non-partner users."
+		}
+	},
+	{
+		"key": "designated-languages-and-channels-for-liferay-support",
+		"value": {
+			"en-US": "Designated languages and channels for Liferay Support."
 		}
 	},
 	{
@@ -222,6 +258,27 @@
 		}
 	},
 	{
+		"key": "quick-answers-and-resources-to-common-support-questions",
+		"value": {
+			"en-US": "Quick answers and resources to common support questions."
+		}
+	},
+	{
+		"key": "search-engine-compatibility-by-product-and-version",
+		"value": {
+			"en-US": "Search engine compatibility by product and version."
+		}
+	},
+	{
+		"key": "see-project-details",
+		"value": {
+			"en-US": "See Project Details",
+			"es-ES": "Ver detalles del proyecto",
+			"ja-JP": "プロジェクトの詳細を見る",
+			"pt-BR": "Ver detalhes do projeto"
+		}
+	},
+	{
 		"key": "sign-in",
 		"value": {
 			"en-US": "Sign in",
@@ -243,15 +300,6 @@
 		"key": "sites",
 		"value": {
 			"en-US": "Sites"
-		}
-	},
-	{
-		"key": "see-project-details",
-		"value": {
-			"en-US": "See Project Details",
-			"es-ES": "Ver detalles del proyecto",
-			"ja-JP": "プロジェクトの詳細を見る",
-			"pt-BR": "Ver detalhes do projeto"
 		}
 	},
 	{
@@ -291,12 +339,24 @@
 		}
 	},
 	{
+		"key": "supported-configurations-for-major-liferay-products-and-releases",
+		"value": {
+			"en-US": "Supported configurations for major Liferay products and releases."
+		}
+	},
+	{
 		"key": "team-members",
 		"value": {
 			"en-US": "Team Members",
 			"es-ES": "Miembros del equipo",
 			"ja-JP": "チームメンバー",
 			"pt-BR": "Membros da equipe"
+		}
+	},
+	{
+		"key": "team-setup-and-activation-management-for-you-and-your-customers",
+		"value": {
+			"en-US": "Team setup and activation management for you and your customers."
 		}
 	},
 	{
