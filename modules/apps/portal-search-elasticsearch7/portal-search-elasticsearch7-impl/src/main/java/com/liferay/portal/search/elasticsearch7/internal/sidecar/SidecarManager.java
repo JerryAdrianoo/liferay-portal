@@ -82,6 +82,7 @@ public class SidecarManager implements ElasticsearchConfigurationObserver {
 				_sidecar.stop();
 			}
 
+
 			_sidecar = new Sidecar(
 				elasticsearchConfigurationWrapper,
 				_getElasticsearchInstancePaths(), processExecutor, this);
@@ -101,8 +102,13 @@ public class SidecarManager implements ElasticsearchConfigurationObserver {
 				_sidecar::stop
 			).preConnectElasticsearchConnectionConsumer(
 				elasticsearchConnection -> {
+					long before = System.currentTimeMillis();
 					_sidecar.start();
-
+					System.out.println(
+							Thread.currentThread(
+							).getName() +
+									" - Time taken to wait for the early Sidecar: " +
+									(System.currentTimeMillis() - before));
 					elasticsearchConnection.setNetworkHostAddresses(
 						new String[] {_sidecar.getNetworkHostAddress()});
 				}

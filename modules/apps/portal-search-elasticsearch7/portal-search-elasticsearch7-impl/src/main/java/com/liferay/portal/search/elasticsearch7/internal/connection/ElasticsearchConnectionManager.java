@@ -104,11 +104,19 @@ public class ElasticsearchConnectionManager
 			executorService.submit(futureTask);
 
 			elasticsearchConnectionSupplier = () -> {
+				long before = System.currentTimeMillis();
+
 				try {
 					return futureTask.get();
 				}
 				catch (Exception exception) {
 					return ReflectionUtil.throwException(exception);
+				}
+				finally {
+					System.out.println(
+							Thread.currentThread(
+							).getName() + " - Time taken to get ES connection: " +
+									(System.currentTimeMillis() - before));
 				}
 			};
 		}
