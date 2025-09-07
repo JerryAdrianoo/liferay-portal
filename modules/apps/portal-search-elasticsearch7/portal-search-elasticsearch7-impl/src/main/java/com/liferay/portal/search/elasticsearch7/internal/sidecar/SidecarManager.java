@@ -5,6 +5,8 @@
 
 package com.liferay.portal.search.elasticsearch7.internal.sidecar;
 
+import com.liferay.petra.concurrent.FutureListener;
+import com.liferay.petra.io.Serializer;
 import com.liferay.petra.process.ProcessExecutor;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
@@ -14,14 +16,25 @@ import com.liferay.portal.search.elasticsearch7.internal.configuration.Elasticse
 import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchConnectionBuilder;
 import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchConnectionManager;
 import com.liferay.portal.search.elasticsearch7.internal.connection.constants.ConnectionConstants;
+import com.liferay.portal.search.elasticsearch7.internal.sidecar.activator.SearchElasticsearch7ImplBundleActivator;
 import com.liferay.portal.search.elasticsearch7.internal.sidecar.constants.SidecarConstants;
 import com.liferay.portal.search.elasticsearch7.internal.util.ResourceUtil;
 import com.liferay.portal.util.PropsValues;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import java.util.concurrent.Future;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
+
+import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -52,7 +65,9 @@ public class SidecarManager implements ElasticsearchConfigurationObserver {
 	}
 
 	@Activate
-	protected void activate() {
+	protected void activate(BundleContext bundleContext) {
+		_bundleContext = bundleContext;
+
 		elasticsearchConfigurationWrapper.register(this);
 
 		applyConfigurations();
@@ -62,57 +77,50 @@ public class SidecarManager implements ElasticsearchConfigurationObserver {
 		if (elasticsearchConfigurationWrapper.isProductionModeEnabled()) {
 			elasticsearchConnectionManager.removeElasticsearchConnection(
 				ConnectionConstants.SIDECAR_CONNECTION_ID);
+
+			return;
 		}
-		else {
-			_startupSuccessful = false;
 
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					StringBundler.concat(
-						"Liferay automatically starts a child process of ",
-						"Elasticsearch named sidecar for convenient ",
-						"development and demonstration purposes. Do NOT use ",
-						"sidecar in production. Refer to the documentation ",
-						"for details on the limitations of sidecar and ",
-						"instructions on configuring a remote Elasticsearch ",
-						"connection in the Control Panel."));
-			}
+		_startupSuccessful = false;
 
-			if (_sidecar != null) {
-				_sidecar.stop();
-			}
-
-			_sidecar = new Sidecar(
-				elasticsearchConfigurationWrapper,
-				_getElasticsearchInstancePaths(), processExecutor, this);
-
-			ElasticsearchConnectionBuilder elasticsearchConnectionBuilder =
-				new ElasticsearchConnectionBuilder();
-
-			elasticsearchConnectionBuilder.active(
-				true
-			).connectionId(
-				ConnectionConstants.SIDECAR_CONNECTION_ID
-			).maxConnections(
-				elasticsearchConfigurationWrapper.maxConnections()
-			).maxConnectionsPerRoute(
-				elasticsearchConfigurationWrapper.maxConnectionsPerRoute()
-			).postCloseRunnable(
-				_sidecar::stop
-			).preConnectElasticsearchConnectionConsumer(
-				elasticsearchConnection -> {
-					_sidecar.start();
-
-					elasticsearchConnection.setNetworkHostAddresses(
-						new String[] {_sidecar.getNetworkHostAddress()});
-				}
-			);
-
-			elasticsearchConnectionManager.addElasticsearchConnection(
-				elasticsearchConnectionBuilder.build());
-
-			_startupSuccessful = true;
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				StringBundler.concat(
+					"Liferay automatically starts a child process of ",
+					"Elasticsearch named sidecar for convenient development ",
+					"and demonstration purposes. Do NOT use sidecar in ",
+					"production. Refer to the documentation for details on ",
+					"the limitations of sidecar and instructions on ",
+					"configuring a remote Elasticsearch connection in the ",
+					"Control Panel."));
 		}
+
+		ElasticsearchConnectionBuilder elasticsearchConnectionBuilder =
+			new ElasticsearchConnectionBuilder();
+
+		elasticsearchConnectionBuilder.active(
+			true
+		).connectionId(
+			ConnectionConstants.SIDECAR_CONNECTION_ID
+		).maxConnections(
+			elasticsearchConfigurationWrapper.maxConnections()
+		).maxConnectionsPerRoute(
+			elasticsearchConfigurationWrapper.maxConnectionsPerRoute()
+		).postCloseRunnable(
+			() -> _sidecar.stop()
+		).preConnectElasticsearchConnectionConsumer(
+			elasticsearchConnection -> {
+				_startSidecar();
+
+				elasticsearchConnection.setNetworkHostAddresses(
+					new String[] {_sidecar.getNetworkHostAddress()});
+			}
+		);
+
+		elasticsearchConnectionManager.addElasticsearchConnection(
+			elasticsearchConnectionBuilder.build());
+
+		_startupSuccessful = true;
 	}
 
 	@Deactivate
@@ -174,9 +182,123 @@ public class SidecarManager implements ElasticsearchConfigurationObserver {
 		return relativeSidecarHomePath;
 	}
 
+	private void _startSidecar() {
+		SidecarRuntimeConfiguration sidecarRuntimeConfiguration =
+			SidecarRuntimeConfigurationBuilder.builder(
+			).elasticsearchConfigurationWrapper(
+				elasticsearchConfigurationWrapper
+			).elasticsearchInstancePaths(
+				_getElasticsearchInstancePaths()
+			).build();
+
+		Serializer serializer = new Serializer();
+
+		serializer.writeObject(sidecarRuntimeConfiguration);
+
+		ByteBuffer byteBuffer = serializer.toByteBuffer();
+
+		byte[] bytes = byteBuffer.array();
+
+		Checksum checksum = new CRC32();
+
+		checksum.update(bytes);
+
+		if (_sidecar == null) {
+			try {
+				long before = System.currentTimeMillis();
+				Sidecar sidecar =
+					SearchElasticsearch7ImplBundleActivator.getSidecar();
+					System.out.println(System.currentTimeMillis() - before);
+
+				if ((sidecar != null) && !sidecar.isStopped() &&
+					(checksum.getValue() ==
+						SearchElasticsearch7ImplBundleActivator.
+							getChecksum())) {
+
+					_sidecar = sidecar;
+
+					if (_log.isInfoEnabled()) {
+						_log.info(
+							"Started Sidecar with persisted configuration");
+					}
+
+					return;
+				}
+			}
+			catch (Exception exception) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Failed to start Sidecar with persisted configuration",
+						exception);
+				}
+			}
+		}
+
+		if (_sidecar != null) {
+			_sidecar.stop();
+		}
+
+		_sidecar = new Sidecar(
+			processExecutor, new RestartFutureListener(this),
+			sidecarRuntimeConfiguration);
+
+		_sidecar.start();
+
+		try {
+			File file = _bundleContext.getDataFile(Sidecar.class.getName());
+
+			Files.write(file.toPath(), bytes);
+
+			File checksumFile = _bundleContext.getDataFile(
+				Sidecar.class.getName() + "_checksum");
+
+			Files.writeString(
+				checksumFile.toPath(), String.valueOf(checksum.getValue()));
+		}
+		catch (IOException ioException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Unable to persist Sidecar configuration", ioException);
+			}
+		}
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(SidecarManager.class);
 
-	private Sidecar _sidecar;
+	private BundleContext _bundleContext;
+	private volatile Sidecar _sidecar;
 	private boolean _startupSuccessful;
+
+	private static class RestartFutureListener
+		implements FutureListener<Serializable> {
+
+		public RestartFutureListener(SidecarManager sidecarManager) {
+			_sidecarManager = sidecarManager;
+		}
+
+		@Override
+		public void complete(Future<Serializable> future) {
+			try {
+				future.get();
+			}
+			catch (Exception exception) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Sidecar Elasticsearch process is aborted", exception);
+				}
+			}
+
+			if (_sidecarManager.isStartupSuccessful()) {
+				if (_log.isInfoEnabled()) {
+					_log.info("Restarting sidecar Elasticsearch process");
+				}
+
+				_sidecarManager.applyConfigurations();
+			}
+		}
+
+		private final SidecarManager _sidecarManager;
+
+	}
 
 }

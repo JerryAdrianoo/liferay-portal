@@ -5,6 +5,7 @@
 
 package com.liferay.portal.search.elasticsearch7.internal.connection;
 
+import com.liferay.petra.concurrent.FutureListener;
 import com.liferay.petra.process.local.LocalProcessExecutor;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -19,7 +20,7 @@ import com.liferay.portal.search.elasticsearch7.internal.sidecar.ElasticsearchIn
 import com.liferay.portal.search.elasticsearch7.internal.sidecar.HttpPortRange;
 import com.liferay.portal.search.elasticsearch7.internal.sidecar.PathUtil;
 import com.liferay.portal.search.elasticsearch7.internal.sidecar.Sidecar;
-import com.liferay.portal.search.elasticsearch7.internal.sidecar.SidecarManager;
+import com.liferay.portal.search.elasticsearch7.internal.sidecar.SidecarRuntimeConfigurationBuilder;
 
 import java.io.IOException;
 
@@ -71,10 +72,9 @@ public class ElasticsearchConnectionFixture
 
 			};
 
-		Sidecar sidecar = new Sidecar(
-			elasticsearchConfigurationWrapper,
-			_createElasticsearchInstancePaths(), new LocalProcessExecutor(),
-			Mockito.mock(SidecarManager.class));
+		_deleteTmpDir();
+
+		SidecarHolder sidecarHolder = new SidecarHolder();
 
 		ElasticsearchConnectionBuilder elasticsearchConnectionBuilder =
 			new ElasticsearchConnectionBuilder();
@@ -84,10 +84,11 @@ public class ElasticsearchConnectionFixture
 		).connectionId(
 			ConnectionConstants.SIDECAR_CONNECTION_ID
 		).postCloseRunnable(
-			sidecar::stop
+			sidecarHolder::stopSidecar
 		).preConnectElasticsearchConnectionConsumer(
 			elasticsearchConnection -> {
-				_deleteTmpDir();
+				Sidecar sidecar = sidecarHolder.getSidecar(
+					elasticsearchConfigurationWrapper);
 
 				sidecar.start();
 
@@ -277,5 +278,33 @@ public class ElasticsearchConnectionFixture
 		Collections.<String, Object>emptyMap();
 	private ElasticsearchConnection _elasticsearchConnection;
 	private Path _workPath;
+
+	private class SidecarHolder {
+
+		public Sidecar getSidecar(
+			ElasticsearchConfigurationWrapper
+				elasticsearchConfigurationWrapper) {
+
+			_sidecar = new Sidecar(
+				new LocalProcessExecutor(), Mockito.mock(FutureListener.class),
+				SidecarRuntimeConfigurationBuilder.builder(
+				).elasticsearchConfigurationWrapper(
+					elasticsearchConfigurationWrapper
+				).elasticsearchInstancePaths(
+					_createElasticsearchInstancePaths()
+				).build());
+
+			return _sidecar;
+		}
+
+		public void stopSidecar() {
+			if (_sidecar != null) {
+				_sidecar.stop();
+			}
+		}
+
+		private Sidecar _sidecar;
+
+	}
 
 }
