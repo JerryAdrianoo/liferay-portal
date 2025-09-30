@@ -300,10 +300,9 @@ public class Configurator {
     public boolean processAddBundle(final Bundle bundle) {
         final long bundleId = bundle.getBundleId();
         final long bundleLastModified = bundle.getLastModified();
-        final Object liferayConfiguratorPolicy = bundle.getHeaders().get("Liferay-Configurator-Policy");
 
         final Long lastModified = state.getLastModified(bundleId);
-        if ( lastModified != null && lastModified.longValue() == bundleLastModified && !("always".equals(liferayConfiguratorPolicy))) {
+        if ( lastModified != null && lastModified.longValue() == bundleLastModified ) {
             // no changes, nothing to do
             return false;
         }
