@@ -1,0 +1,39 @@
+diff --git a/org/apache/felix/configurator/impl/Configurator.java b/org/apache/felix/configurator/impl/Configurator.java
+index 929e331..2c4a420 100644
+--- a/org/apache/felix/configurator/impl/Configurator.java
++++ b/org/apache/felix/configurator/impl/Configurator.java
+@@ -302,8 +302,7 @@ public class Configurator {
+         final long bundleLastModified = bundle.getLastModified();
+ 
+         final Long lastModified = state.getLastModified(bundleId);
+-        if ( lastModified != null && lastModified.longValue() == bundleLastModified ) {
+-            // no changes, nothing to do
++        if (lastModified != null && lastModified.longValue() == bundleLastModified) {
+             return false;
+         }
+ 
+@@ -347,12 +346,20 @@ public class Configurator {
+         if ( lastModified != null ) {
+             processRemoveBundle(bundleId);
+         }
+-        if ( config != null ) {
+-            for(final String pid : config.getPids()) {
++        if (config != null) {
++            for (final String pid : config.getPids()) {
+                 state.addAll(pid, config.getConfigurations(pid));
+             }
+-            state.setLastModified(bundleId, bundleLastModified);
+-            return true;
++
++            final Object liferayConfiguratorPolicy =
++                bundle.getHeaders(null).get("Liferay-Configurator-Policy");
++
++            if (!"always".equals(liferayConfiguratorPolicy)) {
++                state.removeLastModified(bundleId);
++            }   
++            else {
++                state.setLastModified(bundleId, bundleLastModified);
++            }
+         }
+         return lastModified != null;
+     }

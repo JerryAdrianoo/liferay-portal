@@ -300,11 +300,9 @@ public class Configurator {
     public boolean processAddBundle(final Bundle bundle) {
         final long bundleId = bundle.getBundleId();
         final long bundleLastModified = bundle.getLastModified();
-        final Object liferayConfiguratorPolicy = bundle.getHeaders().get("Liferay-Configurator-Policy");
 
         final Long lastModified = state.getLastModified(bundleId);
-        if ( lastModified != null && lastModified.longValue() == bundleLastModified && !("always".equals(liferayConfiguratorPolicy))) {
-            // no changes, nothing to do
+        if (lastModified != null && lastModified.longValue() == bundleLastModified) {
             return false;
         }
 
@@ -348,12 +346,20 @@ public class Configurator {
         if ( lastModified != null ) {
             processRemoveBundle(bundleId);
         }
-        if ( config != null ) {
-            for(final String pid : config.getPids()) {
+        if (config != null) {
+            for (final String pid : config.getPids()) {
                 state.addAll(pid, config.getConfigurations(pid));
             }
-            state.setLastModified(bundleId, bundleLastModified);
-            return true;
+
+            final Object liferayConfiguratorPolicy =
+                bundle.getHeaders(null).get("Liferay-Configurator-Policy");
+
+            if (!"always".equals(liferayConfiguratorPolicy)) {
+                state.removeLastModified(bundleId);
+            }   
+            else {
+                state.setLastModified(bundleId, bundleLastModified);
+            }
         }
         return lastModified != null;
     }
