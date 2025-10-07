@@ -8,7 +8,7 @@ import React from 'react';
 import {
 	ISearchAssetObjectEntry,
 	ISearchAssetTypeInformation,
-} from '../../structure_builder/types/AssetType';
+} from '../../common/types/AssetType';
 import AssetTypeInfoPanelBody from './AssetTypeInfoPanelBody';
 import AssetTypeInfoPanelHeader from './AssetTypeInfoPanelHeader';
 import {AssetTypeInfoPanelContext, IAssetTypeInfoPanelContext} from './context';
@@ -30,7 +30,7 @@ const AssetTypeInfoPanelContent = ({
 
 	const assetLibrary = assetLibraries.find(
 		({groupId}: {groupId: number}) =>
-			groupId === objectEntries?.[0]?.embedded?.scopeId
+			Number(groupId) === Number(objectEntries?.[0]?.embedded?.scopeId)
 	);
 
 	return (

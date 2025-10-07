@@ -1,7 +1,7 @@
 @component-name = "portal-core-infra"
 definition {
 
-	property app.server.types = "tomcat";
+	property app.server.types = "jboss,tomcat,weblogic,wildfly";
 	property ci.retries.disabled = "true";
 	property configure.read.write.database = "jdbc";
 	property database.types = "mysql";

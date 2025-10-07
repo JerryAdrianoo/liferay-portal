@@ -8,7 +8,7 @@ import {openModal} from 'frontend-js-components-web';
 
 import {openAssetUsageListModal} from '../../common/components/asset_usage/utils';
 import formatActionURL from '../../common/utils/formatActionURL';
-import ItemNavigationModalContent from '../modal/item_navigation_view/ItemNavigationModalContent';
+import AssetNavigationModalContent from '../modal/asset_navigation_view/AssetNavigationModalContent';
 import {AdditionalProps} from './AssetsFDSPropsTransformer';
 import deleteItemAction from './actions/deleteItemAction';
 import shareAction from './actions/shareAction';
@@ -82,13 +82,18 @@ export default function HomeRecentAssetsFDSPropsTransformer({
 			loadData: () => {};
 		}) {
 			if (action?.data?.id === 'delete') {
-				openAssetUsageListModal({
-					itemsData: [itemData],
-					onDelete: async () => {
-						await deleteItemAction(itemData, loadData);
-					},
-					selectAll: false,
-				});
+				if (additionalProps.brokenLinksCheckerEnabled) {
+					openAssetUsageListModal({
+						itemsData: [itemData],
+						onDelete: async () => {
+							await deleteItemAction(itemData, loadData);
+						},
+						selectAll: false,
+					});
+				}
+				else {
+					await deleteItemAction(itemData, loadData);
+				}
 			}
 
 			if (
@@ -118,7 +123,8 @@ export default function HomeRecentAssetsFDSPropsTransformer({
 						className: '',
 					},
 					contentComponent: () =>
-						ItemNavigationModalContent({
+						AssetNavigationModalContent({
+							additionalProps,
 							contentViewURL: additionalProps.contentViewURL,
 							currentIndex: currentItemPos,
 							items,

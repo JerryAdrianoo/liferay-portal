@@ -438,15 +438,19 @@ components:
                     type: object
             type: object
         DefaultFragmentReference:
+            allOf:
+                -   $ref: "#/components/schemas/FragmentReference"
+                -   properties:
+                        defaultFragmentKey:
+                            # @review
+                            description:
+                                The key of the default fragment.
+                            type: string
             # @review
             description:
                 A reference to a default fragment (provided out-of-the-box).
-            properties:
-                defaultFragmentKey:
-                    # @review
-                    description:
-                        The key of the default fragment.
-                    type: string
+            required:
+                -   defaultFragmentKey
             type: object
         DisplayPageActionExecutionResult:
             # @review
@@ -1207,6 +1211,16 @@ components:
             allOf:
                 -   $ref: "#/components/schemas/PageElementDefinition"
                 -   properties:
+                        configuration:
+                            # @review
+                            description:
+                                The fragment instance's configuration.
+                            type: string
+                        css:
+                            # @review
+                            description:
+                                The fragment instance's CSS.
+                            type: string
                         cssClasses:
                             # @review
                             description:
@@ -1231,16 +1245,11 @@ components:
                                 The fragment instance's most recent propagation date.
                             format: date-time
                             type: string
-                        datePublished:
-                            description:
-                                The fragment instance's most recent publication date.
-                            format: date-time
-                            type: string
-                        draftPageElementExternalReferenceCode:
+                        draftFragmentInstanceExternalReferenceCode:
                             # @review
                             description:
-                                The external reference code of the corresponding page element in the draft of the page.
-                                Available only in the published page specification.
+                                The external reference code of the corresponding fragment instance in the draft of the
+                                page. Available only in the published page specification.
                             type: string
                         fragmentConfig:
                             additionalProperties:
@@ -1256,18 +1265,29 @@ components:
                             items:
                                 $ref: "#/components/schemas/FragmentField"
                             type: array
-                        fragmentReference:
+                        fragmentInstanceExternalReferenceCode:
                             # @review
                             description:
-                                An external reference to the fragment.
-                            oneOf:
-                                -   $ref: "#/components/schemas/DefaultFragmentReference"
-                                -   $ref: "#/components/schemas/ItemExternalReference"
+                                The fragment instance's external reference code.
+                            type: string
+                        fragmentReference:
+                            $ref: "#/components/schemas/FragmentReference"
+                            # @review
+                            description:
+                                The fragment reference of the fragment instance.
+                            type: object
                         fragmentStyle:
                             $ref: "#/components/schemas/FragmentStyle"
                             # @review
                             description:
                                 The fragment style of the fragment instance page element.
+                            type: string
+                        fragmentType:
+                            # @review
+                            description:
+                                The fragment instance's type (basic, form).
+                            enum: [Basic, Form]
+                            type: string
                         fragmentViewports:
                             # @review
                             description:
@@ -1275,11 +1295,21 @@ components:
                             items:
                                 $ref: "#/components/schemas/FragmentViewport"
                             type: array
+                        html:
+                            # @review
+                            description:
+                                The fragment instance's HTML.
+                            type: string
                         indexed:
                             # @review
                             description:
                                 A flag that indicates whether the fragment instance page element is indexed or not.
                             type: boolean
+                        js:
+                            # @review
+                            description:
+                                The fragment instance's JS.
+                            type: string
                         name:
                             # @review
                             description:
@@ -1305,6 +1335,14 @@ components:
             # @review
             description:
                 A page element definition of a fragment instance.
+            type: object
+        FragmentItemExternalReference:
+            allOf:
+                -   $ref: "#/components/schemas/FragmentReference"
+                -   $ref: "#/components/schemas/ItemExternalReference"
+            # @review
+            description:
+                A unique reference to a fragment which remains constant across environments.
             type: object
         FragmentLink:
             # @review
@@ -1409,6 +1447,21 @@ components:
                         The fragment mapped item reference. Can be a context reference value or external reference to an
                         external value.
                     enum: [ContextReference, ItemExternalReference]
+        FragmentReference:
+            # @review
+            description:
+                The reference to the fragment.
+            discriminator:
+                mapping:
+                    DefaultFragmentReference: "#/components/schemas/DefaultFragmentReference"
+                    FragmentItemExternalReference: "#/components/schemas/FragmentItemExternalReference"
+                propertyName: fragmentReferenceType
+            properties:
+                fragmentReferenceType:
+                    # @review
+                    description:
+                        The fragment reference's type (DefaultFragmentReference, FragmentItemExternalReference).
+                    enum: [DefaultFragmentReference, FragmentItemExternalReference]
                     type: string
             type: object
         FragmentSettingsAllowed:
@@ -1892,11 +1945,6 @@ components:
             description:
                 Represents settings related with the site navigation of a page.
             properties:
-                queryString:
-                    # @review
-                    description:
-                        The default parameter for a page.
-                    type: string
                 target:
                     # @review
                     description:
@@ -2222,6 +2270,11 @@ components:
                     maximum: 2147483647
                     minimum: 0
                     type: integer
+                queryString:
+                    # @review
+                    description:
+                        The default parameter for a page.
+                    type: string
                 seoSettings:
                     $ref: "#/components/schemas/SEOSettings"
                     # @review
@@ -3499,22 +3552,10 @@ components:
                                 The identifier of the layout template.
                             type: string
                         navigationSettings:
+                            $ref: "#/components/schemas/NavigationSettings"
                             # @review
                             description:
                                 The widget page template's site navigation settings.
-                            properties:
-                                target:
-                                    # @review
-                                    description:
-                                        The ID of the target specific frame.
-                                    type: string
-                                targetType:
-                                    # @review
-                                    description:
-                                        The target's type (specific frame or new tab).
-                                    enum: [SpecificFrame, NewTab]
-                                    type: string
-                            type: object
             # @review
             description:
                 The settings of a widget page template.
