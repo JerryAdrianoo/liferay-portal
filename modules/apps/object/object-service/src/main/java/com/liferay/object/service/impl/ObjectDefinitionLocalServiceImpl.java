@@ -2413,8 +2413,12 @@ public class ObjectDefinitionLocalServiceImpl
 					"at-least-one-object-field-must-be-added"),
 				null, null);
 		}
-
+		long start = System.nanoTime();
 		_validateFriendlyURLSeparator(objectDefinition);
+
+		long end = System.nanoTime();
+		System.out.println(
+				"_validateFriendlyURLSeparator()1 took " + ((end - start) / 1_000_000.0) + " ms");
 
 		objectDefinition.setActive(true);
 		objectDefinition.setStatus(WorkflowConstants.STATUS_APPROVED);
@@ -2738,8 +2742,12 @@ public class ObjectDefinitionLocalServiceImpl
 				if (!StringUtil.equals(
 						objectDefinition.getFriendlyURLSeparator(),
 						friendlyURLSeparator)) {
-
+					long start = System.nanoTime();
 					_validateFriendlyURLSeparator(objectDefinition);
+					long end = System.nanoTime();
+
+					System.out.println(
+							"_validateFriendlyURLSeparator()3 took " + ((end - start) / 1_000_000.0) + " ms");
 				}
 
 				objectDefinitionLocalService.deployObjectDefinition(
@@ -3284,7 +3292,7 @@ public class ObjectDefinitionLocalServiceImpl
 	private void _validateFriendlyURLSeparator(
 			ObjectDefinition objectDefinition)
 		throws PortalException {
-
+		long start = System.nanoTime();
 		if (Validator.isNull(objectDefinition.getFriendlyURLSeparator()) ||
 			ObjectDefinitionUtil.isDefaultFriendlyURLSeparator(
 				objectDefinition.getFriendlyURLSeparator())) {
@@ -3322,6 +3330,12 @@ public class ObjectDefinitionLocalServiceImpl
 		_handleException(
 			new ObjectDefinitionFriendlyURLSeparatorException(message),
 			"friendlyURLSeparator", objectDefinition.getFriendlyURLSeparator());
+
+		long end = System.nanoTime();
+
+
+		System.out.println(
+				"_validateFriendlyURLSeparator()2 took " + ((end - start) / 1_000_000.0) + " ms");
 	}
 
 	private void _validateLabel(Map<Locale, String> labelMap)
