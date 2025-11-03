@@ -22,7 +22,6 @@ import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
@@ -130,10 +129,7 @@ public class ObjectEntryModelResourcePermission
 
 		if ((objectEntry.getRootObjectEntryId() != 0) &&
 			!_isObjectActionName(
-				actionId, objectEntry.getObjectDefinitionId()) &&
-			!_isObjectFieldName(
-				actionId, objectEntry.getCompanyId(),
-				objectEntry.getObjectDefinitionId())) {
+				actionId, objectEntry.getObjectDefinitionId())) {
 
 			ObjectEntry rootObjectEntry =
 				_objectEntryLocalService.fetchObjectEntry(
@@ -300,28 +296,6 @@ public class ObjectEntryModelResourcePermission
 					ObjectActionTriggerConstants.KEY_STANDALONE)) {
 
 			if (Objects.equals(objectAction.getName(), actionId)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	private boolean _isObjectFieldName(
-		String actionId, long companyId, long objectDefinitionId) {
-
-		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-17564")) {
-			return false;
-		}
-
-		for (ObjectField objectField :
-				_objectFieldLocalService.getObjectFieldsByBusinessType(
-					objectDefinitionId,
-					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
-
-			if (Objects.equals(
-					objectField.getAttachmentDownloadActionKey(), actionId)) {
-
 				return true;
 			}
 		}
