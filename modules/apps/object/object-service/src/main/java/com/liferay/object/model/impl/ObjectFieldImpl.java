@@ -42,9 +42,11 @@ public class ObjectFieldImpl extends ObjectFieldBaseImpl {
 	public String getAttachmentDownloadActionKey() {
 		String name = getName();
 
+		String nameWithUnderscore = name.replaceAll("(?<!^)([A-Z])", "_$1");
+
 		return StringBundler.concat(
 			ActionKeys.DOWNLOAD, StringPool.UNDERLINE,
-			StringUtil.toUpperCase(name.replaceAll("(?<!^)([A-Z])", "_$1")));
+			StringUtil.toUpperCase(nameWithUnderscore));
 	}
 
 	@Override
