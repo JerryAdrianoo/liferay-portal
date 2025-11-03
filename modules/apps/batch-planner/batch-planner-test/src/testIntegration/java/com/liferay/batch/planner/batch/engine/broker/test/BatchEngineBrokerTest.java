@@ -750,6 +750,7 @@ public class BatchEngineBrokerTest {
 		ObjectEntry objectEntry = _objectEntryLocalService.getObjectEntry(
 			_OBJECT_ENTRY_ERC_1, ObjectDefinitionConstants.GROUP_ID_DEFAULT,
 			_objectDefinition1.getObjectDefinitionId());
+
 		ObjectField objectField = _objectFieldLocalService.getObjectField(
 			_OBJECT_FIELD_ERC, _objectDefinition1.getObjectDefinitionId());
 
