@@ -172,7 +172,7 @@ public class ObjectActionLocalServiceImpl
 
 			try {
 				ObjectDefinitionResourcePermissionUtil.populateResourceActions(
-					null, objectActionLocalService, objectDefinition, null,
+					objectActionLocalService, objectDefinition,
 					_portletLocalService, _resourceActions, null);
 			}
 			catch (Exception exception) {
