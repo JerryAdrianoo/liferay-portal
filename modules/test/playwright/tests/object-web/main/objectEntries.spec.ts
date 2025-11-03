@@ -77,7 +77,7 @@ const test = mergeTests(
 
 const assigneeTest = test;
 
-const cmsTest = mergeTests(
+const scheduleTest = mergeTests(
 	test,
 	featureFlagsTest({
 		'LPD-17564': {enabled: true},
@@ -1470,7 +1470,7 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 		await page.getByRole('button', {name: ATTACHMENT_FILE_NAME}).hover();
 
-		await viewObjectEntriesPage.downloadFileButton.click();
+		await page.locator('.lexicon-icon-download').click();
 
 		expect((await downloadPromise).suggestedFilename()).toStrictEqual(
 			`${ATTACHMENT_FILE_NAME}`
@@ -3173,175 +3173,16 @@ test.describe('Manage object entries through Workflow', () => {
 	);
 });
 
-cmsTest.describe('Manage attachment ObjectField download permission', () => {
-	cmsTest(
-		'Verify file download restrictions',
-		async ({apiHelpers, page, viewObjectEntriesPage}) => {
-			const ATTACHMENT_FILE_NAME = 'astronaut.png';
-
-			const objectFields = generateObjectFields({
-				objectFieldBusinessTypes: ['Attachment'],
-			});
-
-			const objectDefinition =
-				await apiHelpers.objectAdmin.postRandomObjectDefinition({
-					objectFields,
-					status: {code: 0},
-				});
-
-			apiHelpers.data.push({
-				id: objectDefinition.id,
-				type: 'objectDefinition',
-			});
-
-			const company =
-				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
-					'liferay.com'
-				);
-
-			const user = await createUserWithPermissions({
-				apiHelpers,
-				rolePermissions: [
-					{
-						actionIds: ['VIEW_CONTROL_PANEL'],
-						primaryKey: company.companyId,
-						resourceName: '90',
-						scope: 1,
-					},
-					{
-						actionIds: ['ACCESS_IN_CONTROL_PANEL'],
-						primaryKey: company.companyId,
-						resourceName:
-							'com_liferay_users_admin_web_portlet_UsersAdminPortlet',
-						scope: 1,
-					},
-					{
-						actionIds: ['ACCESS_IN_CONTROL_PANEL'],
-						primaryKey: company.companyId,
-						resourceName: `com_liferay_object_web_internal_object_definitions_portlet_ObjectDefinitionsPortlet_${objectDefinition.className.split('#')[1]}`,
-						scope: 1,
-					},
-					{
-						actionIds: ['VIEW'],
-						primaryKey: company.companyId,
-						resourceName: `${objectDefinition.className}`,
-						scope: 1,
-					},
-				],
-			});
-
-			let entryUrl: string;
-
-			await test.step('go to entry page, upload a file, save the entry and check download button is present', async () => {
-				await viewObjectEntriesPage.goto(objectDefinition.className);
-
-				await viewObjectEntriesPage.clickAddObjectEntry(
-					objectDefinition.label['en_US']
-				);
-
-				await viewObjectEntriesPage.selectFileButton.click();
-
-				await viewObjectEntriesPage.selectFileFromDocumentsAndMedia(
-					ATTACHMENT_FILE_NAME
-				);
-
-				await viewObjectEntriesPage.saveObjectEntryButton.click();
-
-				await expect(
-					viewObjectEntriesPage.successMessage
-				).toBeVisible();
-
-				entryUrl = page.url();
-
-				await expect(
-					viewObjectEntriesPage.downloadFileButton
-				).toBeVisible();
-			});
-
-			await test.step('login user with only view permission, then check the user is unable to perform the file download', async () => {
-				await performUserSwitch(page, user.alternateName);
-
-				await viewObjectEntriesPage.goto(objectDefinition.className);
-
-				await page
-					.getByRole('link', {name: ATTACHMENT_FILE_NAME})
-					.click();
-
-				try {
-					await page.waitForEvent('download', {timeout: 1000});
-				}
-				catch (error) {
-					expect(error.message.includes('Timeout')).toBeTruthy();
-				}
-
-				await page.goto(entryUrl);
-
-				await expect(
-					viewObjectEntriesPage.downloadFileButton
-				).not.toBeVisible();
-			});
-
-			await test.step('add download permission to the user then check the user is able to perform the file download', async () => {
-				await performUserSwitch(page, 'test');
-
-				await viewObjectEntriesPage.goto(objectDefinition.className);
-
-				await viewObjectEntriesPage.frontendDatasetActions.click();
-
-				await viewObjectEntriesPage.frontendDatasetPermissionsAction.click();
-
-				const iframeLocator = page.frameLocator(
-					'iframe[title="Permissions"]'
-				);
-
-				const objectField = objectFields[0];
-
-				const objectFieldActionCheckbox = iframeLocator.locator(
-					'#guest_ACTION_download_' + objectField.name
-				);
-
-				await objectFieldActionCheckbox.click();
-
-				await expect(objectFieldActionCheckbox).toBeChecked();
-
-				await iframeLocator.getByRole('button', {name: 'Save'}).click();
-
-				await expect(
-					iframeLocator.getByText('Success:Your request')
-				).toBeVisible();
-
-				await performUserSwitch(page, user.alternateName);
-
-				await viewObjectEntriesPage.goto(objectDefinition.className);
-
-				const downloadPromise = page.waitForEvent('download');
-
-				await page.getByRole('link', {name: 'astronaut.png'}).click();
-
-				expect(
-					(await downloadPromise).suggestedFilename()
-				).toStrictEqual(`${ATTACHMENT_FILE_NAME}`);
-
-				await page.goto(entryUrl);
-
-				await expect(
-					viewObjectEntriesPage.downloadFileButton
-				).toBeVisible();
-			});
-		}
-	);
-});
-
-cmsTest.describe('Manage object entries schedule properties', () => {
+scheduleTest.describe('Manage object entries schedule properties', () => {
 	let _objectDefinition: ObjectDefinition;
 
-	cmsTest.afterEach(async ({accountSettingsPage}) => {
+	scheduleTest.afterEach(async ({accountSettingsPage}) => {
 		await accountSettingsPage.goToDisplaySettings();
 
 		await accountSettingsPage.setTimeZone('UTC');
 	});
 
-	cmsTest.beforeEach(async ({accountSettingsPage, apiHelpers, page}) => {
+	scheduleTest.beforeEach(async ({accountSettingsPage, apiHelpers, page}) => {
 		const objectDefinition =
 			await apiHelpers.objectAdmin.postRandomObjectDefinition({
 				status: {code: 0},
@@ -3352,7 +3193,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 		const objectDefinitionAPIClient =
 			await apiHelpers.buildRestClient(ObjectDefinitionAPI);
 
-		const shouldEnableConfiguration = !cmsTest
+		const shouldEnableConfiguration = !scheduleTest
 			.info()
 			.tags.includes('@enableObjectEntryScheduleFalse');
 
@@ -3386,7 +3227,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 		await accountSettingsPage.setTimeZone(timeZoneValue);
 	});
 
-	cmsTest(
+	scheduleTest(
 		'can create, read, update, and delete a displayDate of an object entry',
 		async ({page, viewObjectEntriesPage}) => {
 			await viewObjectEntriesPage.goto(_objectDefinition.className);
@@ -3447,7 +3288,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 		}
 	);
 
-	cmsTest(
+	scheduleTest(
 		'can create, read, update, and delete a expirationDate of an object entry',
 		async ({page, viewObjectEntriesPage}) => {
 			await viewObjectEntriesPage.goto(_objectDefinition.className);
@@ -3504,7 +3345,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 		}
 	);
 
-	cmsTest(
+	scheduleTest(
 		'can create, read, update, and delete a reviewDate of an object entry',
 		async ({page, viewObjectEntriesPage}) => {
 			await viewObjectEntriesPage.goto(_objectDefinition.className);
@@ -3555,7 +3396,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 		}
 	);
 
-	cmsTest(
+	scheduleTest(
 		'can see approved and scheduled labels for entry with a display date versioning enabled and at least one version approved',
 		async ({apiHelpers, page, viewObjectEntriesPage}) => {
 			const objectDefinitionAPIClient =
@@ -3618,7 +3459,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 		}
 	);
 
-	cmsTest(
+	scheduleTest(
 		'cannot submit an empty displayDate',
 		async ({page, viewObjectEntriesPage}) => {
 			await viewObjectEntriesPage.goto(_objectDefinition.className);
@@ -3653,7 +3494,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 		}
 	);
 
-	cmsTest(
+	scheduleTest(
 		'cannot submit an empty expirationDate and reviewDate when it is enabled',
 		async ({page, viewObjectEntriesPage}) => {
 			await viewObjectEntriesPage.goto(_objectDefinition.className);
@@ -3698,7 +3539,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 		}
 	);
 
-	cmsTest(
+	scheduleTest(
 		'cannot submit a past expirationDate',
 		async ({page, viewObjectEntriesPage}) => {
 			await viewObjectEntriesPage.goto(_objectDefinition.className);
@@ -3735,7 +3576,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 		}
 	);
 
-	cmsTest(
+	scheduleTest(
 		'schedule container is not visible when enableObjectEntrySchedule is disabled',
 		{tag: '@enableObjectEntryScheduleFalse'},
 		async ({viewObjectEntriesPage}) => {

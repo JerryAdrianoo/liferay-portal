@@ -245,11 +245,6 @@ public class ObjectFieldWrapper
 	}
 
 	@Override
-	public String getAttachmentDownloadActionKey() {
-		return model.getAttachmentDownloadActionKey();
-	}
-
-	@Override
 	public String[] getAvailableLanguageIds() {
 		return model.getAvailableLanguageIds();
 	}
