@@ -81,7 +81,6 @@ import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.repository.model.FileVersion;
-import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.PermissionService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
@@ -838,10 +837,8 @@ public class ObjectEntryDTOConverter
 			() -> LinkUtil.toLink(
 				_dlAppService, dlFileEntry, _dlURLHelper,
 				objectEntry.getGroupId(),
-				objectDefinition.getExternalReferenceCode(), objectEntry,
-				_objectEntryService, objectField,
-				GuestOrUserUtil.getPermissionChecker(), _portal));
-
+				objectDefinition.getExternalReferenceCode(),
+				objectEntry.getExternalReferenceCode(), _portal));
 		fileEntry.setMetadata(
 			() -> NestedFieldsSupplier.supply(
 				objectFieldName + ".metadata",
