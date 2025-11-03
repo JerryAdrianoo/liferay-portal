@@ -67,7 +67,7 @@ public class AttachmentObjectFieldDownloadActionFeatureFlagListenerTest {
 		new LiferayIntegrationTestRule();
 
 	@Test
-	public void test() throws Exception {
+	public void testOnValue() throws Exception {
 		ObjectField objectField = ObjectFieldUtil.createObjectField(
 			ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT,
 			ObjectFieldConstants.DB_TYPE_LONG, true, false, null,
@@ -97,6 +97,13 @@ public class AttachmentObjectFieldDownloadActionFeatureFlagListenerTest {
 			ObjectDefinitionTestUtil.publishObjectDefinition(
 				Collections.singletonList(objectField));
 
+		long companyId = objectDefinition.getCompanyId();
+
+		String name = objectDefinition.getClassName();
+
+		Role powerUserRole = _roleLocalService.getRole(
+			companyId, RoleConstants.POWER_USER);
+
 		ObjectEntry objectEntry =
 			_objectEntryLocalService.addOrUpdateObjectEntry(
 				RandomTestUtil.randomString(), 0, TestPropsValues.getUserId(),
@@ -113,35 +120,27 @@ public class AttachmentObjectFieldDownloadActionFeatureFlagListenerTest {
 				).build(),
 				ServiceContextTestUtil.getServiceContext());
 
-		Role powerUserRole = _roleLocalService.getRole(
-			objectDefinition.getCompanyId(), RoleConstants.POWER_USER);
+		String primKey = String.valueOf(objectEntry.getObjectEntryId());
 
 		_resourcePermissionLocalService.setResourcePermissions(
-			objectDefinition.getCompanyId(), objectDefinition.getClassName(),
-			ResourceConstants.SCOPE_INDIVIDUAL,
-			String.valueOf(objectEntry.getObjectEntryId()),
+			companyId, name, ResourceConstants.SCOPE_INDIVIDUAL, primKey,
 			powerUserRole.getRoleId(), new String[] {ActionKeys.VIEW});
 
 		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			objectDefinition.getCompanyId(), false, "LPD-17564");
+			companyId, false, "LPD-17564");
 
-		String attachmentDownloadActionKey =
-			objectField.getAttachmentDownloadActionKey();
+		String actionId = objectField.getAttachmentDownloadActionKey();
 
 		Assert.assertNull(
-			_resourceActionLocalService.fetchResourceAction(
-				objectDefinition.getClassName(), attachmentDownloadActionKey));
+			_resourceActionLocalService.fetchResourceAction(name, actionId));
 
 		Role ownerRole = _roleLocalService.getRole(
-			objectDefinition.getCompanyId(), RoleConstants.OWNER);
+			companyId, RoleConstants.OWNER);
 
 		try {
 			_resourcePermissionLocalService.hasResourcePermission(
-				objectDefinition.getCompanyId(),
-				objectDefinition.getClassName(),
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(objectEntry.getObjectEntryId()),
-				ownerRole.getRoleId(), attachmentDownloadActionKey);
+				companyId, name, ResourceConstants.SCOPE_INDIVIDUAL, primKey,
+				ownerRole.getRoleId(), actionId);
 		}
 		catch (Exception exception) {
 			Assert.assertTrue(
@@ -150,11 +149,8 @@ public class AttachmentObjectFieldDownloadActionFeatureFlagListenerTest {
 
 		try {
 			_resourcePermissionLocalService.hasResourcePermission(
-				objectDefinition.getCompanyId(),
-				objectDefinition.getClassName(),
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(objectEntry.getObjectEntryId()),
-				powerUserRole.getRoleId(), attachmentDownloadActionKey);
+				companyId, name, ResourceConstants.SCOPE_INDIVIDUAL, primKey,
+				powerUserRole.getRoleId(), actionId);
 		}
 		catch (Exception exception) {
 			Assert.assertTrue(
@@ -162,52 +158,39 @@ public class AttachmentObjectFieldDownloadActionFeatureFlagListenerTest {
 		}
 
 		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			objectDefinition.getCompanyId(), true, "LPD-17564");
+			companyId, true, "LPD-17564");
 
 		Assert.assertNotNull(
-			_resourceActionLocalService.fetchResourceAction(
-				objectDefinition.getClassName(), attachmentDownloadActionKey));
+			_resourceActionLocalService.fetchResourceAction(name, actionId));
 
 		Role guestRole = _roleLocalService.getRole(
-			objectDefinition.getCompanyId(), RoleConstants.GUEST);
+			companyId, RoleConstants.GUEST);
 
 		Assert.assertFalse(
 			_resourcePermissionLocalService.hasResourcePermission(
-				objectDefinition.getCompanyId(),
-				objectDefinition.getClassName(),
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(objectEntry.getObjectEntryId()),
-				guestRole.getRoleId(), attachmentDownloadActionKey));
+				companyId, name, ResourceConstants.SCOPE_INDIVIDUAL, primKey,
+				guestRole.getRoleId(), actionId));
 
 		Role userRole = _roleLocalService.getRole(
-			objectDefinition.getCompanyId(), RoleConstants.USER);
+			companyId, RoleConstants.USER);
 
 		Assert.assertFalse(
 			_resourcePermissionLocalService.hasResourcePermission(
-				objectDefinition.getCompanyId(),
-				objectDefinition.getClassName(),
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(objectEntry.getObjectEntryId()),
-				userRole.getRoleId(), attachmentDownloadActionKey));
+				companyId, name, ResourceConstants.SCOPE_INDIVIDUAL, primKey,
+				userRole.getRoleId(), actionId));
 
 		Assert.assertTrue(
 			_resourcePermissionLocalService.hasResourcePermission(
-				objectDefinition.getCompanyId(),
-				objectDefinition.getClassName(),
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(objectEntry.getObjectEntryId()),
-				ownerRole.getRoleId(), attachmentDownloadActionKey));
+				companyId, name, ResourceConstants.SCOPE_INDIVIDUAL, primKey,
+				ownerRole.getRoleId(), actionId));
 
 		Assert.assertTrue(
 			_resourcePermissionLocalService.hasResourcePermission(
-				objectDefinition.getCompanyId(),
-				objectDefinition.getClassName(),
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(objectEntry.getObjectEntryId()),
-				powerUserRole.getRoleId(), attachmentDownloadActionKey));
+				companyId, name, ResourceConstants.SCOPE_INDIVIDUAL, primKey,
+				powerUserRole.getRoleId(), actionId));
 
 		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			objectDefinition.getCompanyId(), false, "LPD-17564");
+			companyId, false, "LPD-17564");
 	}
 
 	private DLFileEntry _addDLFileEntry() throws Exception {
