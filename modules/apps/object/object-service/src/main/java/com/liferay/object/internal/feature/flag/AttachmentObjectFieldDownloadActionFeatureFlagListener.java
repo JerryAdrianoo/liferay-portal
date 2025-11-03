@@ -11,6 +11,7 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagListener;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -58,21 +59,13 @@ public class AttachmentObjectFieldDownloadActionFeatureFlagListener
 					objectDefinition.getObjectDefinitionId(),
 					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT);
 
-			List<ResourcePermission> resourcePermissions =
-				_resourcePermissionLocalService.getResourcePermissions(
-					objectDefinition.getCompanyId(),
-					objectDefinition.getClassName(),
-					ResourceConstants.SCOPE_INDIVIDUAL);
-
 			for (ObjectField objectField : objectFields) {
-				String attachmentDownloadActionKey =
-					objectField.getAttachmentDownloadActionKey();
+				String actionId = objectField.getAttachmentDownloadActionKey();
 
 				if (enabled) {
 					ResourceAction resourceAction =
 						_resourceActionLocalService.fetchResourceAction(
-							objectDefinition.getClassName(),
-							attachmentDownloadActionKey);
+							objectDefinition.getClassName(), actionId);
 
 					if (resourceAction != null) {
 						continue;
@@ -90,35 +83,41 @@ public class AttachmentObjectFieldDownloadActionFeatureFlagListener
 							addOrUpdateObjectFieldResourceActionPLOEntries(
 								objectField);
 
-						for (ResourcePermission resourcePermission :
-								resourcePermissions) {
-
-							if (!resourcePermission.hasActionId(
-									attachmentDownloadActionKey) &&
-								resourcePermission.isViewActionId()) {
-
-								resourcePermission.addResourceAction(
-									attachmentDownloadActionKey);
-
-								_resourcePermissionLocalService.
-									updateResourcePermission(
-										resourcePermission);
-							}
-						}
+						_updateResourcePermissions(actionId, objectDefinition);
 					}
 					catch (Exception exception) {
 						_log.error(exception);
 					}
 				}
 				else {
-					_ploEntryLocalService.deletePLOEntries(
-						objectField.getCompanyId(),
-						"action." + attachmentDownloadActionKey);
-
 					_resourceActions.removeModelResource(
-						objectDefinition.getClassName(),
-						attachmentDownloadActionKey);
+						objectDefinition.getClassName(), actionId);
+
+					_ploEntryLocalService.deletePLOEntries(
+						objectField.getCompanyId(), "action." + actionId);
 				}
+			}
+		}
+	}
+
+	private void _updateResourcePermissions(
+			String actionId, ObjectDefinition objectDefinition)
+		throws PortalException {
+
+		List<ResourcePermission> resourcePermissions =
+			_resourcePermissionLocalService.getResourcePermissions(
+				objectDefinition.getCompanyId(),
+				objectDefinition.getClassName(),
+				ResourceConstants.SCOPE_INDIVIDUAL);
+
+		for (ResourcePermission resourcePermission : resourcePermissions) {
+			if (!resourcePermission.hasActionId(actionId) &&
+				resourcePermission.isViewActionId()) {
+
+				resourcePermission.addResourceAction(actionId);
+
+				_resourcePermissionLocalService.updateResourcePermission(
+					resourcePermission);
 			}
 		}
 	}
