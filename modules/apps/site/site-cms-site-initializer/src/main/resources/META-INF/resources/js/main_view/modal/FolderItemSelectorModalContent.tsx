@@ -19,6 +19,7 @@ export type TFolderItemSelectorModalContent = {
 	action: Action;
 	assetLibraries: AssetLibrary[];
 	itemData: ItemData;
+	loadData: () => {};
 	objectEntryFolderExternalReferenceCode: string | undefined;
 };
 
@@ -94,6 +95,7 @@ function FolderItemSelectorModalContent({
 	action,
 	assetLibraries,
 	itemData,
+	loadData,
 	objectEntryFolderExternalReferenceCode,
 }: TFolderItemSelectorModalContent) {
 	const [selectedItemType, setSelectedItemType] = useState<
@@ -104,10 +106,12 @@ function FolderItemSelectorModalContent({
 			? getSpaceFoldersURL(itemData.embedded.scopeId)
 			: SPACES_URL
 	);
+	const [schemaKey, setSchemaKey] = useState(0);
 
 	const {observer, onOpenChange, open} = useModal();
 
 	function onSpaceClick({scopeId}: {scopeId: number}) {
+		setSchemaKey((prev) => prev + 1);
 		setSelectedItemType('folder');
 		setURL(getSpaceFoldersURL(scopeId));
 	}
@@ -160,6 +164,10 @@ function FolderItemSelectorModalContent({
 			}
 
 			promise.then(({error}: {error: any}) => {
+				if (!error) {
+					loadData();
+				}
+
 				displayToast(
 					error,
 					folder,
@@ -175,6 +183,10 @@ function FolderItemSelectorModalContent({
 					String(folder.id)
 				)
 			).then(({error}: {error: any}) => {
+				if (!error) {
+					loadData();
+				}
+
 				displayToast(
 					error,
 					folder,
@@ -265,6 +277,7 @@ function FolderItemSelectorModalContent({
 					}}
 					itemTypeLabel={Liferay.Language.get('folders')}
 					items={[]}
+					key={schemaKey}
 					locator={
 						selectedItemType === 'folder'
 							? {

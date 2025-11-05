@@ -24,6 +24,7 @@ import dev.langchain4j.service.TokenStream;
 import java.io.Serializable;
 
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -104,6 +105,13 @@ public class ImproveWritingTaskNodeExecutorAIDelegate
 			executionContext.getKaleoInstanceToken();
 
 		try {
+			BiConsumer<String, String> biConsumer =
+				(BiConsumer)workflowContext.get("broadcast");
+
+			biConsumer.accept(
+				aiMessage.text(),
+				String.valueOf(kaleoInstanceToken.getKaleoInstanceId()));
+
 			_workflowInstanceManager.updateWorkflowContext(
 				kaleoInstanceToken.getCompanyId(),
 				kaleoInstanceToken.getKaleoInstanceId(), workflowContext);

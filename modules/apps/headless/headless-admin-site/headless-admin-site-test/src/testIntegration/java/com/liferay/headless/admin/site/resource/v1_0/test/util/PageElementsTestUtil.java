@@ -7,22 +7,29 @@ package com.liferay.headless.admin.site.resource.v1_0.test.util;
 
 import com.liferay.fragment.contributor.util.FragmentCollectionContributorRegistryUtil;
 import com.liferay.fragment.model.FragmentEntry;
+import com.liferay.fragment.renderer.DefaultFragmentRendererContext;
+import com.liferay.fragment.renderer.FragmentRenderer;
+import com.liferay.fragment.renderer.util.FragmentRendererRegistryUtil;
 import com.liferay.headless.admin.site.client.dto.v1_0.CollectionDisplayPageElementDefinition;
 import com.liferay.headless.admin.site.client.dto.v1_0.CollectionItemPageElementDefinition;
 import com.liferay.headless.admin.site.client.dto.v1_0.ContainerPageElementDefinition;
 import com.liferay.headless.admin.site.client.dto.v1_0.DefaultFragmentReference;
 import com.liferay.headless.admin.site.client.dto.v1_0.DropZonePageElementDefinition;
-import com.liferay.headless.admin.site.client.dto.v1_0.FormPageElementDefinition;
+import com.liferay.headless.admin.site.client.dto.v1_0.FormContainerPageElementDefinition;
 import com.liferay.headless.admin.site.client.dto.v1_0.FormStepContainerPageElementDefinition;
 import com.liferay.headless.admin.site.client.dto.v1_0.FormStepPageElementDefinition;
 import com.liferay.headless.admin.site.client.dto.v1_0.FragmentDropZonePageElementDefinition;
 import com.liferay.headless.admin.site.client.dto.v1_0.FragmentInstancePageElementDefinition;
+import com.liferay.headless.admin.site.client.dto.v1_0.FragmentItemExternalReference;
 import com.liferay.headless.admin.site.client.dto.v1_0.GridPageElementDefinition;
 import com.liferay.headless.admin.site.client.dto.v1_0.HtmlProperties;
 import com.liferay.headless.admin.site.client.dto.v1_0.ModulePageElementDefinition;
 import com.liferay.headless.admin.site.client.dto.v1_0.PageElement;
 import com.liferay.headless.admin.site.client.dto.v1_0.PageElementDefinition;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,8 +40,127 @@ import java.util.Objects;
  */
 public class PageElementsTestUtil {
 
+	public static FragmentInstancePageElementDefinition
+		getFragmentInstancePageElementDefinition(
+			FragmentEntry fragmentEntry, long scopeGroupId) {
+
+		return new FragmentInstancePageElementDefinition() {
+			{
+				setConfiguration(fragmentEntry::getConfiguration);
+				setCss(fragmentEntry::getCss);
+				setCssClasses(
+					() -> new String[] {RandomTestUtil.randomString()});
+				setCustomCSS(RandomTestUtil::randomString);
+				setDatePropagated(RandomTestUtil::nextDate);
+				setFragmentInstanceExternalReferenceCode(
+					RandomTestUtil::randomString);
+				setFragmentReference(
+					() -> {
+						if (fragmentEntry.getFragmentEntryId() == 0) {
+							return new DefaultFragmentReference() {
+								{
+									setDefaultFragmentKey(
+										fragmentEntry::getFragmentEntryKey);
+									setFragmentReferenceType(
+										() ->
+											FragmentReferenceType.
+												DEFAULT_FRAGMENT_REFERENCE);
+								}
+							};
+						}
+
+						return new FragmentItemExternalReference() {
+							{
+								setExternalReferenceCode(
+									fragmentEntry::getExternalReferenceCode);
+								setFragmentReferenceType(
+									() ->
+										FragmentReferenceType.
+											FRAGMENT_ITEM_EXTERNAL_REFERENCE);
+								setScope(
+									() -> ScopeTestUtil.getItemScope(
+										fragmentEntry.getGroupId(),
+										scopeGroupId));
+							}
+						};
+					});
+				setFragmentType(FragmentType.BASIC);
+				setHtml(fragmentEntry::getHtml);
+				setIndexed(RandomTestUtil::randomBoolean);
+				setJs(fragmentEntry::getJs);
+				setName(RandomTestUtil::randomString);
+				setNamespace(RandomTestUtil::randomString);
+				setType(Type.FRAGMENT);
+				setUuid(RandomTestUtil::randomString);
+			}
+		};
+	}
+
+	public static FragmentInstancePageElementDefinition
+		getFragmentInstancePageElementDefinition(
+			FragmentRenderer fragmentRenderer) {
+
+		return new FragmentInstancePageElementDefinition() {
+			{
+				setConfiguration(
+					() -> GetterUtil.getString(
+						JSONFactoryUtil.toString(
+							fragmentRenderer.getConfigurationJSONObject(
+								new DefaultFragmentRendererContext(null)))));
+
+				setCss(() -> StringPool.BLANK);
+				setCssClasses(
+					() -> new String[] {RandomTestUtil.randomString()});
+				setCustomCSS(RandomTestUtil::randomString);
+				setDatePropagated(RandomTestUtil::nextDate);
+				setFragmentInstanceExternalReferenceCode(
+					RandomTestUtil::randomString);
+				setFragmentReference(
+					() -> new DefaultFragmentReference() {
+						{
+							setDefaultFragmentKey(fragmentRenderer::getKey);
+							setFragmentReferenceType(
+								() ->
+									FragmentReferenceType.
+										DEFAULT_FRAGMENT_REFERENCE);
+						}
+					});
+				setFragmentType(FragmentType.BASIC);
+				setHtml(() -> StringPool.BLANK);
+				setIndexed(RandomTestUtil::randomBoolean);
+				setJs(() -> StringPool.BLANK);
+				setName(RandomTestUtil::randomString);
+				setNamespace(RandomTestUtil::randomString);
+				setType(Type.FRAGMENT);
+				setUuid(RandomTestUtil::randomString);
+			}
+		};
+	}
+
+	public static FragmentInstancePageElementDefinition
+		getFragmentInstancePageElementDefinition(
+			String key, long scopeGroupId) {
+
+		FragmentEntry fragmentEntry =
+			FragmentCollectionContributorRegistryUtil.getFragmentEntry(key);
+
+		if (fragmentEntry != null) {
+			return getFragmentInstancePageElementDefinition(
+				fragmentEntry, scopeGroupId);
+		}
+
+		FragmentRenderer fragmentRenderer =
+			FragmentRendererRegistryUtil.getFragmentRenderer(key);
+
+		if (fragmentRenderer != null) {
+			return getFragmentInstancePageElementDefinition(fragmentRenderer);
+		}
+
+		return null;
+	}
+
 	public static PageElementDefinition getPageElementDefinition(
-		PageElementDefinition.Type type) {
+		PageElementDefinition.Type type, long scopeGroupId) {
 
 		if (Objects.equals(
 				type, PageElementDefinition.Type.COLLECTION_DISPLAY)) {
@@ -79,11 +205,11 @@ public class PageElementsTestUtil {
 			};
 		}
 
-		if (Objects.equals(type, PageElementDefinition.Type.FORM)) {
-			return new FormPageElementDefinition() {
+		if (Objects.equals(type, PageElementDefinition.Type.FORM_CONTAINER)) {
+			return new FormContainerPageElementDefinition() {
 				{
 					setIndexed(Boolean.TRUE);
-					setType(Type.FORM);
+					setType(Type.FORM_CONTAINER);
 				}
 			};
 		}
@@ -107,43 +233,8 @@ public class PageElementsTestUtil {
 		}
 
 		if (Objects.equals(type, PageElementDefinition.Type.FRAGMENT)) {
-			return new FragmentInstancePageElementDefinition() {
-				{
-					FragmentEntry fragmentEntry =
-						FragmentCollectionContributorRegistryUtil.
-							getFragmentEntry("BASIC_COMPONENT-heading");
-
-					setConfiguration(fragmentEntry::getConfiguration);
-					setCss(fragmentEntry::getCss);
-
-					setCssClasses(
-						() -> new String[] {RandomTestUtil.randomString()});
-					setCustomCSS(RandomTestUtil::randomString);
-					setDatePropagated(RandomTestUtil::nextDate);
-					setFragmentInstanceExternalReferenceCode(
-						RandomTestUtil::randomString);
-
-					setFragmentReference(
-						() -> new DefaultFragmentReference() {
-							{
-								setDefaultFragmentKey(
-									fragmentEntry::getFragmentEntryKey);
-								setFragmentReferenceType(
-									() ->
-										FragmentReferenceType.
-											DEFAULT_FRAGMENT_REFERENCE);
-							}
-						});
-					setFragmentType(FragmentType.BASIC);
-					setHtml(fragmentEntry::getHtml);
-					setIndexed(RandomTestUtil::randomBoolean);
-					setJs(fragmentEntry::getJs);
-					setName(RandomTestUtil::randomString);
-					setNamespace(RandomTestUtil::randomString);
-					setType(Type.FRAGMENT);
-					setUuid(RandomTestUtil::randomString);
-				}
-			};
+			return getFragmentInstancePageElementDefinition(
+				"BASIC_COMPONENT-heading", scopeGroupId);
 		}
 
 		if (Objects.equals(
@@ -183,7 +274,7 @@ public class PageElementsTestUtil {
 	}
 
 	public static PageElement[] getPageElements(
-		int count, String parentExternalReferenceCode) {
+		int count, String parentExternalReferenceCode, long scopeGroupId) {
 
 		PageElement[] pageElements = new PageElement[count];
 
@@ -192,7 +283,7 @@ public class PageElementsTestUtil {
 
 			pageElement.setExternalReferenceCode(RandomTestUtil::randomString);
 			pageElement.setPageElementDefinition(
-				getPageElementDefinition(_getRandomType()));
+				getPageElementDefinition(_getRandomType(), scopeGroupId));
 			pageElement.setPosition(i);
 
 			if (_isParentablePageElementDefinitionType(
@@ -202,7 +293,7 @@ public class PageElementsTestUtil {
 				pageElement.setPageElements(
 					getPageElements(
 						RandomTestUtil.randomInt(1, 2),
-						pageElement.getExternalReferenceCode()));
+						pageElement.getExternalReferenceCode(), scopeGroupId));
 			}
 
 			pageElement.setParentExternalReferenceCode(
