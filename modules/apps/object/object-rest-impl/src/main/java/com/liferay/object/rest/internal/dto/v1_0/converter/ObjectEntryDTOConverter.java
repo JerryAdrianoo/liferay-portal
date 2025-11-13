@@ -1215,9 +1215,28 @@ public class ObjectEntryDTOConverter
 				return serializable;
 			}
 
+			String[] keys = null;
+
+			if (serializable instanceof Object[]) {
+				keys = TransformUtil.transform(
+					(Object[])serializable,
+					object -> {
+						if (!(object instanceof Map)) {
+							return null;
+						}
+
+						return MapUtil.getString(
+							(Map<String, String>)object, "key");
+					},
+					String.class);
+			}
+			else if (serializable instanceof String) {
+				keys = StringUtil.split(
+					(String)serializable, StringPool.COMMA_AND_SPACE);
+			}
+
 			return (Serializable)TransformUtil.transformToList(
-				StringUtil.split(
-					(String)serializable, StringPool.COMMA_AND_SPACE),
+				keys,
 				key -> _getListEntry(
 					dtoConverterContext, key,
 					objectField.getListTypeDefinitionId()));
@@ -1589,52 +1608,60 @@ public class ObjectEntryDTOConverter
 			int versionInt)
 		throws Exception {
 
-		SystemProperties systemProperties = new SystemProperties();
+		Group group = _groupLocalService.fetchGroup(groupId);
 
-		systemProperties.setScope(
-			() -> {
-				Group group = _groupLocalService.fetchGroup(groupId);
-
-				if (group == null) {
-					return null;
-				}
-
-				Scope scope = new Scope();
-
-				scope.setExternalReferenceCode(group::getExternalReferenceCode);
-				scope.setType(
-					() -> {
-						if (group.getType() == GroupConstants.TYPE_DEPOT) {
-							return Scope.Type.ASSET_LIBRARY;
-						}
-
-						return Scope.Type.SITE;
-					});
-
-				return scope;
-			});
-
-		ObjectDefinitionBrief objectDefinitionBrief =
+		ObjectDefinitionBrief nestedObjectDefinitionBrief =
 			NestedFieldsSupplier.supply(
 				"systemProperties.objectDefinitionBrief",
 				nestedField -> _toObjectDefinitionBrief(
 					locale, objectDefinition));
 
-		if (objectDefinitionBrief != null) {
-			systemProperties.setObjectDefinitionBrief(
-				() -> objectDefinitionBrief);
+		if (!objectDefinition.isEnableObjectEntryVersioning() &&
+			(group == null) && (nestedObjectDefinitionBrief == null)) {
+
+			return null;
 		}
 
-		if (objectDefinition.isEnableObjectEntryVersioning()) {
-			systemProperties.setVersion(
-				() -> new Version() {
-					{
-						setNumber(() -> versionInt);
-					}
-				});
-		}
+		return new SystemProperties() {
+			{
+				setObjectDefinitionBrief(() -> nestedObjectDefinitionBrief);
+				setScope(
+					() -> {
+						if (group == null) {
+							return null;
+						}
 
-		return systemProperties;
+						Scope scope = new Scope();
+
+						scope.setExternalReferenceCode(
+							group::getExternalReferenceCode);
+						scope.setType(
+							() -> {
+								if (group.getType() ==
+										GroupConstants.TYPE_DEPOT) {
+
+									return Scope.Type.ASSET_LIBRARY;
+								}
+
+								return Scope.Type.SITE;
+							});
+
+						return scope;
+					});
+				setVersion(
+					() -> {
+						if (!objectDefinition.isEnableObjectEntryVersioning()) {
+							return null;
+						}
+
+						return new Version() {
+							{
+								setNumber(() -> versionInt);
+							}
+						};
+					});
+			}
+		};
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

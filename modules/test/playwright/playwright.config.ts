@@ -56,6 +56,7 @@ import {config as depotWebConfig} from './tests/depot-web/main/config';
 import {config as dispatchWebConfig} from './tests/dispatch-web/main/config';
 import {config as documentLibraryWebConfig} from './tests/document-library-web/main/config';
 import {config as dynamicDataMappingFormWebConfig} from './tests/dynamic-data-mapping-form-web/main/config';
+import {config as expandoWebConfig} from './tests/expando-web/main/config';
 import {config as exportImportServiceConfig} from './tests/export-import-service/main/config';
 import {config as exportImportWebConfig} from './tests/export-import-web/main/config';
 import {config as exportImportWebRevampConfig} from './tests/export-import-web/revamp/config';
@@ -152,6 +153,7 @@ import {config as siteNavigationDirectoryWebConfig} from './tests/site-navigatio
 import {config as siteNavigationLanguageWebConfig} from './tests/site-navigation-language-web/main/config';
 import {config as siteNavigationMenuWebConfig} from './tests/site-navigation-menu-web/main/config';
 import {config as siteSitemapWebConfig} from './tests/site-sitemap-web/main/config';
+import {config as siteTeamsWebConfig} from './tests/site-teams-web/main/config';
 import {config as smokeConfig} from './tests/smoke/main/config';
 import {config as stagingConfig} from './tests/staging-configuration-web/main/config';
 import {config as stylebookWebConfig} from './tests/style-book-web/main/config';
@@ -231,6 +233,7 @@ export default defineConfig({
 		dispatchWebConfig,
 		documentLibraryWebConfig,
 		dynamicDataMappingFormWebConfig,
+		expandoWebConfig,
 		exportImportServiceConfig,
 		exportImportWebConfig,
 		exportImportWebRevampConfig,
@@ -327,6 +330,7 @@ export default defineConfig({
 		siteNavigationLanguageWebConfig,
 		siteNavigationMenuWebConfig,
 		siteSitemapWebConfig,
+		siteTeamsWebConfig,
 		smokeConfig,
 		stagingConfig,
 		stylebookWebConfig,

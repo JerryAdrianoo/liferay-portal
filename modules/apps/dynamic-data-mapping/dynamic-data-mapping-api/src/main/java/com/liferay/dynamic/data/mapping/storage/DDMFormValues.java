@@ -25,6 +25,26 @@ import java.util.Set;
  */
 public class DDMFormValues implements Serializable {
 
+	public static List<DDMFormFieldValue> getDDMFormFieldValues(
+		List<DDMFormFieldValue> ddmFormFieldValues, String name,
+		boolean includeNestedDDMFormFieldValues) {
+
+		List<DDMFormFieldValue> matchedDDMFormFieldValues = new ArrayList<>();
+
+		for (DDMFormFieldValue ddmFormFieldValue : ddmFormFieldValues) {
+			if (Objects.equals(name, ddmFormFieldValue.getName())) {
+				matchedDDMFormFieldValues.add(ddmFormFieldValue);
+			}
+
+			if (includeNestedDDMFormFieldValues) {
+				ddmFormFieldValue.populateNestedDDMFormFieldValues(
+					name, matchedDDMFormFieldValues);
+			}
+		}
+
+		return matchedDDMFormFieldValues;
+	}
+
 	public DDMFormValues(DDMForm ddmForm) {
 		_ddmForm = ddmForm;
 	}
@@ -73,6 +93,13 @@ public class DDMFormValues implements Serializable {
 
 	public List<DDMFormFieldValue> getDDMFormFieldValues() {
 		return _ddmFormFieldValues;
+	}
+
+	public List<DDMFormFieldValue> getDDMFormFieldValues(
+		String name, boolean includeNestedDDMFormFieldValues) {
+
+		return getDDMFormFieldValues(
+			_ddmFormFieldValues, name, includeNestedDDMFormFieldValues);
 	}
 
 	/**

@@ -57,9 +57,23 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 
 	@Override
 	public DDMForm createFullHierarchyDDMForm() throws PortalException {
-		DDMForm fullHierarchyDDMForm = getDDMForm();
+		return createFullHierarchyDDMForm(true);
+	}
+
+	@Override
+	public DDMForm createFullHierarchyDDMForm(boolean copy)
+		throws PortalException {
+
+		DDMForm fullHierarchyDDMForm = _getDDMForm(
+			ddmFormUpdateEntityCacheBiConsumer);
 
 		DDMStructure parentDDMStructure = getParentDDMStructure();
+
+		if ((parentDDMStructure == null) && !copy) {
+			return fullHierarchyDDMForm;
+		}
+
+		fullHierarchyDDMForm = new DDMForm(fullHierarchyDDMForm);
 
 		if (parentDDMStructure != null) {
 			DDMForm ancestorsDDMForm =
@@ -139,7 +153,20 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 	public DDMFormField getDDMFormField(String fieldName)
 		throws PortalException {
 
-		return new DDMFormField(_getDDMFormField(fieldName));
+		return getDDMFormField(fieldName, true);
+	}
+
+	@Override
+	public DDMFormField getDDMFormField(String fieldName, boolean copy)
+		throws PortalException {
+
+		DDMFormField ddmFormField = _getDDMFormField(fieldName);
+
+		if (copy) {
+			ddmFormField = new DDMFormField(ddmFormField);
+		}
+
+		return ddmFormField;
 	}
 
 	@Override
@@ -297,8 +324,13 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 
 	@Override
 	public DDMForm getFullHierarchyDDMForm() {
+		return getFullHierarchyDDMForm(true);
+	}
+
+	@Override
+	public DDMForm getFullHierarchyDDMForm(boolean copy) {
 		try {
-			return createFullHierarchyDDMForm();
+			return createFullHierarchyDDMForm(copy);
 		}
 		catch (Exception exception) {
 			_log.error(exception);
