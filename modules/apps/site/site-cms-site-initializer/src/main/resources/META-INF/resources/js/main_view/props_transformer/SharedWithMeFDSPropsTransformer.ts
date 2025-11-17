@@ -11,6 +11,7 @@ import {AdditionalProps} from './AssetsFDSPropsTransformer';
 import shareAction from './actions/shareAction';
 import AuthorRenderer from './cell_renderers/AuthorRenderer';
 import SharedItemRenderer from './cell_renderers/SharedItemRenderer';
+import VisibleRenderer from './cell_renderers/VisibleRenderer';
 
 const OBJECT_ENTRY_FOLDER_CLASS_NAME =
 	'com.liferay.object.model.ObjectEntryFolder';
@@ -38,6 +39,11 @@ export default function SharedWithMeFDSPropsTransformer({
 					name: 'sharedItemTableCellRenderer',
 					type: 'internal',
 				} as IInternalRenderer,
+				{
+					component: VisibleRenderer,
+					name: 'visibleTableCellRenderer',
+					type: 'internal',
+				} as IInternalRenderer,
 			],
 		},
 		itemsActions: itemsActions.map((action) => {
@@ -60,7 +66,8 @@ export default function SharedWithMeFDSPropsTransformer({
 						Boolean(
 							item?.className !==
 								OBJECT_ENTRY_FOLDER_CLASS_NAME &&
-								item?.actionIds?.includes('UPDATE')
+								item?.actionIds?.includes('UPDATE') &&
+								item?.visible
 						),
 				};
 			}
@@ -74,13 +81,16 @@ export default function SharedWithMeFDSPropsTransformer({
 				return {
 					...action,
 					isVisible: (item: any) =>
-						Boolean(item?.actionIds?.includes('UPDATE')),
+						Boolean(
+							item?.actionIds?.includes('UPDATE') && item?.visible
+						),
 				};
 			}
 			else if (action?.data?.id === 'share') {
 				return {
 					...action,
-					isVisible: (item: any) => Boolean(item?.shareable),
+					isVisible: (item: any) =>
+						Boolean(item?.shareable && item?.visible),
 				};
 			}
 			else if (action?.data?.id === 'view-content') {

@@ -86,7 +86,7 @@ public class SystemFDSSerializer
 			httpServletRequest, systemFDSEntry.getRESTApplication(),
 			systemFDSEntry.getRESTEndpoint(), systemFDSEntry.getRESTSchema()
 		).addQueryString(
-			systemFDSEntry.getAdditionalAPIURLParameters()
+			systemFDSEntry.getAdditionalAPIURLParameters(httpServletRequest)
 		).setTokenResolutions(
 			tokenResolutionsJSONObject
 		).buildQueryString(
@@ -266,7 +266,7 @@ public class SystemFDSSerializer
 				"contentRendererModuleURL",
 				fdsView.getContentRendererModuleURL()
 			).put(
-				"default", fdsView.isDefault()
+				"default", fdsView.isDefault(fdsName)
 			).put(
 				"label",
 				LanguageUtil.get(

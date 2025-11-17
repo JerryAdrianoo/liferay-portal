@@ -109,9 +109,6 @@ public class ImportSystemDataSetMVCResourceCommand
 			fdsName, 0, dataSetObjectDefinition.getObjectDefinitionId(),
 			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
 			HashMapBuilder.<String, Serializable>put(
-				"additionalAPIURLParameters",
-				systemFDSEntry.getAdditionalAPIURLParameters()
-			).put(
 				"defaultItemsPerPage", systemFDSEntry.getDefaultItemsPerPage()
 			).put(
 				"description", systemFDSEntry.getDescription()
@@ -173,21 +170,21 @@ public class ImportSystemDataSetMVCResourceCommand
 		for (FDSView fdsView : _fdsViewRegistry.getFDSViews(fdsName)) {
 			if (fdsView instanceof BaseCardsFDSView) {
 				_addBaseCardsFDSViewObjectEntries(
-					(BaseCardsFDSView)fdsView,
+					(BaseCardsFDSView)fdsView, fdsName,
 					_portal.getHttpServletRequest(resourceRequest),
 					objectEntry);
 			}
 
 			if (fdsView instanceof BaseListFDSView) {
 				_addBaseListFDSViewObjectEntries(
-					(BaseListFDSView)fdsView,
+					(BaseListFDSView)fdsView, fdsName,
 					_portal.getHttpServletRequest(resourceRequest),
 					objectEntry);
 			}
 
 			if (fdsView instanceof BaseTableFDSView) {
 				_addBaseTableFDSViewObjectEntries(
-					(BaseTableFDSView)fdsView,
+					(BaseTableFDSView)fdsView, fdsName,
 					_portal.getHttpServletRequest(resourceRequest),
 					objectEntry);
 			}
@@ -198,7 +195,7 @@ public class ImportSystemDataSetMVCResourceCommand
 	}
 
 	private void _addBaseCardsFDSViewObjectEntries(
-			BaseCardsFDSView baseCardsFDSView,
+			BaseCardsFDSView baseCardsFDSView, String fdsName,
 			HttpServletRequest httpServletRequest, ObjectEntry objectEntry)
 		throws Exception {
 
@@ -239,7 +236,7 @@ public class ImportSystemDataSetMVCResourceCommand
 				new ServiceContext());
 		}
 
-		if (baseCardsFDSView.isDefault()) {
+		if (baseCardsFDSView.isDefault(fdsName)) {
 			Map<String, Serializable> values = objectEntry.getValues();
 
 			values.put("defaultVisualizationMode", "cards");
@@ -252,7 +249,7 @@ public class ImportSystemDataSetMVCResourceCommand
 	}
 
 	private void _addBaseListFDSViewObjectEntries(
-			BaseListFDSView baseListFDSView,
+			BaseListFDSView baseListFDSView, String fdsName,
 			HttpServletRequest httpServletRequest, ObjectEntry objectEntry)
 		throws Exception {
 
@@ -293,7 +290,7 @@ public class ImportSystemDataSetMVCResourceCommand
 				new ServiceContext());
 		}
 
-		if (baseListFDSView.isDefault()) {
+		if (baseListFDSView.isDefault(fdsName)) {
 			Map<String, Serializable> values = objectEntry.getValues();
 
 			values.put("defaultVisualizationMode", "list");
@@ -306,7 +303,7 @@ public class ImportSystemDataSetMVCResourceCommand
 	}
 
 	private void _addBaseTableFDSViewObjectEntries(
-			BaseTableFDSView baseTableFDSView,
+			BaseTableFDSView baseTableFDSView, String fdsName,
 			HttpServletRequest httpServletRequest, ObjectEntry objectEntry)
 		throws Exception {
 
@@ -394,7 +391,7 @@ public class ImportSystemDataSetMVCResourceCommand
 				new ServiceContext());
 		}
 
-		if (baseTableFDSView.isDefault()) {
+		if (baseTableFDSView.isDefault(fdsName)) {
 			Map<String, Serializable> values = objectEntry.getValues();
 
 			values.put("defaultVisualizationMode", "table");

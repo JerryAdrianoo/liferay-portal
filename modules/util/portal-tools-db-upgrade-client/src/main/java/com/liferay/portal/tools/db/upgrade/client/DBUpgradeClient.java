@@ -156,12 +156,6 @@ public class DBUpgradeClient {
 
 		_fileOutputStream = new FileOutputStream(_logFile);
 
-		_portalUpgradeDatabasePropertiesFile = new File(
-			_jarDir, "portal-upgrade-database.properties");
-
-		_portalUpgradeDatabaseProperties = _readProperties(
-			_portalUpgradeDatabasePropertiesFile);
-
 		_portalUpgradeExtPropertiesFile = new File(
 			_jarDir, "portal-upgrade-ext.properties");
 
@@ -302,20 +296,25 @@ public class DBUpgradeClient {
 				"Remove " + file + " prior to running an upgrade to prevent " +
 					"possible conflicts.");
 
-			System.exit(0);
+			System.exit(1);
 		}
 
 		try {
-			_verifyPortalUpgradeExtProperties();
+			_verifyPortalUpgradeExtPropertiesLiferayHome();
 
 			_verifyAppServerProperties();
 
-			_verifyPortalUpgradeDatabaseProperties();
+			_verifyPortalUpgradeExtPropertiesDatabase();
 
 			_saveProperties();
 		}
 		catch (IOException ioException) {
-			ioException.printStackTrace();
+			System.err.println(ioException.getMessage());
+			System.err.println(
+				"Stopping the upgrade process. Please fix the errors and try " +
+					"again.");
+
+			System.exit(1);
 		}
 	}
 
@@ -504,13 +503,13 @@ public class DBUpgradeClient {
 		return true;
 	}
 
-	private boolean _isValidDir(File dir) {
+	private boolean _isValidDir(File dir) throws IOException {
 		if (dir.exists() && dir.isDirectory()) {
 			return true;
 		}
 
 		System.err.println(
-			dir.getAbsolutePath() + " does not exist or is not a directory.");
+			dir.getCanonicalPath() + " does not exist or is not a directory.");
 
 		return false;
 	}
@@ -707,8 +706,6 @@ public class DBUpgradeClient {
 
 	private void _saveProperties() throws IOException {
 		_appServerProperties.store(_appServerPropertiesFile);
-		_portalUpgradeDatabaseProperties.store(
-			_portalUpgradeDatabasePropertiesFile);
 		_portalUpgradeExtProperties.store(_portalUpgradeExtPropertiesFile);
 	}
 
@@ -802,27 +799,156 @@ public class DBUpgradeClient {
 				_appServer.getServerDetectorServerId());
 		}
 		else {
+			File liferayHome = new File(
+				_portalUpgradeExtProperties.getProperty("liferay.home"));
+
+			_appServer = AppServer.getAppServer(liferayHome, value);
+
+			if (_appServer == null) {
+				System.err.println(
+					value + " is an unsupported application server.");
+
+				throw new IOException(
+					"Invalid configuration in " +
+						_appServerPropertiesFile.getName());
+			}
+
 			String dirName = _appServerProperties.getProperty("dir");
+
+			if (!_verifyDirName(
+					true, liferayHome, dirName,
+					_appServerPropertiesFile.getName(), "dir")) {
+
+				throw new IOException(
+					"Invalid configuration in " +
+						_appServerPropertiesFile.getName());
+			}
 
 			File dir = new File(dirName);
 
 			if (!dir.isAbsolute()) {
-				dir = new File(_jarDir, dirName);
+				dir = new File(liferayHome, dirName);
 			}
 
 			dirName = dir.getCanonicalPath();
 
+			_appServer.setDirName(dirName);
+
 			_appServerProperties.setProperty("dir", dirName);
 
-			_appServer = new AppServer(
-				dirName, _appServerProperties.getProperty("extra.lib.dirs"),
-				_appServerProperties.getProperty("global.lib.dir"),
-				_appServerProperties.getProperty("portal.dir"), value);
+			String extraLibDirNames = _appServerProperties.getProperty(
+				"extra.lib.dirs");
+			String globalLibDirName = _appServerProperties.getProperty(
+				"global.lib.dir");
+			String portalDirName = _appServerProperties.getProperty(
+				"portal.dir");
+
+			if (!_verifyDirNames(
+					false, dir, extraLibDirNames,
+					_appServerPropertiesFile.getName(), "extra.lib.dirs") |
+				!_verifyDirName(
+					false, dir, globalLibDirName,
+					_appServerPropertiesFile.getName(), "global.lib.dir") |
+				!_verifyDirName(
+					false, dir, portalDirName,
+					_appServerPropertiesFile.getName(), "portal.dir")) {
+
+				throw new IOException(
+					"Invalid configuration in " +
+						_appServerPropertiesFile.getName());
+			}
+
+			_appServer.setExtraLibDirNames(extraLibDirNames);
+			_appServer.setGlobalLibDirName(globalLibDirName);
+			_appServer.setPortalDirName(portalDirName);
 		}
 	}
 
-	private void _verifyPortalUpgradeDatabaseProperties() throws IOException {
-		String value = _portalUpgradeDatabaseProperties.getProperty(
+	private boolean _verifyDirName(
+			boolean allowAbsolutePaths, File baseDir, String dirName,
+			String propertiesFileName, String propertyName)
+		throws IOException {
+
+		if (dirName != null) {
+			dirName = dirName.trim();
+		}
+
+		if ((dirName == null) || dirName.isEmpty()) {
+			System.err.println(
+				"Property \"" + propertyName + "\" is not set in " +
+					propertiesFileName + ".");
+
+			return false;
+		}
+
+		File testDir = _getResolvedDir(allowAbsolutePaths, baseDir, dirName);
+
+		if (testDir == null) {
+			System.err.println(
+				"Property '" + propertyName + "' in " + propertiesFileName +
+					" contains an invalid path: " + dirName);
+
+			return false;
+		}
+
+		return _isValidDir(testDir);
+	}
+
+	private boolean _verifyDirNames(
+			boolean allowAbsolutePaths, File baseDir, String dirNames,
+			String propertiesFileName, String propertyName)
+		throws IOException {
+
+		if ((dirNames == null) ||
+			dirNames.trim(
+			).isEmpty()) {
+
+			return true;
+		}
+
+		boolean hasErrors = false;
+
+		for (String dirName : dirNames.split(",")) {
+			dirName = dirName.trim();
+
+			if (dirName.isEmpty()) {
+				continue;
+			}
+
+			File testDir = _getResolvedDir(
+				allowAbsolutePaths, baseDir, dirName);
+
+			if (testDir == null) {
+				System.err.println(
+					"Property \"" + propertyName + "\" in " +
+						propertiesFileName + " contains an invalid path: " +
+							dirName);
+
+				hasErrors = true;
+			}
+			else if (!_isValidDir(testDir)) {
+				hasErrors = true;
+			}
+		}
+
+		return !hasErrors;
+	}
+
+	private void _verifyPortalUpgradeExtPropertiesDatabase()
+		throws IOException {
+
+		File portalUpgradeDatabasePropertiesFile = new File(
+			_jarDir, "portal-upgrade-database.properties");
+
+		if (portalUpgradeDatabasePropertiesFile.exists()) {
+			System.err.println(
+				"The portal-upgrade-database.properties file is deprecated " +
+					"and will be ignored. Please move all database " +
+						"configuration properties to " +
+							"portal-upgrade-ext.properties.");
+		}
+
+		String value = _portalUpgradeExtProperties.getProperty(
 			"jdbc.default.driverClassName");
 
 		if ((value != null) && !value.isEmpty()) {
@@ -909,17 +1035,19 @@ public class DBUpgradeClient {
 
 		String password = _consoleReader.readLine('*');
 
-		_portalUpgradeDatabaseProperties.setProperty(
+		_portalUpgradeExtProperties.setProperty(
 			"jdbc.default.driverClassName", dataSource.getClassName());
-		_portalUpgradeDatabaseProperties.setProperty(
+		_portalUpgradeExtProperties.setProperty(
 			"jdbc.default.password", password);
-		_portalUpgradeDatabaseProperties.setProperty(
+		_portalUpgradeExtProperties.setProperty(
 			"jdbc.default.url", dataSource.getURL());
-		_portalUpgradeDatabaseProperties.setProperty(
+		_portalUpgradeExtProperties.setProperty(
 			"jdbc.default.username", userName);
 	}
 
-	private void _verifyPortalUpgradeExtProperties() throws IOException {
+	private void _verifyPortalUpgradeExtPropertiesLiferayHome()
+		throws IOException {
+
 		String value = _portalUpgradeExtProperties.getProperty("liferay.home");
 
 		File baseDir = new File(".");
@@ -940,6 +1068,16 @@ public class DBUpgradeClient {
 		}
 		else {
 			baseDir = _jarDir;
+
+			if (!_verifyDirName(
+					true, baseDir, value,
+					_portalUpgradeExtPropertiesFile.getName(),
+					"liferay.home")) {
+
+				throw new IOException(
+					"Invalid configuration in " +
+						_portalUpgradeExtPropertiesFile.getName());
+			}
 		}
 
 		File liferayHome = new File(value);
@@ -1009,8 +1147,6 @@ public class DBUpgradeClient {
 	private final FileOutputStream _fileOutputStream;
 	private List<String> _jvmOpts = new ArrayList<>();
 	private final File _logFile;
-	private final Properties _portalUpgradeDatabaseProperties;
-	private final File _portalUpgradeDatabasePropertiesFile;
 	private final Properties _portalUpgradeExtProperties;
 	private final File _portalUpgradeExtPropertiesFile;
 	private final boolean _shell;
