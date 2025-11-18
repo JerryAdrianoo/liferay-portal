@@ -231,6 +231,9 @@ public class DataSourceController extends BaseFaroController {
 			@DefaultValue(StringPool.BLANK) @FormParam("accountsConfiguration")
 				FaroParam<SalesforceProvider.AccountsConfiguration>
 					accountsConfigurationFaroParam,
+			@DefaultValue(StringPool.BLANK) @FormParam("channelsConfiguration")
+				FaroParam<SalesforceProvider.ChannelsConfiguration>
+					channelsConfigurationFaroParam,
 			@DefaultValue(StringPool.BLANK) @FormParam("contactsConfiguration")
 				FaroParam<SalesforceProvider.ContactsConfiguration>
 					contactsConfigurationFaroParam,
@@ -241,27 +244,13 @@ public class DataSourceController extends BaseFaroController {
 
 		salesforceProvider.setAccountsConfiguration(
 			accountsConfigurationFaroParam.getValue());
+		salesforceProvider.setChannelsConfiguration(
+			channelsConfigurationFaroParam.getValue());
 		salesforceProvider.setContactsConfiguration(
 			contactsConfigurationFaroParam.getValue());
 
-		DataSourceDisplay dataSourceDisplay = create(
+		return create(
 			groupId, credentials, salesforceProvider, name, url, null, status);
-
-		FaroProject faroProject =
-			faroProjectLocalService.getFaroProjectByGroupId(groupId);
-
-		createFieldMappings(
-			faroProject, dataSourceDisplay.getId(),
-			FieldMappingConstants.CONTEXT_ORGANIZATION,
-			FieldMappingConstants.OWNER_TYPE_ACCOUNT,
-			FieldMappingConstants.getSalesforceAccountFieldMappingMaps());
-		createFieldMappings(
-			faroProject, dataSourceDisplay.getId(),
-			FieldMappingConstants.CONTEXT_DEMOGRAPHICS,
-			FieldMappingConstants.OWNER_TYPE_INDIVIDUAL,
-			FieldMappingConstants.getSalesforceIndividualFieldMappingMaps());
-
-		return dataSourceDisplay;
 	}
 
 	@DELETE
@@ -982,6 +971,9 @@ public class DataSourceController extends BaseFaroController {
 			@DefaultValue(StringPool.BLANK) @FormParam("accountsConfiguration")
 				FaroParam<SalesforceProvider.AccountsConfiguration>
 					accountsConfigurationFaroParam,
+			@DefaultValue(StringPool.BLANK) @FormParam("channelsConfiguration")
+				FaroParam<SalesforceProvider.ChannelsConfiguration>
+					channelsConfigurationFaroParam,
 			@DefaultValue(StringPool.BLANK) @FormParam("contactsConfiguration")
 				FaroParam<SalesforceProvider.ContactsConfiguration>
 					contactsConfigurationFaroParam,
@@ -992,15 +984,19 @@ public class DataSourceController extends BaseFaroController {
 
 		SalesforceProvider.AccountsConfiguration accountsConfiguration =
 			accountsConfigurationFaroParam.getValue();
+		SalesforceProvider.ChannelsConfiguration channelsConfiguration =
+			channelsConfigurationFaroParam.getValue();
 		SalesforceProvider.ContactsConfiguration contactsConfiguration =
 			contactsConfigurationFaroParam.getValue();
 
 		if ((accountsConfiguration != null) &&
+			(channelsConfiguration != null) &&
 			(contactsConfiguration != null)) {
 
 			salesforceProvider = new SalesforceProvider();
 
 			salesforceProvider.setAccountsConfiguration(accountsConfiguration);
+			salesforceProvider.setChannelsConfiguration(channelsConfiguration);
 			salesforceProvider.setContactsConfiguration(contactsConfiguration);
 		}
 		else if ((accountsConfiguration != null) ||
@@ -1014,6 +1010,11 @@ public class DataSourceController extends BaseFaroController {
 			if (accountsConfiguration != null) {
 				salesforceProvider.setAccountsConfiguration(
 					accountsConfiguration);
+			}
+
+			if (channelsConfiguration != null) {
+				salesforceProvider.setChannelsConfiguration(
+					channelsConfiguration);
 			}
 
 			if (contactsConfiguration != null) {
@@ -1160,6 +1161,9 @@ public class DataSourceController extends BaseFaroController {
 			@DefaultValue(StringPool.BLANK) @FormParam("accountsConfiguration")
 				FaroParam<SalesforceProvider.AccountsConfiguration>
 					accountsConfigurationFaroParam,
+			@DefaultValue(StringPool.BLANK) @FormParam("channelsConfiguration")
+				FaroParam<SalesforceProvider.ChannelsConfiguration>
+					channelsConfigurationFaroParam,
 			@DefaultValue(StringPool.BLANK) @FormParam("contactsConfiguration")
 				FaroParam<SalesforceProvider.ContactsConfiguration>
 					contactsConfigurationFaroParam,
@@ -1170,6 +1174,8 @@ public class DataSourceController extends BaseFaroController {
 
 		salesforceProvider.setAccountsConfiguration(
 			accountsConfigurationFaroParam.getValue());
+		salesforceProvider.setChannelsConfiguration(
+			channelsConfigurationFaroParam.getValue());
 		salesforceProvider.setContactsConfiguration(
 			contactsConfigurationFaroParam.getValue());
 

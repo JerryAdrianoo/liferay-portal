@@ -2695,7 +2695,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 				layout.getFriendlyURLMap(), layout.getIconImage(), null,
 				layout.getStyleBookEntryERC(),
 				pageJSONObject.getLong("faviconFileEntryId"),
-				layout.getMasterLayoutPlid(), serviceContext);
+				layout.getMasterLayoutPageTemplateEntryERC(), serviceContext);
 
 			_layoutLocalService.updateTypeSettings(
 				layout, unicodeProperties.toString());
@@ -5922,10 +5922,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 						masterPageJSONObject.getString("key"));
 
 			if (layoutPageTemplateEntry != null) {
-				draftLayout = _layoutLocalService.updateMasterLayoutPlid(
-					draftLayout.getGroupId(), draftLayout.isPrivateLayout(),
-					draftLayout.getLayoutId(),
-					layoutPageTemplateEntry.getPlid());
+				draftLayout =
+					_layoutLocalService.updateMasterLayoutPageTemplateEntryERC(
+						draftLayout.getGroupId(), draftLayout.isPrivateLayout(),
+						draftLayout.getLayoutId(),
+						layoutPageTemplateEntry.getExternalReferenceCode());
 			}
 		}
 

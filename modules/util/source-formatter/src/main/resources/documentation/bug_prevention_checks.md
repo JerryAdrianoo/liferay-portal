@@ -140,6 +140,7 @@ JavaRedundantConstructorCheck | .java | Finds unnecessary empty constructor. |
 JavaReferenceAnnotationsCheck | .java | Performs several checks on classes with `@Reference` annotations. |
 JavaReleaseInfoCheck | .java | Validates information in `ReleaseInfo.java`. |
 [JavaResultSetCheck](check/java_result_set_check.md#javaresultsetcheck) | .java | Checks for correct use `java.sql.ResultSet.getInt(int)`. |
+JavaSQLStatementCheck | .java | Perform several checks in SQL statements. |
 [JavaSeeAnnotationCheck](check/java_see_annotation_check.md#javaseeannotationcheck) | .java | Checks for nested annotations inside `@see`. |
 JavaServiceImplCheck | .java | Ensures that `afterPropertiesSet` and `destroy` methods in `*ServiceImpl` always call the method with the same name in the superclass. |
 [JavaServiceUtilCheck](check/java_service_util_check.md#javaserviceutilcheck) | .java | Checks that there are no calls to `*ServiceImpl` from a `*ServiceUtil` class. |
@@ -154,9 +155,11 @@ JavaSystemEventAnnotationCheck | .java | Finds missing method `setDeletionSystem
 JavaSystemExceptionCheck | .java | Finds unnecessary SystemExceptions. |
 JavaTaglibMethodCheck | .java | Checks that a `*Tag` class has a `set*` and `get*` or `is*` method for each attribute. |
 JavaTransactionBoundaryCheck | .java | Finds direct `add*` or `get*` calls in `*ServiceImpl` (those should use the `*service` global variable instead). |
+JavaUniqueUpgradeProcessCheck | .java | Checks that only one regular `UpgradeProcess` is allowed when registering a new upgrade process |
 [JavaUnsafeCastingCheck](check/java_unsafe_casting_check.md#javaunsafecastingcheck) | .java | Checks for potential ClassCastException. |
 [JavaUpgradeAlterCheck](check/java_upgrade_alter_check.md#javaupgradealtercheck) | .java | Performs several checks on `alter` calls in Upgrade classes. |
 [JavaUpgradeClassCheck](check/java_upgrade_class_check.md#javaupgradeclasscheck) | .java | Performs several checks on Upgrade classes. |
+JavaUpgradeCompanyThreadLocalCheck | .java | Checks that we do not use `CompanyThreadLocal.setCompanyId*` in upgrade classes. |
 JavaUpgradeConnectionCheck | .java | Finds cases where `DataAccess.getConnection` is used (instead of using the available global variable `connection`). |
 [JavaUpgradeDropTableCheck](check/java_upgrade_drop_table_check.md#javaupgradedroptablecheck) | .java | Finds cases where `DROP_TABLE_IF_EXISTS` should be used (instead of `drop table if exists`). |
 [JavaUpgradeIndexCheck](check/java_upgrade_index_check.md#javaupgradeindexcheck) | .java | Finds cases where the service builder indexes are updated manually in Upgrade classes. This is not needed because Liferay takes care of it. |

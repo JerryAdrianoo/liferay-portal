@@ -16,6 +16,9 @@ import com.liferay.data.cleanup.internal.upgrade.OutdatedPublishedCTCollectionUp
 import com.liferay.data.cleanup.internal.upgrade.PublishedCTSContentDataUpgradeProcess;
 import com.liferay.data.cleanup.internal.upgrade.WidgetLayoutTypeSettingsUpgradeProcess;
 import com.liferay.data.cleanup.internal.upgrade.util.ConfigurationUtil;
+import com.liferay.data.cleanup.internal.verify.ClassNamePostUpgradeDataCleanupProcess;
+import com.liferay.data.cleanup.internal.verify.PostUpgradeDataCleanupProcess;
+import com.liferay.data.cleanup.internal.verify.ServiceComponentPostUpgradeDataCleanupProcess;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.layout.manager.ContentManager;
@@ -28,6 +31,7 @@ import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ReleaseLocalService;
+import com.liferay.portal.kernel.service.ServiceComponentLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
 import com.liferay.portal.kernel.util.Portal;
@@ -134,8 +138,40 @@ public class DataRemovalExecutor {
 			}
 		}
 
+		if (dataRemovalConfiguration.removeClassNameOrphanData()) {
+			VerifyProcess verifyProcess = new VerifyProcess() {
+
+				@Override
+				protected void doVerify() throws Exception {
+					PostUpgradeDataCleanupProcess
+						postUpgradeDataCleanupProcess =
+							new ClassNamePostUpgradeDataCleanupProcess(
+								_classNameLocalService, connection);
+
+					postUpgradeDataCleanupProcess.cleanUp();
+				}
+
+			};
+
+			verifyProcess.verify();
+		}
+
 		if (dataRemovalConfiguration.removeServiceComponentOrphanData()) {
-			_serviceComponentDataCleanupVerifyProcess.verify();
+			VerifyProcess verifyProcess = new VerifyProcess() {
+
+				@Override
+				protected void doVerify() throws Exception {
+					PostUpgradeDataCleanupProcess
+						postUpgradeDataCleanupProcess =
+							new ServiceComponentPostUpgradeDataCleanupProcess(
+								connection, _serviceComponentLocalService);
+
+					postUpgradeDataCleanupProcess.cleanUp();
+				}
+
+			};
+
+			verifyProcess.verify();
 		}
 	}
 
@@ -263,9 +299,7 @@ public class DataRemovalExecutor {
 	@Reference
 	private ReleaseLocalService _releaseLocalService;
 
-	@Reference(
-		target = "(component.name=com.liferay.data.cleanup.internal.verify.ServiceComponentDataCleanupVerifyProcess)"
-	)
-	private VerifyProcess _serviceComponentDataCleanupVerifyProcess;
+	@Reference
+	private ServiceComponentLocalService _serviceComponentLocalService;
 
 }

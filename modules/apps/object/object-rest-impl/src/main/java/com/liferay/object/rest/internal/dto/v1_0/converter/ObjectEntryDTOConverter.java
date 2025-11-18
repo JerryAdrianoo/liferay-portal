@@ -17,7 +17,6 @@ import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.exportimport.attachment.ExportImportAttachmentManager;
 import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
-import com.liferay.headless.object.dto.v1_0.Scope;
 import com.liferay.list.type.model.ListTypeEntry;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.constants.ObjectActionKeys;
@@ -117,6 +116,7 @@ import com.liferay.portal.vulcan.fields.NestedFieldsSupplier;
 import com.liferay.portal.vulcan.jaxrs.extension.ExtendedEntity;
 import com.liferay.portal.vulcan.permission.Permission;
 import com.liferay.portal.vulcan.permission.PermissionUtil;
+import com.liferay.portal.vulcan.scope.Scope;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.trash.model.TrashEntry;
 import com.liferay.trash.service.TrashEntryLocalService;
@@ -883,22 +883,15 @@ public class ObjectEntryDTOConverter
 					return null;
 				}
 
-				Scope scope = new Scope();
-
 				Group group = _groupLocalService.getGroup(
 					dlFileEntry.getGroupId());
 
-				scope.setExternalReferenceCode(group::getExternalReferenceCode);
-				scope.setType(
-					() -> {
-						if (group.getType() == GroupConstants.TYPE_DEPOT) {
-							return Scope.Type.ASSET_LIBRARY;
-						}
+				Scope.Type type =
+					(group.getType() == GroupConstants.TYPE_DEPOT) ?
+						Scope.Type.ASSET_LIBRARY : Scope.Type.SITE;
 
-						return Scope.Type.SITE;
-					});
-
-				return scope;
+				return Scope.ofReference(
+					group.getExternalReferenceCode(), type);
 			});
 		fileEntry.setThumbnailURL(
 			() -> NestedFieldsSupplier.supply(
@@ -1215,9 +1208,28 @@ public class ObjectEntryDTOConverter
 				return serializable;
 			}
 
+			String[] keys = null;
+
+			if (serializable instanceof Object[]) {
+				keys = TransformUtil.transform(
+					(Object[])serializable,
+					object -> {
+						if (!(object instanceof Map)) {
+							return null;
+						}
+
+						return MapUtil.getString(
+							(Map<String, String>)object, "key");
+					},
+					String.class);
+			}
+			else if (serializable instanceof String) {
+				keys = StringUtil.split(
+					(String)serializable, StringPool.COMMA_AND_SPACE);
+			}
+
 			return (Serializable)TransformUtil.transformToList(
-				StringUtil.split(
-					(String)serializable, StringPool.COMMA_AND_SPACE),
+				keys,
 				key -> _getListEntry(
 					dtoConverterContext, key,
 					objectField.getListTypeDefinitionId()));
@@ -1589,52 +1601,45 @@ public class ObjectEntryDTOConverter
 			int versionInt)
 		throws Exception {
 
-		SystemProperties systemProperties = new SystemProperties();
+		Group group = _groupLocalService.fetchGroup(groupId);
 
-		systemProperties.setScope(
-			() -> {
-				Group group = _groupLocalService.fetchGroup(groupId);
-
-				if (group == null) {
-					return null;
-				}
-
-				Scope scope = new Scope();
-
-				scope.setExternalReferenceCode(group::getExternalReferenceCode);
-				scope.setType(
-					() -> {
-						if (group.getType() == GroupConstants.TYPE_DEPOT) {
-							return Scope.Type.ASSET_LIBRARY;
-						}
-
-						return Scope.Type.SITE;
-					});
-
-				return scope;
-			});
-
-		ObjectDefinitionBrief objectDefinitionBrief =
+		ObjectDefinitionBrief nestedObjectDefinitionBrief =
 			NestedFieldsSupplier.supply(
 				"systemProperties.objectDefinitionBrief",
 				nestedField -> _toObjectDefinitionBrief(
 					locale, objectDefinition));
 
-		if (objectDefinitionBrief != null) {
-			systemProperties.setObjectDefinitionBrief(
-				() -> objectDefinitionBrief);
+		if (!objectDefinition.isEnableObjectEntryVersioning() &&
+			(group == null) && (nestedObjectDefinitionBrief == null)) {
+
+			return null;
 		}
 
-		if (objectDefinition.isEnableObjectEntryVersioning()) {
-			systemProperties.setVersion(
-				() -> new Version() {
-					{
-						setNumber(() -> versionInt);
-					}
-				});
-		}
+		return new SystemProperties() {
+			{
+				setObjectDefinitionBrief(() -> nestedObjectDefinitionBrief);
+				setScope(
+					() -> {
+						if (group == null) {
+							return null;
+						}
 
-		return systemProperties;
+						return Scope.of(groupId, locale);
+					});
+				setVersion(
+					() -> {
+						if (!objectDefinition.isEnableObjectEntryVersioning()) {
+							return null;
+						}
+
+						return new Version() {
+							{
+								setNumber(() -> versionInt);
+							}
+						};
+					});
+			}
+		};
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

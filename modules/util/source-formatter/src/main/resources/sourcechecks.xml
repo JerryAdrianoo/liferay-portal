@@ -660,6 +660,11 @@
 			<category name="Performance" />
 			<description name="Finds unnecessary calls to `Session.flush()` (calls that are followed by `Session.clear()`)." />
 		</check>
+		<check name="JavaSQLStatementCheck">
+			<category name="Bug Prevention" />
+			<description name="Perform several checks in SQL statements." />
+			<property name="enabled" value="false" />
+		</check>
 		<check name="JavaStaticBlockCheck">
 			<category name="Bug Prevention" />
 			<description name="Performs several checks on `static` blocks." />
@@ -865,7 +870,7 @@
 			<category name="Bug Prevention" />
 			<description name="Validates information in `ReleaseInfo.java`." />
 		</check>
-		<check name="JavaRunSqlStylingCheck">
+		<check name="JavaRunSQLCheck">
 			<category name="Styling" />
 			<description name="Applies rules to enforce consistency in code style." />
 		</check>
@@ -933,6 +938,11 @@
 			<category name="Bug Prevention" />
 			<description name="Finds direct `add*` or `get*` calls in `*ServiceImpl` (those should use the `*service` global variable instead)." />
 		</check>
+		<check name="JavaUniqueUpgradeProcessCheck">
+			<category name="Bug Prevention" />
+			<description name="Checks that only one regular `UpgradeProcess` is allowed when registering a new upgrade process" />
+			<property name="enabled" value="false" />
+		</check>
 		<check name="JavaUnsafeCastingCheck">
 			<category name="Bug Prevention" />
 			<description name="Checks for potential ClassCastException." />
@@ -953,9 +963,18 @@
 			<category name="Bug Prevention" />
 			<description name="Performs several checks on Upgrade classes." />
 		</check>
+		<check name="JavaUpgradeCompanyThreadLocalCheck">
+			<category name="Bug Prevention" />
+			<description name="Checks that we do not use `CompanyThreadLocal.setCompanyId*` in upgrade classes." />
+		</check>
 		<check name="JavaUpgradeConnectionCheck">
 			<category name="Bug Prevention" />
 			<description name="Finds cases where `DataAccess.getConnection` is used (instead of using the available global variable `connection`)." />
+		</check>
+		<check name="JavaUpgradeCreateTableCheck">
+			<category name="Bug Prevention" />
+			<description name="Checks that we do not use `create table` statement in upgrade classes." />
+			<property name="enabled" value="false" />
 		</check>
 		<check name="JavaUpgradeDropTableCheck">
 			<category name="Bug Prevention" />
@@ -1947,10 +1966,6 @@
 		<check name="UpgradeJavaLocalServiceImplCheck">
 			<category name="Upgrade" />
 			<description name="Add Component annotation to `*LocalServiceImpl.java` file." />
-		</check>
-		<check name="UpgradeJavaMultiVMPoolUtilCheck">
-			<category name="Upgrade" />
-			<description name="Replaces the references of the MultiVMPoolUtil class and also its methods usages." />
 		</check>
 		<check name="UpgradeJavaPortletIdMethodCheck">
 			<category name="Upgrade" />
