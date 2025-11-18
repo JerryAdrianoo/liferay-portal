@@ -20,6 +20,50 @@ components:
                         -   $ref: "#/components/schemas/SitePageActionExecutionResult"
                         -   $ref: "#/components/schemas/URLActionExecutionResult"
             type: object
+        ActionFragmentEditableElementValue:
+            allOf:
+                -   $ref: "#/components/schemas/FragmentEditableElementValue"
+                -   properties:
+                        action:
+                            # @review
+                            description:
+                                The fragment editable element's action. Must be mapped to an external value.
+                            oneOf:
+                                -   $ref: "#/components/schemas/FragmentMappedValue"
+                        onError:
+                            $ref: "#/components/schemas/ActionExecutionResult"
+                            # @review
+                            description:
+                                The action execution result in case the action fails.
+                        onSuccess:
+                            $ref: "#/components/schemas/ActionExecutionResult"
+                            # @review
+                            description:
+                                The action execution result in case the action succeeds.
+                        text:
+                            # @review
+                            description:
+                                The fragment editable element's text.
+                            oneOf:
+                                -   $ref: "#/components/schemas/FragmentInlineValue"
+                                -   $ref: "#/components/schemas/FragmentMappedValue"
+            # @review
+            description:
+                A fragment editable element value of type action.
+            type: object
+        BackgroundImageFragmentEditableElementValue:
+            allOf:
+                -   $ref: "#/components/schemas/FragmentEditableElementValue"
+                -   properties:
+                        backgroundFragmentImage:
+                            $ref: "#/components/schemas/FragmentImage"
+                            # @review
+                            description:
+                                The fragment editable element's background image.
+            # @review
+            description:
+                A fragment editable element value of type background image.
+            type: object
         BasicLayout:
             properties:
                 align:
@@ -538,6 +582,29 @@ components:
                             type: string
                     type: object
             type: object
+        DisplayPageFormContainerSubmissionResult:
+            # @review
+            allOf:
+                -   $ref: "#/components/schemas/SuccessFormContainerSubmissionResult"
+                -   properties:
+                        defaultDisplayPage:
+                            # @review
+                            description:
+                                Default display page when a form container submission is successful.
+                            type: boolean
+                        itemExternalReference:
+                            $ref: "#/components/schemas/ItemExternalReference"
+                            # @review
+                            description:
+                                A reference to a site page when a form container submission is successful.
+                        successNotificationMessage:
+                            $ref: "#/components/schemas/SuccessNotificationMessage"
+                            # @review
+                            description:
+                                The success notification message.
+            description:
+                The definition of a submission result of type page.
+            type: object
         DisplayPageTemplate:
             # @review
             description:
@@ -779,6 +846,24 @@ components:
             description:
                 Represent a page element definition of a drop zone.
             type: object
+        EmbeddedMessageFormContainerSubmissionResult:
+            # @review
+            allOf:
+                -   $ref: "#/components/schemas/SuccessFormContainerSubmissionResult"
+                -   properties:
+                        message:
+                            $ref: "#/components/schemas/FragmentInlineValue"
+                            # @review
+                            description:
+                                The localized submission of message type.
+                        successNotificationMessage:
+                            $ref: "#/components/schemas/SuccessNotificationMessage"
+                            # @review
+                            description:
+                                The success notification message.
+            description:
+                The definition of a submission result of type embedded message.
+            type: object
         EmptyCollectionConfig:
             properties:
                 displayMessage:
@@ -829,92 +914,127 @@ components:
                 A unique reference to a FavIcon of type ItemExternalReference which remains constant across
                 environments.
             type: object
-        FormConfig:
+        FormContainerClassSubtypeReference:
+            # @review
+            allOf:
+                -   $ref: "#/components/schemas/ClassSubtypeReference"
+                -   $ref: "#/components/schemas/FormContainerReference"
+            description:
+                A unique reference to a FormContainerReference of type FormContainerClassSubtypeReference which remains
+                constant across environments.
+            type: object
+        FormContainerConfig:
             # @review
             description:
-                The form page element definition form's configuration.
+                The form container page element definition form's container configuration.
             properties:
-                formReference:
+                formContainerReference:
                     # @review
+                    $ref: "#/components/schemas/FormContainerReference"
                     description:
-                        The form reference.
-                    oneOf:
-                        -   $ref: "#/components/schemas/ClassSubtypeReference"
-                        -   $ref: "#/components/schemas/ContextReference"
-                formType:
+                        The form container reference.
+                formContainerType:
                     enum: [Multistep, Simple]
                     type: string
+                localizationConfig:
+                    properties:
+                        unlocalizedFieldsMessageFragmentInlineValue:
+                            $ref: "#/components/schemas/FragmentInlineValue"
+                            # @review
+                            description:
+                                The message displayed in the unlocalized fields.
+                        unlocalizedFieldsState:
+                            # @review
+                            description:
+                                The state of the unlocalized fields.
+                            enum: [Disabled, ReadOnly]
+                            type: string
+                    type: object
                 numberOfSteps:
                     # @review
                     description:
-                        The form page element's number of steps.
+                        The form container page element's number of steps.
                     type: integer
-                successFormSubmissionResult:
+                successFormContainerSubmissionResult:
                     # @review
+                    $ref: "#/components/schemas/SuccessFormContainerSubmissionResult"
                     description:
-                        The definition of the result when a form submission is successful.
-                    oneOf:
-                        -   $ref: "#/components/schemas/MessageFormSubmissionResult"
-                        -   $ref: "#/components/schemas/SitePageFormSubmissionResult"
-                        -   $ref: "#/components/schemas/URLFormSubmissionResult"
-                    type: object
+                        The definition of the result when a form container submission is successful.
             type: object            
-        FormPageElementDefinition:
+        FormContainerContextReference:
+            # @review
+            allOf:
+                -   $ref: "#/components/schemas/ContextReference"
+                -   $ref: "#/components/schemas/FormContainerReference"
+            description:
+                A unique reference to a FormContainerReference of type FormContainerContextReference which remains
+                constant across environments.
+            type: object
+        FormContainerPageElementDefinition:
             allOf:
                 -   $ref: "#/components/schemas/PageElementDefinition"
                 -   properties:
                         cssClasses:
                             # @review
                             description:
-                                A list of CSS classes that are applied to the form page element.
+                                A list of CSS classes that are applied to the form container page element.
                             items:
                                 type: string
                             type: array
                         customCSS:
                             # @review
                             description:
-                                Custom CSS that is applied on the form page element.
+                                Custom CSS that is applied on the form container page element.
                             type: string
-                        customCSSViewports:
-                            # @review
-                            description:
-                                The custom CSS viewports of the page form.
-                            items:
-                                $ref: "#/components/schemas/CustomCSSViewport"
-                            type: array
-                        formConfig:
-                            $ref: "#/components/schemas/FormConfig"
-                            type: object
+                        formContainerConfig:
+                            $ref: "#/components/schemas/FormContainerConfig"
                         fragmentStyle:
                             $ref: "#/components/schemas/FragmentStyle"
                             # @review
                             description:
-                                The fragment style of a form page element.
+                                The fragment style of a form container page element.
                         fragmentViewports:
                             # @review
                             description:
-                                A list of fragment viewports of a form page element.
+                                A list of fragment viewports of a form container page element.
                             items:
                                 $ref: "#/components/schemas/FragmentViewport"
                             type: array
                         indexed:
                             # @review
                             description:
-                                A flag that indicates whether the page fragment instance is indexed or not.
+                                A flag that indicates whether the form container is indexed or not.
                             type: boolean
                         layout:
                             $ref: "#/components/schemas/Layout"
                             # @review
                             description:
-                                The form page element's layout.
+                                The form container page element's layout.
                         name:
                             # @review
                             description:
-                                The custom name of a form page element.
+                                The custom name of a form container page element.
                             type: string
             # @review
             description:
                 The page element definition of a form.
+            type: object
+        FormContainerReference:
+            # @review
+            description:
+                The form container reference.
+            discriminator:
+                mapping:
+                    FormContainerClassSubtypeReference: "#/components/schemas/FormContainerClassSubtypeReference"
+                    FormContainerContextReference: "#/components/schemas/FormContainerContextReference"
+                propertyName: type
+            properties:
+                type:
+                    # @review
+                    description:
+                        The form container reference. Can be a class subtype reference or a context reference.
+                    enum: [FormContainerClassSubtypeReference, FormContainerContextReference]
+                    type: string
             type: object
         FormStepContainerPageElementDefinition:
             allOf:
@@ -1099,113 +1219,43 @@ components:
             # @review
             description:
                 The page element definition of a fragment drop zone.
-        FragmentField:
+        FragmentEditableElement:
             # @review
             description:
-                A fragment field.
+                A fragment editable element.
             properties:
+                fragmentEditableElementValue:
+                    $ref: "#/components/schemas/FragmentEditableElementValue"
                 id:
                     # @review
                     description:
-                        The fragment field's ID.
+                        The fragment element's ID.
                     type: string
-                value:
-                    anyOf:
-                        -   $ref: "#/components/schemas/FragmentFieldAction"
-                        -   $ref: "#/components/schemas/FragmentFieldBackgroundImage"
-                        -   $ref: "#/components/schemas/FragmentFieldHTML"
-                        -   $ref: "#/components/schemas/FragmentFieldImage"
-                        -   $ref: "#/components/schemas/FragmentFieldText"
-                    # @review
-                    description:
-                        The fragment field's value.
             type: object
-        FragmentFieldAction:
+        FragmentEditableElementValue:
             # @review
             description:
-                A fragment field with an action.
+                The fragment editable element value.
+            discriminator:
+                mapping:
+                    Action: "#/components/schemas/ActionFragmentEditableElementValue"
+                    BackgroundImage: "#/components/schemas/BackgroundImageFragmentEditableElementValue"
+                    HTML: "#/components/schemas/HTMLFragmentEditableElementValue"
+                    Image: "#/components/schemas/ImageFragmentEditableElementValue"
+                    Text: "#/components/schemas/TextFragmentEditableElementValue"
+                propertyName: type
             properties:
-                action:
+                type:
                     # @review
                     description:
-                        The fragment field's action. Must be mapped to an external value.
-                    oneOf:
-                        -   $ref: "#/components/schemas/FragmentMappedValue"
-                onError:
-                    $ref: "#/components/schemas/ActionExecutionResult"
-                    # @review
-                    description:
-                        The action execution result in case the action fails.
-                onSuccess:
-                    $ref: "#/components/schemas/ActionExecutionResult"
-                    # @review
-                    description:
-                        The action execution result in case the action succeeds.
-                text:
-                    # @review
-                    description:
-                        The fragment field's text.
-                    oneOf:
-                        -   $ref: "#/components/schemas/FragmentInlineValue"
-                        -   $ref: "#/components/schemas/FragmentMappedValue"
-            type: object
-        FragmentFieldBackgroundImage:
-            # @review
-            description:
-                A fragment field with a background image.
-            properties:
-                backgroundFragmentImage:
-                    $ref: "#/components/schemas/FragmentImage"
-                    # @review
-                    description:
-                        The fragment field's background image.
-            type: object
-        FragmentFieldHTML:
-            # @review
-            description:
-                A fragment field with HTML.
-            properties:
-                html:
-                    # @review
-                    description:
-                        The fragment field's HTML. Can be inline or mapped to an external value.
-                    oneOf:
-                        -   $ref: "#/components/schemas/FragmentInlineValue"
-                        -   $ref: "#/components/schemas/FragmentMappedValue"
-            type: object
-        FragmentFieldImage:
-            # @review
-            description:
-                A fragment field with an image.
-            properties:
-                fragmentImage:
-                    $ref: "#/components/schemas/FragmentImage"
-                    # @review
-                    description:
-                        The fragment field's image.
-                fragmentLink:
-                    $ref: "#/components/schemas/FragmentLink"
-                    # @review
-                    description:
-                        A link to a fragment.
-            type: object
-        FragmentFieldText:
-            # @review
-            description:
-                A fragment field with text.
-            properties:
-                fragmentLink:
-                    $ref: "#/components/schemas/FragmentLink"
-                    # @review
-                    description:
-                        A link to a fragment.
-                text:
-                    # @review
-                    description:
-                        The fragment field's text.
-                    oneOf:
-                        -   $ref: "#/components/schemas/FragmentInlineValue"
-                        -   $ref: "#/components/schemas/FragmentMappedValue"
+                        The fragment editable element's type.
+                    enum:
+                        -   Action
+                        -   BackgroundImage
+                        -   HTML
+                        -   Image
+                        -   Text
+                    type: string
             type: object
         FragmentImage:
             # @review
@@ -1319,12 +1369,12 @@ components:
                             description:
                                 The fragment configuration field values of the fragment instance.
                             type: object
-                        fragmentFields:
+                        fragmentEditableElements:
                             # @review
                             description:
-                                The fragment field values of the the fragment instance.
+                                The fragment editable elements of the the fragment instance.
                             items:
-                                $ref: "#/components/schemas/FragmentField"
+                                $ref: "#/components/schemas/FragmentEditableElement"
                             type: array
                         fragmentInstanceExternalReferenceCode:
                             # @review
@@ -1981,6 +2031,21 @@ components:
                 -   gridViewportDefinition
                 -   id
             type: object
+        HTMLFragmentEditableElementValue:
+            allOf:
+                -   $ref: "#/components/schemas/FragmentEditableElementValue"
+                -   properties:
+                        html:
+                            # @review
+                            description:
+                                The fragment editable element's HTML. Can be inline or mapped to an external value.
+                            oneOf:
+                                -   $ref: "#/components/schemas/FragmentInlineValue"
+                                -   $ref: "#/components/schemas/FragmentMappedValue"
+            # @review
+            description:
+                A fragment editable element value of type HTML.
+            type: object
         HrefURLValue:
             allOf:
                 -   $ref: "#/components/schemas/URLValue"
@@ -1994,6 +2059,24 @@ components:
                     enum: [Article, Aside, Div, Footer, Header, Nav, Section]
                     type: string
             type: object
+        ImageFragmentEditableElementValue:
+            allOf:
+                -   $ref: "#/components/schemas/FragmentEditableElementValue"
+                -   properties:
+                        fragmentImage:
+                            $ref: "#/components/schemas/FragmentImage"
+                            # @review
+                            description:
+                                The fragment editable element's image.
+                        fragmentLink:
+                            $ref: "#/components/schemas/FragmentLink"
+                            # @review
+                            description:
+                                A link to a fragment.
+            # @review
+            description:
+                A fragment editable element value of type image.
+            type: object
         ItemExternalReference:
             # @review
             description:
@@ -2004,16 +2087,7 @@ components:
                 externalReferenceCode:
                     type: string
                 scope:
-                    properties:
-                        externalReferenceCode:
-                            type: string
-                        type:
-                            enum: [AssetLibrary, Site]
-                            type: string
-                    required:
-                        -   externalReferenceCode
-                        -   type
-                    type: object
+                    type: scope
             required:
                 -   externalReferenceCode
             type: object
@@ -2198,24 +2272,6 @@ components:
                     description:
                         A valid external identifier to reference this page.
                     type: string
-        MessageFormSubmissionResult:
-            # @review
-            description:
-                The definition of a submission result of type message.
-            properties:
-                message:
-                    $ref: "#/components/schemas/FragmentInlineValue"
-                    # @review
-                    description:
-                        The localized submission of message type.
-                messageType:
-                    # @review
-                    description:
-                        The message form submission type (embedded, none).
-                    enum: [Embedded, None]
-                    type: string
-                showNotification:
-                    type: boolean
             type: object
         ModulePageElementDefinition:
             allOf:
@@ -2271,6 +2327,11 @@ components:
                         Block of actions allowed by the user making the request.
                     readOnly: true
                     type: object
+                auto:
+                    description:
+                        A Boolean value that specifies whether or not the Navigation Menu displays as an option when
+                        creating a new page
+                    type: boolean
                 creator:
                     $ref: ../../headless-admin-user/headless-admin-user-impl/rest-openapi.yaml#Creator
                     # @review
@@ -2325,13 +2386,11 @@ components:
                     items:
                         type: permission
                     type: array
-                siteId:
-                    # @review
+                siteExternalReferenceCode:
                     description:
-                        The ID of the site to which this navigation menu is scoped.
-                    format: int64
+                        The external reference code of the site to which this navigation menu is scoped.
                     readOnly: true
-                    type: integer
+                    type: string
         NavigationMenuFragmentConfigurationFieldValue:
             allOf:
                 -   $ref: "#/components/schemas/FragmentConfigurationFieldValue"
@@ -2578,7 +2637,7 @@ components:
                     CollectionItem: "#/components/schemas/CollectionItemPageElementDefinition"
                     Container: "#/components/schemas/ContainerPageElementDefinition"
                     DropZone: "#/components/schemas/DropZonePageElementDefinition"
-                    Form: "#/components/schemas/FormPageElementDefinition"
+                    FormContainer: "#/components/schemas/FormContainerPageElementDefinition"
                     FormStep: "#/components/schemas/FormStepPageElementDefinition"
                     FormStepContainer: "#/components/schemas/FormStepContainerPageElementDefinition"
                     Fragment: "#/components/schemas/FragmentInstancePageElementDefinition"
@@ -2593,14 +2652,14 @@ components:
                     # @review
                     description:
                         The page element definition's type (collection display, collection item, container, drop zone,
-                        form, form step, form step container, fragment, fragment composition, fragment drop zone, grid, 
-                        module or widget).
+                        form container, form step, form step container, fragment, fragment composition, fragment drop
+                        zone, grid,  module or widget).
                     enum:
                         -   CollectionDisplay
                         -   CollectionItem
                         -   Container
                         -   DropZone
-                        -   Form
+                        -   FormContainer
                         -   FormStep
                         -   FormStepContainer
                         -   Fragment
@@ -3159,8 +3218,18 @@ components:
                 active:
                     type: boolean
                 description:
+                    type: string
+                description_i18n:
                     additionalProperties:
                         type: string
+                    type: object
+                descriptiveName:
+                    readOnly: true
+                    type: string
+                descriptiveName_i18n:
+                    additionalProperties:
+                        type: string
+                    readOnly: true
                     type: object
                 externalReferenceCode:
                     description:
@@ -3353,16 +3422,23 @@ components:
                     description:
                         The reference to a page.
             type: object
-        SitePageFormSubmissionResult:
+        SitePageFormContainerSubmissionResult:
             # @review
+            allOf:
+                -   $ref: "#/components/schemas/SuccessFormContainerSubmissionResult"
+                -   properties:
+                        itemExternalReference:
+                            $ref: "#/components/schemas/ItemExternalReference"
+                            # @review
+                            description:
+                                A reference to a site page when a form container submission is successful.
+                        successNotificationMessage:
+                            $ref: "#/components/schemas/SuccessNotificationMessage"
+                            # @review
+                            description:
+                                The success notification message.
             description:
                 The definition of a submission result of type page.
-            properties:
-                itemReference:
-                    $ref: "#/components/schemas/ItemExternalReference"
-                    # @review
-                    description:
-                        The localized submission of page type.
             type: object
         SitePageNavigationSettings:
             allOf:
@@ -3428,6 +3504,52 @@ components:
                     minimum: 0
                     type: number
             type: object
+        StayInPageFormContainerSubmissionResult:
+            # @review
+            allOf:
+                -   $ref: "#/components/schemas/SuccessFormContainerSubmissionResult"
+                -   properties:
+                        successNotificationMessage:
+                            $ref: "#/components/schemas/SuccessNotificationMessage"
+                            # @review
+                            description:
+                                The success notification message.
+            description:
+                The definition of a submission result of type stay in page.
+            type: object
+        SuccessFormContainerSubmissionResult:
+            # @review
+            description:
+                The form container success form container submission result.
+            discriminator:
+                mapping:
+                    DisplayPage: "#/components/schemas/DisplayPageFormContainerSubmissionResult"
+                    EmbeddedMessage : "#/components/schemas/EmbeddedMessageFormContainerSubmissionResult"
+                    SitePage: "#/components/schemas/SitePageFormContainerSubmissionResult"
+                    StayInPage : "#/components/schemas/StayInPageFormContainerSubmissionResult"
+                    Url: "#/components/schemas/URLFormContainerSubmissionResult"
+                propertyName: type
+            properties:
+                type:
+                    # @review
+                    description:
+                        The form container success form container submission result type.
+                    enum: [DisplayPage,EmbeddedMessage, SitePage,StayInPage, Url]
+                    type: string
+            type: object
+        SuccessNotificationMessage:
+            # @review
+            description:
+                The success notification message.
+            properties:
+                message:
+                    $ref: "#/components/schemas/FragmentInlineValue"
+                    # @review
+                    description:
+                        The localized success notification message.
+                showNotification:
+                    type: boolean
+            type: object
         TemplateListStyle:
             # @review
             allOf:
@@ -3487,6 +3609,69 @@ components:
             description:
                 The value of a fragment configuration field of type text.
             type: object
+        TextFragmentEditableElementValue:
+            allOf:
+                -   $ref: "#/components/schemas/FragmentEditableElementValue"
+                -   properties:
+                        fragmentLink:
+                            $ref: "#/components/schemas/FragmentLink"
+                            # @review
+                            description:
+                                The fragment link of a text fragment editable element.
+                        textFragmentValue:
+                            $ref: "#/components/schemas/TextFragmentValue"
+                            # @review
+                            description:
+                                The fragment editable element's text.
+            # @review
+            description:
+                A fragment editable element of type text.
+            type: object
+        TextFragmentValue:
+            # @review
+            description:
+                The value of a fragment text element.
+            discriminator:
+                mapping:
+                    Inline: "#/components/schemas/TextInlineFragmentValue"
+                    Mapped: "#/components/schemas/TextMappedFragmentValue"
+                propertyName: type
+            properties:
+                type:
+                    # @review
+                    description:
+                        Whether the value is set inline or mapped.
+                    enum: [Inline, Mapped]
+                    type: string
+            type: object
+        TextInlineFragmentValue:
+            # @review
+            allOf:
+                -   properties:
+                        fragmentInlineValue:
+                            $ref: "#/components/schemas/FragmentInlineValue"
+                            # @review
+                            description:
+                                The fragment inline value.
+                -   $ref: "#/components/schemas/TextFragmentValue"
+            # @review
+            description:
+                An inline value of a fragment text element.
+            type: object
+        TextMappedFragmentValue:
+            # @review
+            allOf:
+                -   properties:
+                        fragmentMappedValue:
+                            $ref: "#/components/schemas/FragmentMappedValue"
+                            # @review
+                            description:
+                                The fragment mapped value.
+                -   $ref: "#/components/schemas/TextFragmentValue"
+            # @review
+            description:
+                A mapped value of a fragment text element.
+            type: object
         URLActionExecutionResult:
             # @review
             description:
@@ -3498,16 +3683,18 @@ components:
                     description:
                         The localized action execution result of type URL.
             type: object
-        URLFormSubmissionResult:
+        URLFormContainerSubmissionResult:
             # @review
+            allOf:
+                -   $ref: "#/components/schemas/SuccessFormContainerSubmissionResult"
+                -   properties:
+                        url:
+                            $ref: "#/components/schemas/FragmentInlineValue"
+                            # @review
+                            description:
+                                The localized submission of URL type.
             description:
                 The definition of a submission result of type URL.
-            properties:
-                url:
-                    $ref: "#/components/schemas/FragmentInlineValue"
-                    # @review
-                    description:
-                        The localized submission of URL type.
             type: object
         URLFragmentConfigurationFieldValue:
             allOf:
@@ -4250,7 +4437,7 @@ components:
 info:
     description:
         "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID
-        'com.liferay.headless.admin.site.client', and version '1.0.17'."
+        'com.liferay.headless.admin.site.client', and version '1.0.19'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html

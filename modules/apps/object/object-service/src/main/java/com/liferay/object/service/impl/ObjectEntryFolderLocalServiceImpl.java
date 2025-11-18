@@ -762,8 +762,9 @@ public class ObjectEntryFolderLocalServiceImpl
 			return name;
 		}
 
-		return UniqueUtil.getCopyValue(
-			copyValue -> _isUniqueName(copyValue, parentObjectEntryFolder),
+		return UniqueUtil.getUniqueValue(
+			"copy",
+			uniqueValue -> _isUniqueName(uniqueValue, parentObjectEntryFolder),
 			name);
 	}
 
@@ -944,6 +945,10 @@ public class ObjectEntryFolderLocalServiceImpl
 			}
 		}
 
+		objectEntryFolder.setLabel(
+			uniqueName,
+			LocaleUtil.fromLanguageId(
+				objectEntryFolder.getDefaultLanguageId()));
 		objectEntryFolder.setName(uniqueName);
 	}
 

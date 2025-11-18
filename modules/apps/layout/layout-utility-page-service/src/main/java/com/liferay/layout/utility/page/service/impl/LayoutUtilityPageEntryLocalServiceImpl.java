@@ -104,7 +104,8 @@ public class LayoutUtilityPageEntryLocalServiceImpl
 
 		if (plid == 0) {
 			Layout layout = _addLayout(
-				userId, groupId, name, masterLayoutPlid,
+				userId, groupId, name,
+				layoutUtilityPageEntry.getExternalReferenceCode(),
 				defaultLayoutUtilityPageEntry, serviceContext);
 
 			if (layout != null) {
@@ -147,11 +148,12 @@ public class LayoutUtilityPageEntryLocalServiceImpl
 			layoutUtilityPageEntryPersistence.findByPrimaryKey(
 				sourceLayoutUtilityPageEntryId);
 
-		String name = UniqueUtil.getCopyValue(
-			copyValue -> {
+		String name = UniqueUtil.getUniqueValue(
+			"copy",
+			uniqueValue -> {
 				LayoutUtilityPageEntry layoutUtilityPageEntry =
 					layoutUtilityPageEntryPersistence.fetchByG_N_T(
-						groupId, copyValue,
+						groupId, uniqueValue,
 						sourceLayoutUtilityPageEntry.getType());
 
 				if (layoutUtilityPageEntry == null) {
@@ -445,7 +447,7 @@ public class LayoutUtilityPageEntryLocalServiceImpl
 			draftLayout.getFriendlyURLMap(), draftLayout.getIconImage(), null,
 			draftLayout.getStyleBookEntryERC(),
 			draftLayout.getFaviconFileEntryId(),
-			draftLayout.getMasterLayoutPlid(), serviceContext);
+			draftLayout.getMasterLayoutPageTemplateEntryERC(), serviceContext);
 
 		Layout layout = _layoutLocalService.getLayout(
 			layoutUtilityPageEntry.getPlid());
@@ -457,14 +459,15 @@ public class LayoutUtilityPageEntryLocalServiceImpl
 			layout.getRobotsMap(), layout.getType(), layout.isHidden(),
 			layout.getFriendlyURLMap(), layout.getIconImage(), null,
 			layout.getStyleBookEntryERC(), layout.getFaviconFileEntryId(),
-			layout.getMasterLayoutPlid(), serviceContext);
+			layout.getMasterLayoutPageTemplateEntryERC(), serviceContext);
 
 		return layoutUtilityPageEntry;
 	}
 
 	private Layout _addLayout(
-			long userId, long groupId, String name, long masterLayoutPlid,
-			boolean published, ServiceContext serviceContext)
+			long userId, long groupId, String name,
+			String masterLayoutPageTemplateEntryERC, boolean published,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		Map<Locale, String> titleMap = Collections.singletonMap(
@@ -473,7 +476,7 @@ public class LayoutUtilityPageEntryLocalServiceImpl
 		UnicodeProperties typeSettingsUnicodeProperties =
 			new UnicodeProperties();
 
-		if (masterLayoutPlid > 0) {
+		if (Validator.isNotNull(masterLayoutPageTemplateEntryERC)) {
 			typeSettingsUnicodeProperties.setProperty(
 				"lfr-theme:regular:show-footer", Boolean.FALSE.toString());
 			typeSettingsUnicodeProperties.setProperty(
@@ -499,11 +502,11 @@ public class LayoutUtilityPageEntryLocalServiceImpl
 		Layout layout = _layoutLocalService.addLayout(
 			null, userId, groupId, false, 0, 0, 0, titleMap, titleMap, null,
 			null, null, LayoutConstants.TYPE_UTILITY, typeSettings, true, true,
-			new HashMap<>(), masterLayoutPlid, serviceContext);
+			new HashMap<>(), masterLayoutPageTemplateEntryERC, serviceContext);
 
 		Layout draftLayout = layout.fetchDraftLayout();
 
-		if (masterLayoutPlid > 0) {
+		if (Validator.isNotNull(masterLayoutPageTemplateEntryERC)) {
 			LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
 				groupId, false);
 

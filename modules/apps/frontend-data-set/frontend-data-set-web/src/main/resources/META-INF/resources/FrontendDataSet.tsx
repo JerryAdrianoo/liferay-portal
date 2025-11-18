@@ -116,6 +116,7 @@ const FrontendDataSetContent = ({
 	formId,
 	formName,
 	header,
+	hideManagementBarInEmptyState = false,
 	id,
 	infoPanelComponent,
 	inlineAddingSettings,
@@ -137,7 +138,6 @@ const FrontendDataSetContent = ({
 	showBulkActionsManagementBar = true,
 	showBulkActionsManagementBarActions = true,
 	showManagementBar = true,
-	showManagementBarInEmptyState = true,
 	showNavBarWhenSelected = false,
 	showPagination = true,
 	showSearch = true,
@@ -1319,7 +1319,7 @@ const FrontendDataSetContent = ({
 		(!!items.length ||
 			hasSearch ||
 			hasActiveFilters ||
-			showManagementBarInEmptyState);
+			!hideManagementBarInEmptyState);
 
 	const managementBar = showManagementToolbar ? (
 		<div className="management-bar-wrapper">
@@ -1717,6 +1717,7 @@ const FrontendDataSetContent = ({
 				executeAsyncItemAction,
 				formId,
 				formName,
+				hideManagementBarInEmptyState,
 				highlightItems,
 				highlightedItemsValue,
 				id,
@@ -1752,7 +1753,6 @@ const FrontendDataSetContent = ({
 				showBulkActionsManagementBar,
 				showBulkActionsManagementBarActions,
 				showInfoPanel: infoPanelComponent ? true : false,
-				showManagementBarInEmptyState,
 				sidePanelId: dataSetSupportSidePanelIdRef.current,
 				sorts,
 				style,
