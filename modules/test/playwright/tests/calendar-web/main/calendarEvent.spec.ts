@@ -14,6 +14,7 @@ import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
+import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import {getRandomInt} from '../../../utils/getRandomInt';
 import getRandomString from '../../../utils/getRandomString';
 import performLogin, {
@@ -34,6 +35,7 @@ export const test = mergeTests(
 	collectionsPagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
+		'LPD-11235': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
 	journalPagesTest,
@@ -423,6 +425,78 @@ test('can create calendar event with invitation', async ({
 		await apiHelpers.headlessAdminUser.deleteUserAccount(Number(user1.id));
 		await apiHelpers.headlessAdminUser.deleteUserAccount(Number(user2.id));
 	}
+});
+
+test('can create calendar event with description', async ({
+	calendarWidgetPage,
+}) => {
+	const title = getRandomInt().toString();
+	const description = 'English description';
+
+	await test.step('Check that description persists', async () => {
+		await calendarWidgetPage.addEvent({
+			allDay: false,
+			description,
+			publishEvent: true,
+			title,
+		});
+
+		await calendarWidgetPage.description.scrollIntoViewIfNeeded();
+
+		await expect(calendarWidgetPage.description).toContainText(description);
+	});
+
+	await test.step('Check that a description with multiple translations persists', async () => {
+		await test.step('Fill in a description for es-ES', async () => {
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: calendarWidgetPage.descriptionLocalesDropdownMenu.locator(
+					'#es_ES'
+				),
+				trigger: calendarWidgetPage.descriptionLocalesDropdownButton,
+			});
+
+			await calendarWidgetPage.description.scrollIntoViewIfNeeded();
+
+			await expect(async () => {
+				await expect(
+					calendarWidgetPage.descriptionLocalesDropdownButton
+				).toContainText('es-ES');
+			}).toPass();
+
+			await calendarWidgetPage.description.fill('Spanish description');
+		});
+
+		await test.step('Publish the event', async () => {
+			await calendarWidgetPage.publishEvent({waitForSuccessAlert: true});
+		});
+
+		await test.step('Check that "English description" and "Spanish description" are persisted', async () => {
+			await calendarWidgetPage.description.scrollIntoViewIfNeeded();
+
+			await expect(calendarWidgetPage.description).toContainText(
+				'English description'
+			);
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: calendarWidgetPage.descriptionLocalesDropdownMenu.locator(
+					'#es_ES'
+				),
+				trigger: calendarWidgetPage.descriptionLocalesDropdownButton,
+			});
+
+			await expect(async () => {
+				await expect(
+					calendarWidgetPage.descriptionLocalesDropdownButton
+				).toContainText('es-ES');
+			}).toPass();
+
+			await expect(calendarWidgetPage.description).toContainText(
+				'Spanish description'
+			);
+		});
+	});
 });
 
 test('can see calendar event inputs alerts', async ({

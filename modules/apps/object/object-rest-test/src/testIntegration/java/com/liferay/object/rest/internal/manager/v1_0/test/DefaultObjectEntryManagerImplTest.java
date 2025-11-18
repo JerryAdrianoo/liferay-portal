@@ -95,7 +95,6 @@ import com.liferay.object.rest.dto.v1_0.Status;
 import com.liferay.object.rest.dto.v1_0.SystemProperties;
 import com.liferay.object.rest.dto.v1_0.TaxonomyCategoryBrief;
 import com.liferay.object.rest.dto.v1_0.Version;
-import com.liferay.object.rest.dto.v1_0.util.ScopeUtil;
 import com.liferay.object.rest.manager.v1_0.DefaultObjectEntryManager;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
 import com.liferay.object.rest.test.util.BaseObjectEntryManagerImplTestCase;
@@ -211,6 +210,7 @@ import com.liferay.portal.vulcan.fields.NestedFieldsContext;
 import com.liferay.portal.vulcan.fields.NestedFieldsContextThreadLocal;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.permission.Permission;
+import com.liferay.portal.vulcan.scope.Scope;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.subscription.service.SubscriptionLocalService;
 
@@ -2500,6 +2500,38 @@ public class DefaultObjectEntryManagerImplTest
 	}
 
 	@Test
+	public void testAddObjectEntryWithLocalizedRichTextObjectField()
+		throws Exception {
+
+		ObjectEntry objectEntry = _defaultObjectEntryManager.addObjectEntry(
+			_simpleDTOConverterContext, _objectDefinition2,
+			new ObjectEntry() {
+				{
+					properties = HashMapBuilder.<String, Object>put(
+						"localizedRichTextObjectFieldName_i18n",
+						HashMapBuilder.<String, Object>put(
+							"en_US",
+							"en_US <script>console.log('XSS');</script>"
+						).put(
+							"pt_BR",
+							"pt_BR <script>console.log('XSS');</script>"
+						).build()
+					).build();
+				}
+			},
+			null);
+
+		Assert.assertEquals(
+			"en_US",
+			_getLocalizedPropertyValue(
+				"en_US", objectEntry, "localizedRichTextObjectFieldName"));
+		Assert.assertEquals(
+			"pt_BR",
+			_getLocalizedPropertyValue(
+				"pt_BR", objectEntry, "localizedRichTextObjectFieldName"));
+	}
+
+	@Test
 	@TestInfo("LPD-56833")
 	public void testAddObjectEntryWithMissingObjectEntryFolderReference()
 		throws Exception {
@@ -2724,14 +2756,16 @@ public class DefaultObjectEntryManagerImplTest
 					new TaxonomyCategoryBrief[] {
 						new TaxonomyCategoryBrief() {
 							{
-								scope = ScopeUtil.toScope(_group);
+								scope = Scope.of(
+									_group, LocaleUtil.getDefault());
 								taxonomyCategoryExternalReferenceCode =
 									taxonomyCategoryExternalReferenceCode1;
 							}
 						},
 						new TaxonomyCategoryBrief() {
 							{
-								scope = ScopeUtil.toScope(_group);
+								scope = Scope.of(
+									_group, LocaleUtil.getDefault());
 								taxonomyCategoryExternalReferenceCode =
 									taxonomyCategoryExternalReferenceCode2;
 							}

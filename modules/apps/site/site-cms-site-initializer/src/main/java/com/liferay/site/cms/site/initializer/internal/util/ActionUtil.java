@@ -195,11 +195,21 @@ public class ActionUtil {
 			addedFragmentEntryLinks,
 			JSONUtil.put(
 				"placeholder",
-				JSONUtil.put(
-					LocaleUtil.US.toString(),
-					LanguageUtil.format(
-						serviceContext.getLocale(), "new-x",
-						infoForm.getLabel(serviceContext.getLocale())))),
+				() -> {
+					JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+
+					for (Locale locale :
+							LanguageUtil.getCompanyAvailableLocales(
+								layout.getCompanyId())) {
+
+						jsonObject.put(
+							LocaleUtil.toLanguageId(locale),
+							LanguageUtil.format(
+								locale, "new-x", infoForm.getLabel(locale)));
+					}
+
+					return jsonObject;
+				}),
 			formManager, "INPUTS-inline-text-input",
 			infoForm.getInfoField("ObjectField_title"), layout, layoutStructure,
 			formStyledLayoutStructureItem, false, segmentsExperienceId,
@@ -667,6 +677,19 @@ public class ActionUtil {
 		dropdownItems.addAll(contentsCustomDropdownItems);
 
 		return dropdownItems;
+	}
+
+	public static String getControlPanelPortletURL(
+		ThemeDisplay themeDisplay, String portletId) {
+
+		StringBundler sb = new StringBundler(4);
+
+		sb.append(themeDisplay.getCDNBaseURL());
+		sb.append(themeDisplay.getPathFriendlyURLPrivateGroup());
+		sb.append("/asset-library-{id}/~/control_panel/manage?p_p_id=");
+		sb.append(portletId);
+
+		return sb.toString();
 	}
 
 	public static DropdownItem getCreateFolderDropdownItem(

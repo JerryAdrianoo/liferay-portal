@@ -183,19 +183,30 @@ public class ObjectEntryDisplayContextImpl
 	}
 
 	public String getAPIURL() throws PortalException {
-		ObjectRelationship objectRelationship =
-			_objectRelationshipLocalService.fetchObjectRelationship(
-				ParamUtil.getLong(
-					_objectRequestHelper.getRequest(), "objectRelationshipId"));
-
 		String externalReferenceCode = null;
 
 		if (_objectEntry != null) {
 			externalReferenceCode = _objectEntry.getExternalReferenceCode();
 		}
 
+		ObjectRelationship objectRelationship =
+			_objectRelationshipLocalService.fetchObjectRelationship(
+				ParamUtil.getLong(
+					_objectRequestHelper.getRequest(), "objectRelationshipId"));
+
 		if ((objectRelationship == null) || !objectRelationship.isEdge()) {
-			return _getAPIURL(externalReferenceCode, getObjectDefinition1());
+			ObjectDefinition objectDefinition = getObjectDefinition1();
+
+			if (Objects.equals(
+					objectDefinition.getScope(),
+					ObjectDefinitionConstants.SCOPE_DEPOT)) {
+
+				ObjectEntry objectEntry = _getObjectEntry();
+
+				externalReferenceCode = objectEntry.getExternalReferenceCode();
+			}
+
+			return _getAPIURL(externalReferenceCode, objectDefinition);
 		}
 
 		String parentObjectEntryAPIURL = _getAPIURL(
@@ -1019,6 +1030,9 @@ public class ObjectEntryDisplayContextImpl
 
 		if (Objects.equals(
 				objectDefinition.getScope(),
+				ObjectDefinitionConstants.SCOPE_DEPOT) ||
+			Objects.equals(
+				objectDefinition.getScope(),
 				ObjectDefinitionConstants.SCOPE_SITE)) {
 
 			apiURL += "/scopes/" + _themeDisplay.getScopeGroupId();
@@ -1482,6 +1496,7 @@ public class ObjectEntryDisplayContextImpl
 
 		ObjectEntryManager objectEntryManager =
 			_objectEntryManagerRegistry.getObjectEntryManager(
+				objectDefinition.getCompanyId(),
 				objectDefinition.getStorageType());
 
 		String externalReferenceCode = ParamUtil.getString(
