@@ -85,7 +85,8 @@ public class LayoutLocalServiceUtil {
 	 To see how the URL is normalized when accessed, see {@link
 	 com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil#normalize(
 	 String)}.
-	 * @param masterLayoutPlid the primary key of the master layout
+	 * @param masterLayoutPageTemplateEntryERC the external reference code of
+	 the master layout page template entry
 	 * @param serviceContext the service context to be applied. Must set the
 	 UUID for the layout. Can set the creation date, modification
 	 date, and expando bridge attributes for the layout. For layouts
@@ -111,7 +112,8 @@ public class LayoutLocalServiceUtil {
 			Map<java.util.Locale, String> keywordsMap,
 			Map<java.util.Locale, String> robotsMap, String type,
 			String typeSettings, boolean hidden, boolean system,
-			Map<java.util.Locale, String> friendlyURLMap, long masterLayoutPlid,
+			Map<java.util.Locale, String> friendlyURLMap,
+			String masterLayoutPageTemplateEntryERC,
 			ServiceContext serviceContext)
 		throws PortalException {
 
@@ -119,7 +121,8 @@ public class LayoutLocalServiceUtil {
 			externalReferenceCode, userId, groupId, privateLayout,
 			parentLayoutId, classNameId, classPK, nameMap, titleMap,
 			descriptionMap, keywordsMap, robotsMap, type, typeSettings, hidden,
-			system, friendlyURLMap, masterLayoutPlid, serviceContext);
+			system, friendlyURLMap, masterLayoutPageTemplateEntryERC,
+			serviceContext);
 	}
 
 	/**
@@ -1373,15 +1376,17 @@ public class LayoutLocalServiceUtil {
 	}
 
 	public static List<Layout> getMasterLayouts(
-		long groupId, long masterLayoutPlid) {
+		long groupId, String masterLayoutPageTemplateEntryERC) {
 
-		return getService().getMasterLayouts(groupId, masterLayoutPlid);
+		return getService().getMasterLayouts(
+			groupId, masterLayoutPageTemplateEntryERC);
 	}
 
 	public static int getMasterLayoutsCount(
-		long groupId, long masterLayoutPlid) {
+		long groupId, String masterLayoutPageTemplateEntryERC) {
 
-		return getService().getMasterLayoutsCount(groupId, masterLayoutPlid);
+		return getService().getMasterLayoutsCount(
+			groupId, masterLayoutPageTemplateEntryERC);
 	}
 
 	/**
@@ -1732,7 +1737,8 @@ public class LayoutLocalServiceUtil {
 	 * @param styleBookEntryERC the external reference code of the style book
 	 entry
 	 * @param faviconFileEntryId the file entry ID of the layout's new favicon
-	 * @param masterLayoutPlid the primary key of the master layout
+	 * @param masterLayoutPageTemplateEntryERC the external reference code of
+	 the master layout page template entry
 	 * @param serviceContext the service context to be applied. Can set the
 	 modification date and expando bridge attributes for the layout.
 	 For layouts that are linked to a layout prototype, attributes
@@ -1754,7 +1760,7 @@ public class LayoutLocalServiceUtil {
 			Map<java.util.Locale, String> robotsMap, String type,
 			boolean hidden, Map<java.util.Locale, String> friendlyURLMap,
 			boolean hasIconImage, byte[] iconBytes, String styleBookEntryERC,
-			long faviconFileEntryId, long masterLayoutPlid,
+			long faviconFileEntryId, String masterLayoutPageTemplateEntryERC,
 			ServiceContext serviceContext)
 		throws PortalException {
 
@@ -1762,20 +1768,21 @@ public class LayoutLocalServiceUtil {
 			groupId, privateLayout, layoutId, parentLayoutId, nameMap, titleMap,
 			descriptionMap, keywordsMap, robotsMap, type, hidden,
 			friendlyURLMap, hasIconImage, iconBytes, styleBookEntryERC,
-			faviconFileEntryId, masterLayoutPlid, serviceContext);
+			faviconFileEntryId, masterLayoutPageTemplateEntryERC,
+			serviceContext);
 	}
 
 	public static Layout updateLayout(
 			long groupId, boolean privateLayout, long layoutId,
 			String typeSettings, byte[] iconBytes, String themeId,
 			String colorSchemeId, String styleBookEntryERC, String css,
-			long faviconFileEntryId, long masterLayoutPlid)
+			long faviconFileEntryId, String masterLayoutPageTemplateEntryERC)
 		throws PortalException {
 
 		return getService().updateLayout(
 			groupId, privateLayout, layoutId, typeSettings, iconBytes, themeId,
 			colorSchemeId, styleBookEntryERC, css, faviconFileEntryId,
-			masterLayoutPlid);
+			masterLayoutPageTemplateEntryERC);
 	}
 
 	public static void updateLayoutContent(
@@ -1807,22 +1814,24 @@ public class LayoutLocalServiceUtil {
 	}
 
 	/**
-	 * Updates the layout replacing its master layout plid.
+	 * Updates the layout replacing its master layout page template entry
+	 * external reference code
 	 *
 	 * @param groupId the primary key of the group
 	 * @param privateLayout whether the layout is private to the group
 	 * @param layoutId the layout ID of the layout
-	 * @param masterLayoutPlid the primary key of the master layout
+	 * @param masterLayoutPageTemplateEntryERC the external reference code of
+	 the master layout page template entry
 	 * @return the updated layout
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static Layout updateMasterLayoutPlid(
+	public static Layout updateMasterLayoutPageTemplateEntryERC(
 			long groupId, boolean privateLayout, long layoutId,
-			long masterLayoutPlid)
+			String masterLayoutPageTemplateEntryERC)
 		throws PortalException {
 
-		return getService().updateMasterLayoutPlid(
-			groupId, privateLayout, layoutId, masterLayoutPlid);
+		return getService().updateMasterLayoutPageTemplateEntryERC(
+			groupId, privateLayout, layoutId, masterLayoutPageTemplateEntryERC);
 	}
 
 	/**

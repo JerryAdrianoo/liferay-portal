@@ -18,8 +18,8 @@ import com.liferay.headless.admin.site.client.dto.v1_0.FavIcon;
 import com.liferay.headless.admin.site.client.dto.v1_0.FavIconClientExtension;
 import com.liferay.headless.admin.site.client.dto.v1_0.FavIconItemExternalReference;
 import com.liferay.headless.admin.site.client.dto.v1_0.ItemExternalReference;
-import com.liferay.headless.admin.site.client.dto.v1_0.Scope;
 import com.liferay.headless.admin.site.client.dto.v1_0.Settings;
+import com.liferay.headless.admin.site.client.scope.Scope;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalServiceUtil;
 import com.liferay.petra.string.StringPool;
@@ -144,14 +144,15 @@ public class SettingsTestUtil {
 		ItemExternalReference masterPageItemExternalReference =
 			settings.getMasterPageItemExternalReference();
 
-		if (layout.getMasterLayoutPlid() == 0) {
+		if (Validator.isNull(layout.getMasterLayoutPageTemplateEntryERC())) {
 			Assert.assertNull(masterPageItemExternalReference);
 		}
 		else {
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				LayoutPageTemplateEntryLocalServiceUtil.
-					fetchLayoutPageTemplateEntryByPlid(
-						layout.getMasterLayoutPlid());
+					fetchLayoutPageTemplateEntryByExternalReferenceCode(
+						layout.getMasterLayoutPageTemplateEntryERC(),
+						layout.getGroupId());
 
 			Assert.assertEquals(
 				layoutPageTemplateEntry.getExternalReferenceCode(),
@@ -273,23 +274,34 @@ public class SettingsTestUtil {
 	}
 
 	public static ItemExternalReference getMasterPageItemExternalReference(
-			ServiceContext serviceContext)
+			boolean optionalMasterPageReference, ServiceContext serviceContext)
 		throws Exception {
 
-		LayoutPageTemplateEntry layoutPageTemplateEntry =
-			LayoutPageTemplateEntryTestUtil.getMasterLayoutPageTemplateEntry(
-				serviceContext, WorkflowConstants.STATUS_APPROVED);
+		String itemExternalReferenceCode;
+
+		if (optionalMasterPageReference) {
+			itemExternalReferenceCode = RandomTestUtil.randomString();
+		}
+		else {
+			LayoutPageTemplateEntry layoutPageTemplateEntry =
+				LayoutPageTemplateEntryTestUtil.
+					getMasterLayoutPageTemplateEntry(
+						serviceContext, WorkflowConstants.STATUS_APPROVED);
+
+			itemExternalReferenceCode =
+				layoutPageTemplateEntry.getExternalReferenceCode();
+		}
 
 		return new ItemExternalReference() {
 			{
-				setExternalReferenceCode(
-					layoutPageTemplateEntry::getExternalReferenceCode);
+				setExternalReferenceCode(itemExternalReferenceCode);
 			}
 		};
 	}
 
 	public static Settings getSettings(
-		FavIcon.FavIconType favIconType, ServiceContext serviceContext) {
+		FavIcon.FavIconType favIconType, boolean optionalMasterPageReference,
+		ServiceContext serviceContext) {
 
 		return new Settings() {
 			{
@@ -313,7 +325,7 @@ public class SettingsTestUtil {
 				setJavascript(RandomTestUtil::randomString);
 				setMasterPageItemExternalReference(
 					() -> SettingsTestUtil.getMasterPageItemExternalReference(
-						serviceContext));
+						optionalMasterPageReference, serviceContext));
 				setStyleBookItemExternalReference(
 					() -> SettingsTestUtil.getStyleBookItemExternalReference(
 						serviceContext));
@@ -334,6 +346,12 @@ public class SettingsTestUtil {
 						ClientExtensionEntryConstants.TYPE_THEME_SPRITEMAP));
 			}
 		};
+	}
+
+	public static Settings getSettings(
+		FavIcon.FavIconType favIconType, ServiceContext serviceContext) {
+
+		return getSettings(favIconType, false, serviceContext);
 	}
 
 	public static ItemExternalReference getStyleBookItemExternalReference(

@@ -8,12 +8,20 @@ package com.liferay.marketplace;
 import com.liferay.client.extension.util.spring.boot3.BaseRestController;
 import com.liferay.headless.commerce.admin.order.client.dto.v1_0.Order;
 import com.liferay.marketplace.constants.MarketplaceConstants;
+import com.liferay.marketplace.service.KoroneikiService;
 import com.liferay.marketplace.service.MarketplaceService;
+import com.liferay.osb.koroneiki.phloem.rest.client.dto.v1_0.Product;
+import com.liferay.osb.koroneiki.phloem.rest.client.dto.v1_0.ProductConsumption;
+import com.liferay.osb.koroneiki.phloem.rest.client.dto.v1_0.ProductPurchase;
+import com.liferay.osb.koroneiki.phloem.rest.client.pagination.Page;
+import com.liferay.osb.koroneiki.phloem.rest.client.pagination.Pagination;
+import com.liferay.osb.koroneiki.phloem.rest.client.resource.v1_0.ProductPurchaseResource;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 
 import java.time.Duration;
 
-import java.util.Collections;
+import java.util.Date;
 import java.util.Objects;
 
 import org.apache.commons.logging.Log;
@@ -24,7 +32,9 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -79,6 +89,94 @@ public class AnalyticsRestController extends BaseRestController {
 			).toUri());
 	}
 
+	@GetMapping("plan/{accountKey}")
+	public ResponseEntity<?> getPlan(@PathVariable String accountKey)
+		throws Exception {
+
+		try {
+			_koroneikiService.getKoroneikiAccount(accountKey);
+		}
+		catch (Exception exception) {
+			_log.error(exception);
+
+			return ResponseEntity.status(
+				HttpStatus.BAD_REQUEST
+			).body(
+				new JSONObject(
+				).put(
+					"error", "ACCOUNT_NOT_FOUND"
+				).toString()
+			);
+		}
+
+		ProductPurchaseResource productPurchaseResource =
+			_koroneikiService.getProductPurchaseResource();
+
+		Page<ProductPurchase> productPurchasePage =
+			productPurchaseResource.getProductPurchasesPage(
+				"",
+				StringBundler.concat(
+					"accountKey eq '", accountKey, "' and name in (",
+					"'Analytics Cloud Basic', 'Analytics Cloud Business', ",
+					"'Analytics Cloud Enterprise')"),
+				Pagination.of(1, 20), "");
+
+		if (productPurchasePage.getTotalCount() == 0) {
+			return ResponseEntity.ok(
+				new JSONObject(
+				).put(
+					"plan", "Analytics Cloud Basic"
+				).toString());
+		}
+
+		for (ProductPurchase productPurchase : productPurchasePage.getItems()) {
+			ProductPurchase.Status status = productPurchase.getStatus();
+
+			if (!Objects.equals(status.getValue(), "Approved")) {
+				continue;
+			}
+
+			Date endDate = productPurchase.getEndDate();
+
+			if (productPurchase.getPerpetual() ||
+				((endDate != null) && endDate.after(new Date()))) {
+
+				ProductConsumption[] productConsumptions =
+					productPurchase.getProductConsumptions();
+
+				if (productConsumptions.length == 0) {
+					Product product = productPurchase.getProduct();
+
+					return ResponseEntity.ok(
+						new JSONObject(
+						).put(
+							"key", productPurchase.getKey()
+						).put(
+							"plan", product.getName()
+						).toString());
+				}
+
+				return ResponseEntity.status(
+					HttpStatus.BAD_REQUEST
+				).body(
+					new JSONObject(
+					).put(
+						"error", "WORKSPACE_ALREADY_EXISTS"
+					).toString()
+				);
+			}
+		}
+
+		return ResponseEntity.status(
+			HttpStatus.BAD_REQUEST
+		).body(
+			new JSONObject(
+			).put(
+				"error", "UNABLE_TO_PROVISION"
+			).toString()
+		);
+	}
+
 	@GetMapping("project/{projectId}")
 	public String getProject(@PathVariable String projectId) throws Exception {
 		return get(
@@ -87,42 +185,6 @@ public class AnalyticsRestController extends BaseRestController {
 				_analyticsAuthUrl
 			).path(
 				"/o/faro/main/project/" + projectId
-			).build(
-			).toUri());
-	}
-
-	@GetMapping("project/{projectId}/data-source")
-	public String getProjectDataSource(
-			@RequestParam(defaultValue = "1", required = false) int cur,
-			@RequestParam(defaultValue = "20", required = false) int delta,
-			@PathVariable String projectId)
-		throws Exception {
-
-		return get(
-			"Basic " + _analyticsAuthBasic,
-			UriComponentsBuilder.fromUriString(
-				_analyticsAuthUrl
-			).path(
-				"/o/faro/contacts/" + projectId + "/data_source"
-			).queryParam(
-				"cur", cur
-			).queryParam(
-				"delta", delta
-			).build(
-			).toUri());
-	}
-
-	@GetMapping("project/{projectId}/data-source/token")
-	public String getProjectDataSourceToken(@PathVariable String projectId)
-		throws Exception {
-
-		return get(
-			Collections.singletonMap(
-				HttpHeaders.AUTHORIZATION, "Basic " + _analyticsAuthBasic),
-			UriComponentsBuilder.fromUriString(
-				_analyticsAuthUrl
-			).path(
-				"/o/faro/contacts/" + projectId + "/data_source/token"
 			).build(
 			).toUri());
 	}
@@ -172,7 +234,7 @@ public class AnalyticsRestController extends BaseRestController {
 			).with(
 				"sharedCluster", "false"
 			).with(
-				"timeZoneId", jsonObject.getString("timeZoneId")
+				"timeZoneId", jsonObject.optString("timeZoneId")
 			).with(
 				"trial", "true"
 			).with(
@@ -187,7 +249,7 @@ public class AnalyticsRestController extends BaseRestController {
 			UriComponentsBuilder.fromUriString(
 				_analyticsAuthUrl
 			).path(
-				"/o/faro/main/project/unprovisioned"
+				"/o/faro/main/project/provisioned"
 			).build(
 			).toUri());
 
@@ -252,6 +314,9 @@ public class AnalyticsRestController extends BaseRestController {
 
 	@Value("${liferay.marketplace.analytics.auth.url}")
 	private String _analyticsAuthUrl;
+
+	@Autowired
+	private KoroneikiService _koroneikiService;
 
 	@Autowired
 	private MarketplaceService _marketplaceService;
