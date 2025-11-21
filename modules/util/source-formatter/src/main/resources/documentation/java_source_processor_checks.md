@@ -149,7 +149,8 @@ JavaReferenceAnnotationsCheck | [Bug Prevention](bug_prevention_checks.md#bug-pr
 JavaReleaseInfoCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Validates information in `ReleaseInfo.java`. |
 [JavaResultSetCheck](check/java_result_set_check.md#javaresultsetcheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks for correct use `java.sql.ResultSet.getInt(int)`. |
 JavaReturnStatementCheck | [Styling](styling_checks.md#styling-checks) | Finds unnecessary `else` statement (when `if` and `else` statement both end with `return` statement). |
-JavaRunSqlStylingCheck | [Styling](styling_checks.md#styling-checks) | Applies rules to enforce consistency in code style. |
+JavaRunSQLCheck | [Styling](styling_checks.md#styling-checks) | Applies rules to enforce consistency in code style. |
+JavaSQLStatementCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Perform several checks in SQL statements. |
 [JavaSeeAnnotationCheck](check/java_see_annotation_check.md#javaseeannotationcheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks for nested annotations inside `@see`. |
 JavaServiceImplCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Ensures that `afterPropertiesSet` and `destroy` methods in `*ServiceImpl` always call the method with the same name in the superclass. |
 JavaServiceImplErcUsageCheck | [Productivity](productivity_checks.md#productivity-checks) | Automatically generates and ensures that `externalReferenceCode` is properly used in remote `*ServiceImpl` add method. |
@@ -180,12 +181,15 @@ JavaTermStylingCheck | [Styling](styling_checks.md#styling-checks) | Applies rul
 [JavaTestMethodAnnotationsCheck](check/java_test_method_annotations_check.md#javatestmethodannotationscheck) | [Naming Conventions](naming_conventions_checks.md#naming-conventions-checks) | Checks if methods with test annotations follow the naming conventions. |
 JavaToJSONArrayCheck | [Styling](styling_checks.md#styling-checks) | Finds missing and unnecessary whitespace on `toJSONArray` calls. |
 JavaTransactionBoundaryCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds direct `add*` or `get*` calls in `*ServiceImpl` (those should use the `*service` global variable instead). |
+JavaUniqueUpgradeProcessCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that only one regular `UpgradeProcess` is allowed when registering a new upgrade process |
 [JavaUnsafeCastingCheck](check/java_unsafe_casting_check.md#javaunsafecastingcheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks for potential ClassCastException. |
 [JavaUnusedSourceFormatterChecksCheck](check/java_unused_source_formatter_checks_check.md#javaunusedsourceformattercheckscheck) | [Miscellaneous](miscellaneous_checks.md#miscellaneous-checks) | Finds `*Check` classes that are not configured. |
 [JavaUpgradeAlterCheck](check/java_upgrade_alter_check.md#javaupgradealtercheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Performs several checks on `alter` calls in Upgrade classes. |
 JavaUpgradeAlterColumnCallsOrderCheck | [Styling](styling_checks.md#styling-checks) | Sorts method calls for altering table columns. |
 [JavaUpgradeClassCheck](check/java_upgrade_class_check.md#javaupgradeclasscheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Performs several checks on Upgrade classes. |
+JavaUpgradeCompanyThreadLocalCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that we do not use `CompanyThreadLocal.setCompanyId*` in upgrade classes. |
 JavaUpgradeConnectionCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds cases where `DataAccess.getConnection` is used (instead of using the available global variable `connection`). |
+JavaUpgradeCreateTableCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that we do not use `create table` statement in upgrade classes. |
 [JavaUpgradeDropTableCheck](check/java_upgrade_drop_table_check.md#javaupgradedroptablecheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds cases where `DROP_TABLE_IF_EXISTS` should be used (instead of `drop table if exists`). |
 JavaUpgradeEmptyLinesCheck | [Styling](styling_checks.md#styling-checks) | Finds missing and unnecessary empty lines in upgrade classes. |
 [JavaUpgradeIndexCheck](check/java_upgrade_index_check.md#javaupgradeindexcheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds cases where the service builder indexes are updated manually in Upgrade classes. This is not needed because Liferay takes care of it. |

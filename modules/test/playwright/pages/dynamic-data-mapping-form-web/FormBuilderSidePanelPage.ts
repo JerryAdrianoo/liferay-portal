@@ -100,6 +100,31 @@ export class FormBuilderSidePanelPage {
 		await this.backButton.click();
 	}
 
+	async dragAndDropField(sourceFieldName: string, target: string | number) {
+		const sourceLocator = this.page
+			.locator(
+				`.ddm-field-container[data-field-name="${sourceFieldName}"]`
+			)
+			.locator('.ddm-drag');
+
+		let targetLocator;
+
+		if (typeof target === 'string') {
+			targetLocator = this.page.locator(
+				`.ddm-field-container[data-field-name="${target}"].ddm-target`
+			);
+		}
+		else {
+			targetLocator = this.page.locator('.col-ddm.col-md-12').nth(target);
+		}
+
+		// We need this pause to render forms group (if applicable)
+
+		await sourceLocator.dragTo(targetLocator);
+
+		await this.page.waitForTimeout(1000);
+	}
+
 	async fillParagraphField(apiHelpers: ApiHelpers, text: string) {
 		await this.paragraphFieldTextarea.fill(text);
 
@@ -115,6 +140,10 @@ export class FormBuilderSidePanelPage {
 
 		const option = this.getSelectOptionLocator(objectFieldLabel);
 		await option.click();
+	}
+
+	async getFieldReference() {
+		return this.page.getByLabel('Field Reference').inputValue();
 	}
 
 	getSelectOptionLocator(optionLabel: string) {

@@ -2798,6 +2798,20 @@ public class ObjectEntryLocalServiceTest {
 
 		// Composite key field values must be unique
 
+		ObjectField localizedObjectField = ObjectFieldUtil.addCustomObjectField(
+			new TextObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).localized(
+				true
+			).name(
+				"textLocalized"
+			).objectDefinitionId(
+				_objectDefinition.getObjectDefinitionId()
+			).userId(
+				TestPropsValues.getUserId()
+			).build());
+
 		ObjectValidationRule objectValidationRule1 = _addObjectValidationRule(
 			ObjectValidationRuleConstants.ENGINE_TYPE_COMPOSITE_KEY,
 			LocalizedMapUtil.getLocalizedMap(
@@ -2860,6 +2874,13 @@ public class ObjectEntryLocalServiceTest {
 
 						return String.valueOf(objectField.getObjectFieldId());
 					}
+				).build(),
+				new ObjectValidationRuleSettingBuilder(
+				).name(
+					ObjectValidationRuleSettingConstants.
+						NAME_COMPOSITE_KEY_OBJECT_FIELD_ID
+				).value(
+					String.valueOf(localizedObjectField.getObjectFieldId())
 				).build()));
 
 		Map<String, Serializable> values =
@@ -2869,6 +2890,13 @@ public class ObjectEntryLocalServiceTest {
 				"listTypeEntryKeyRequired", "listTypeEntryKey1"
 			).put(
 				"numberOfBooksWritten", 5
+			).put(
+				"textLocalized_i18n",
+				HashMapBuilder.put(
+					"en_US", RandomTestUtil.randomString()
+				).put(
+					"pt_BR", RandomTestUtil.randomString()
+				).build()
 			).build();
 
 		_addObjectEntry(values);
@@ -2974,20 +3002,6 @@ public class ObjectEntryLocalServiceTest {
 		_assertCount(4);
 
 		// Field must not be empty
-
-		ObjectField localizedObjectField = ObjectFieldUtil.addCustomObjectField(
-			new TextObjectFieldBuilder(
-			).labelMap(
-				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
-			).localized(
-				true
-			).name(
-				"textLocalized"
-			).objectDefinitionId(
-				_objectDefinition.getObjectDefinitionId()
-			).userId(
-				TestPropsValues.getUserId()
-			).build());
 
 		ObjectValidationRule objectValidationRule5 = _addObjectValidationRule(
 			ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
@@ -3228,39 +3242,10 @@ public class ObjectEntryLocalServiceTest {
 
 	@FeatureFlag("LPD-31212")
 	@Test
-	public void testAddObjectEntryWithRichTextObjectField() throws Exception {
-		ObjectDefinition objectDefinition = _publishCustomObjectDefinition(
-			true,
-			Arrays.asList(
-				ObjectFieldUtil.createObjectField(
-					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-					ObjectFieldConstants.DB_TYPE_STRING, true, true, null,
-					RandomTestUtil.randomString(), "name",
-					Arrays.asList(
-						new ObjectFieldSettingBuilder(
-						).name(
-							ObjectFieldSettingConstants.NAME_UNIQUE_VALUES
-						).value(
-							Boolean.TRUE.toString()
-						).build()),
-					false)));
+	public void testAddObjectEntryWithRichTextObjectFieldWithCKEditor4()
+		throws Exception {
 
-		_addCustomObjectField(
-			new RichTextObjectFieldBuilder(
-			).labelMap(
-				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
-			).name(
-				"richText"
-			).objectDefinitionId(
-				objectDefinition.getObjectDefinitionId()
-			).build());
-
-		objectDefinition.setScope(ObjectDefinitionConstants.SCOPE_SITE);
-
-		objectDefinition = _objectDefinitionLocalService.updateObjectDefinition(
-			objectDefinition);
-
-		Map<String, Serializable> expectedValues =
+		_testAddObjectEntryWithRichTextObjectField(
 			HashMapBuilder.<String, Serializable>put(
 				"richText",
 				StringBundler.concat(
@@ -3268,26 +3253,32 @@ public class ObjectEntryLocalServiceTest {
 					"data-embed-id=",
 					"\"https://www.youtube.com/embed/6LjQ7Z99N74?rel=0\" ",
 					"data-styles=\"{&quot;width&quot;:&quot;81%&quot;}",
-					"\" style=\"width:81%\"><iframe allow=\"autoplay; ",
+					"\" style=\"width: 81%\"><iframe allow=\"autoplay; ",
 					"encrypted-media\" allowfullscreen=\"\" frameborder=\"0\" ",
 					"height=\"315\" src=",
 					"\"https://www.youtube.com/embed/6LjQ7Z99N74?rel=0\" ",
 					"width=\"560\"></iframe></div><p>&nbsp;</p>")
-			).build();
-
-		ObjectEntry objectEntry = _addObjectEntry(
-			TestPropsValues.getGroupId(),
-			objectDefinition.getObjectDefinitionId(),
-			HashMapBuilder.create(
-				expectedValues
 			).build());
+	}
 
-		Map<String, Serializable> actualValues = objectEntry.getValues();
+	@FeatureFlag("LPD-11235")
+	@Test
+	public void testAddObjectEntryWithRichTextObjectFieldWithCKEditor5()
+		throws Exception {
 
-		Assert.assertEquals(
-			expectedValues.get("richText"), actualValues.get("richText"));
-
-		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
+		_testAddObjectEntryWithRichTextObjectField(
+			HashMapBuilder.<String, Serializable>put(
+				"richText",
+				StringBundler.concat(
+					"<figure class=\"media\"><div data-oembed-url=\"",
+					"https://www.youtube.com/watch?v=6LjQ7Z99N74\">",
+					"<div style=\"height: 0; padding-bottom: 56.2493%; ",
+					"position: relative;\"><iframe allow=\"autoplay; ",
+					"encrypted-media\" allowfullscreen=\"\" frameborder=\"0\" ",
+					"src=\"https://www.youtube.com/embed/6LjQ7Z99N74\" ",
+					"style=\"height: 100%; left: 0; position: absolute; top: ",
+					"0; width: 100%;\"></iframe></div></div></figure>")
+			).build());
 	}
 
 	@Test
@@ -4726,19 +4717,10 @@ public class ObjectEntryLocalServiceTest {
 			Assert.assertEquals(
 				exportImportConfigurationId,
 				exportImportReportEntry.getExportImportConfigurationId());
+			Assert.assertEquals(groupId, exportImportReportEntry.getGroupId());
 			Assert.assertEquals(
 				_siteObjectDefinition.getShortName(),
 				exportImportReportEntry.getModelName());
-			Assert.assertEquals(
-				ObjectDefinitionConstants.SCOPE_SITE,
-				exportImportReportEntry.getScope());
-
-			Group group = _groupLocalService.getGroup(groupId);
-
-			Assert.assertEquals(
-				exportImportReportEntry.getScopeKey(),
-				group.getExternalReferenceCode());
-
 			Assert.assertEquals(
 				ExportImportReportEntryConstants.TYPE_EMPTY,
 				exportImportReportEntry.getType());
@@ -8386,6 +8368,39 @@ public class ObjectEntryLocalServiceTest {
 		_objectDefinition =
 			_objectDefinitionLocalService.updateObjectDefinition(
 				_objectDefinition);
+	}
+
+	private void _testAddObjectEntryWithRichTextObjectField(
+			Map<String, Serializable> expectedValues)
+		throws Exception {
+
+		ObjectDefinition objectDefinition =
+			ObjectDefinitionTestUtil.publishObjectDefinition(
+				true, ObjectDefinitionTestUtil.getRandomName(),
+				Arrays.asList(
+					new RichTextObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"richText"
+					).build()),
+				ObjectDefinitionConstants.SCOPE_SITE,
+				TestPropsValues.getUserId());
+
+		ObjectEntry objectEntry = _addObjectEntry(
+			TestPropsValues.getGroupId(),
+			objectDefinition.getObjectDefinitionId(),
+			HashMapBuilder.create(
+				expectedValues
+			).build());
+
+		Map<String, Serializable> actualValues = objectEntry.getValues();
+
+		Assert.assertEquals(
+			expectedValues.get("richText"), actualValues.get("richText"));
+
+		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
 	}
 
 	private void _testPartialUpdateObjectEntryExternalReferenceCode()
