@@ -3,37 +3,48 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import Alert from '@clayui/alert';
 import {useModal} from '@clayui/modal';
 import {IFrontendDataSetProps, IView} from '@liferay/frontend-data-set-web';
 import {ItemSelectorModal} from '@liferay/frontend-js-item-selector-web';
-import {openToast} from 'frontend-js-components-web';
+import {openModal, openToast} from 'frontend-js-components-web';
 import {sub} from 'frontend-js-web';
 import React, {useEffect, useState} from 'react';
 
 import ApiHelper, {RequestResult} from '../../common/services/ApiHelper';
 import FolderService from '../../common/services/FolderService';
 import {AssetLibrary} from '../../common/types/AssetLibrary';
+import {OBJECT_ENTRY_FOLDER_CLASS_NAME} from '../../common/utils/constants';
 import {displayErrorToast} from '../../common/utils/toastUtil';
+import DuplicatedAssetFolderNamesModalContent, {
+	Option,
+} from './DuplicatedAssetFolderNamesModalContent';
 
 export type TFolderItemSelectorModalContent = {
 	action: Action;
 	assetLibraries: AssetLibrary[];
 	itemData: ItemData;
+	loadData: () => {};
 	objectEntryFolderExternalReferenceCode: string | undefined;
 };
 
-type Action = 'copy' | 'move';
+export type Action = 'copy' | 'move';
 
 type Folder = {
 	id: number;
 	title: string;
 };
 
+type Space = {
+	name: string;
+	scopeId: number;
+};
+
 const SPACES_URL = `${window.location.origin}/o/headless-asset-library/v1.0/asset-libraries?filter=type eq 'Space'`;
 
-const SUCCESS_MESSAGE_KEYS = {
-	copy: 'x-was-successfully-copied-to-x',
-	move: 'x-was-successfully-moved-to-x',
+const SUCCESS_MESSAGES = {
+	copy: Liferay.Language.get('x-was-successfully-copied-to-x'),
+	move: Liferay.Language.get('x-was-successfully-moved-to-x'),
 };
 
 const FDS_DEFAULT_PROPS: Partial<IFrontendDataSetProps> = {
@@ -55,9 +66,9 @@ const displayInfoToast = (
 ) => {
 	openToast({
 		message: sub(
-			Liferay.Language.get(
-				action === 'copy' ? 'copying-x-to-x' : 'moving-x-to-x'
-			),
+			action === 'copy'
+				? Liferay.Language.get('copying-x-to-x')
+				: Liferay.Language.get('moving-x-to-x'),
 			`${Liferay.Util.escapeHTML(itemData.embedded.title)}`,
 			`<strong>${Liferay.Util.escapeHTML(folder.title)}</strong>`
 		),
@@ -65,9 +76,9 @@ const displayInfoToast = (
 	});
 };
 
-const displaySuccessToast = (messageKey: string, ...args: string[]) => {
+const displaySuccessToast = (message: string, ...args: string[]) => {
 	openToast({
-		message: sub(Liferay.Language.get(messageKey), args),
+		message: sub(message, args),
 		type: 'success',
 	});
 };
@@ -76,24 +87,96 @@ const displayToast = (
 	error: any,
 	folder: Folder,
 	itemData: ItemData,
-	messageKey: string
+	message: string
 ) => {
 	if (error) {
 		displayErrorToast(error);
 	}
 	else {
 		displaySuccessToast(
-			messageKey,
+			message,
 			`${Liferay.Util.escapeHTML(itemData.embedded.title)}`,
 			`<strong>${Liferay.Util.escapeHTML(folder.title)}</strong>`
 		);
 	}
 };
 
+function executeFolderAction(
+	action: Action,
+	folder: Folder,
+	itemData: ItemData,
+	loadData: () => {},
+	replace = false
+) {
+	displayInfoToast(action, folder, itemData);
+
+	let promise: Promise<RequestResult<unknown>>;
+
+	if (action === 'copy') {
+		promise = replace
+			? FolderService.copyReplaceFolder(itemData.embedded.id, folder.id)
+			: FolderService.copyFolder(itemData.embedded.id, folder.id);
+	}
+	else {
+		promise = replace
+			? FolderService.moveReplaceFolder(itemData.embedded.id, folder.id)
+			: FolderService.moveFolder(itemData.embedded.id, folder.id);
+	}
+
+	promise.then(({error}: {error: any}) => {
+		if (!error) {
+			loadData();
+		}
+
+		displayToast(error, folder, itemData, SUCCESS_MESSAGES[action]);
+	});
+}
+
+function executeAssetAction(
+	action: Action,
+	folder: Folder,
+	itemData: ItemData,
+	loadData: () => {},
+	replace = false
+) {
+	displayInfoToast(action, folder, itemData);
+
+	ApiHelper.post<any>(
+		itemData.actions[`${action}${replace ? '-replace' : ''}`].href.replace(
+			'{objectEntryFolderId}',
+			String(folder.id)
+		)
+	).then(({error}: {error: any}) => {
+		if (!error) {
+			loadData();
+		}
+
+		displayToast(error, folder, itemData, SUCCESS_MESSAGES[action]);
+	});
+}
+
+function openDuplicatedAssetFolderNamesModal(
+	action: Action,
+	itemData: ItemData,
+	onContinueClick: (operation: Option) => void
+) {
+	openModal({
+		contentComponent: ({closeModal}: {closeModal: () => void}) =>
+			DuplicatedAssetFolderNamesModalContent({
+				action,
+				closeModal,
+				itemData,
+				onContinueClick,
+			}),
+		size: 'md',
+	});
+}
+
 function FolderItemSelectorModalContent({
 	action,
 	assetLibraries,
 	itemData,
+	loadData,
 	objectEntryFolderExternalReferenceCode,
 }: TFolderItemSelectorModalContent) {
 	const [selectedItemType, setSelectedItemType] = useState<
@@ -104,12 +187,16 @@ function FolderItemSelectorModalContent({
 			? getSpaceFoldersURL(itemData.embedded.scopeId)
 			: SPACES_URL
 	);
+	const [schemaKey, setSchemaKey] = useState(0);
+	const [currentSpace, setCurrentSpace] = useState<Space | undefined>();
 
 	const {observer, onOpenChange, open} = useModal();
 
-	function onSpaceClick({scopeId}: {scopeId: number}) {
+	function handleSpaceClick(space: Space) {
+		setCurrentSpace(space);
+		setSchemaKey((prev) => prev + 1);
 		setSelectedItemType('folder');
-		setURL(getSpaceFoldersURL(scopeId));
+		setURL(getSpaceFoldersURL(space.scopeId));
 	}
 
 	const setItemComponentProps = ({item, props}: {item: any; props: any}) => {
@@ -123,7 +210,8 @@ function FolderItemSelectorModalContent({
 			return {
 				...props,
 				onClick: () => {
-					onSpaceClick({
+					handleSpaceClick({
+						name: assetLibrary!.name,
 						scopeId: assetLibrary!.groupId,
 					});
 				},
@@ -138,49 +226,64 @@ function FolderItemSelectorModalContent({
 	};
 
 	const handleOnItemsChange = (folder: Folder) => {
-		displayInfoToast(action, folder, itemData);
-
-		if (
-			itemData.entryClassName ===
-			'com.liferay.object.model.ObjectEntryFolder'
-		) {
-			let promise: Promise<RequestResult<unknown>>;
-
-			if (action === 'copy') {
-				promise = FolderService.copyFolder(
-					itemData.embedded.id,
-					folder.id
-				);
-			}
-			else {
-				promise = FolderService.moveFolder(
-					itemData.embedded.id,
-					folder.id
-				);
-			}
-
-			promise.then(({error}: {error: any}) => {
-				displayToast(
-					error,
-					folder,
-					itemData,
-					SUCCESS_MESSAGE_KEYS[action]
-				);
+		if (itemData.entryClassName === OBJECT_ENTRY_FOLDER_CLASS_NAME) {
+			FolderService.searchFolder(
+				itemData.embedded.scopeId,
+				itemData.title,
+				folder.id
+			).then(({data, error}: any) => {
+				if (error) {
+					displayErrorToast(error);
+				}
+				else {
+					if (data?.items.length > 0) {
+						openDuplicatedAssetFolderNamesModal(
+							action,
+							itemData,
+							(operation: Option) => {
+								executeFolderAction(
+									action,
+									folder,
+									itemData,
+									loadData,
+									operation === 'replace'
+								);
+							}
+						);
+					}
+					else {
+						executeFolderAction(action, folder, itemData, loadData);
+					}
+				}
 			});
 		}
 		else {
-			ApiHelper.post<any>(
-				itemData.actions[action].href.replace(
-					'{objectEntryFolderId}',
-					String(folder.id)
-				)
-			).then(({error}: {error: any}) => {
-				displayToast(
-					error,
-					folder,
-					itemData,
-					SUCCESS_MESSAGE_KEYS[action]
-				);
+			ApiHelper.get(
+				`${itemData.actions['get-by-scope'].href}?filter=title eq '${itemData.title}' and folderId eq ${folder.id}`
+			).then(({data, error}: any) => {
+				if (error) {
+					displayErrorToast(error);
+				}
+				else {
+					if (data?.items.length > 0) {
+						openDuplicatedAssetFolderNamesModal(
+							action,
+							itemData,
+							(operation: Option) => {
+								executeAssetAction(
+									action,
+									folder,
+									itemData,
+									loadData,
+									operation === 'replace'
+								);
+							}
+						);
+					}
+					else {
+						executeAssetAction(action, folder, itemData, loadData);
+					}
+				}
 			});
 		}
 	};
@@ -192,7 +295,7 @@ function FolderItemSelectorModalContent({
 	return (
 		<>
 			{open && (
-				<ItemSelectorModal
+				<ItemSelectorModal<Folder>
 					apiURL={url}
 					breadcrumbs={
 						objectEntryFolderExternalReferenceCode
@@ -201,12 +304,27 @@ function FolderItemSelectorModalContent({
 									{
 										label: Liferay.Language.get('spaces'),
 										onClick: () => {
+											setCurrentSpace(undefined);
+											setSchemaKey((prev) => prev + 1);
 											setSelectedItemType('space');
 											setURL(SPACES_URL);
 										},
 									},
+									...(currentSpace
+										? [
+												{
+													label: currentSpace.name,
+													onClick: () => {
+														handleSpaceClick(
+															currentSpace
+														);
+													},
+												},
+											]
+										: []),
 								]
 					}
+					breadcrumbsLabel={false}
 					fdsProps={{
 						...FDS_DEFAULT_PROPS,
 						id: `itemSelectorModal-users-${itemData.id}`,
@@ -263,8 +381,8 @@ function FolderItemSelectorModalContent({
 							},
 						] as IView[],
 					}}
-					itemTypeLabel={Liferay.Language.get('folders')}
 					items={[]}
+					key={schemaKey}
 					locator={
 						selectedItemType === 'folder'
 							? {
@@ -278,6 +396,21 @@ function FolderItemSelectorModalContent({
 									value: 'id',
 								}
 					}
+					message={
+						<Alert
+							className="alert-dismissible alert-fluid p-3"
+							displayType="warning"
+							title="Warning"
+						>
+							{action === 'copy'
+								? Liferay.Language.get(
+										'only-categories-and-tags-also-available-in-the-destination-will-be-copied'
+									)
+								: Liferay.Language.get(
+										'only-categories-and-tags-also-available-in-the-destination-will-be-retained'
+									)}
+						</Alert>
+					}
 					observer={observer}
 					onItemsChange={(items: Folder[]) => {
 						if (items.length) {
@@ -286,6 +419,17 @@ function FolderItemSelectorModalContent({
 					}}
 					onOpenChange={onOpenChange}
 					open={open}
+					title={
+						action === 'copy'
+							? sub(
+									Liferay.Language.get('copy-x-to'),
+									itemData.title
+								)
+							: sub(
+									Liferay.Language.get('move-x-to'),
+									itemData.title
+								)
+					}
 				/>
 			)}
 		</>

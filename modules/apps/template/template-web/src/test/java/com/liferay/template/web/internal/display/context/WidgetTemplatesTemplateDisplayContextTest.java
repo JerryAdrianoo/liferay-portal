@@ -44,6 +44,7 @@ public class WidgetTemplatesTemplateDisplayContextTest {
 
 	@Before
 	public void setUp() {
+		_setUpGroup();
 		_setUpPortletLocalService();
 		_setUpThemeDisplay();
 	}
@@ -131,6 +132,14 @@ public class WidgetTemplatesTemplateDisplayContextTest {
 		return mockLiferayPortletRenderRequest;
 	}
 
+	private void _setUpGroup() {
+		Mockito.when(
+			_group.getGroupId()
+		).thenReturn(
+			RandomTestUtil.randomLong()
+		);
+	}
+
 	private void _setUpPortletLocalService() {
 		_portletLocalServiceUtilMockedStatic = Mockito.mockStatic(
 			PortletLocalServiceUtil.class);
@@ -156,9 +165,6 @@ public class WidgetTemplatesTemplateDisplayContextTest {
 	}
 
 	private void _setUpThemeDisplay() {
-		_portletPermissionUtilMockedStatic = Mockito.mockStatic(
-			PortletPermissionUtil.class);
-
 		Mockito.when(
 			_themeDisplay.getPermissionChecker()
 		).thenReturn(
@@ -169,12 +175,6 @@ public class WidgetTemplatesTemplateDisplayContextTest {
 			_themeDisplay.getScopeGroup()
 		).thenReturn(
 			_group
-		);
-
-		Mockito.when(
-			_group.getGroupId()
-		).thenReturn(
-			RandomTestUtil.randomLong()
 		);
 	}
 
@@ -188,8 +188,9 @@ public class WidgetTemplatesTemplateDisplayContextTest {
 		PortletLocalService.class);
 	private MockedStatic<PortletLocalServiceUtil>
 		_portletLocalServiceUtilMockedStatic;
-	private MockedStatic<PortletPermissionUtil>
-		_portletPermissionUtilMockedStatic;
+	private final MockedStatic<PortletPermissionUtil>
+		_portletPermissionUtilMockedStatic = Mockito.mockStatic(
+			PortletPermissionUtil.class);
 	private final ThemeDisplay _themeDisplay = Mockito.mock(ThemeDisplay.class);
 
 }
