@@ -10,7 +10,9 @@ import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileEntryMetadata;
 import com.liferay.document.library.kernel.model.DLFileVersion;
 import com.liferay.document.library.kernel.service.DLFileEntryMetadataLocalService;
+import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.Value;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.storage.DDMStorageEngineManager;
@@ -19,12 +21,10 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
 
 import java.util.List;
-import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -68,26 +68,28 @@ public class DLFileEntryModelDocumentContributor
 
 		for (DLFileEntryMetadata dlFileEntryMetadata : dlFileEntryMetadatas) {
 			try {
+				DDMStructure ddmStructure =
+					_ddmStructureLocalService.getStructure(
+						dlFileEntryMetadata.getDDMStructureId());
+
 				DDMFormValues ddmFormValues =
 					_ddmStorageEngineManager.getDDMFormValues(
-						dlFileEntryMetadata.getDDMStorageId());
+						dlFileEntryMetadata.getDDMStorageId(),
+						ddmStructure.getDDMForm(false));
 
 				if (ddmFormValues == null) {
 					continue;
 				}
 
-				Map<String, List<DDMFormFieldValue>> ddmFormFieldValuesMap =
-					ddmFormValues.getDDMFormFieldValuesMap(false);
-
 				long tiffImageLength = _getDDMFormFieldsValueValue(
-					ddmFormFieldValuesMap.get("TIFF_IMAGE_LENGTH"));
+					ddmFormValues, "TIFF_IMAGE_LENGTH");
 
 				if (tiffImageLength <= 0) {
 					continue;
 				}
 
 				long tiffImageWidth = _getDDMFormFieldsValueValue(
-					ddmFormFieldValuesMap.get("TIFF_IMAGE_WIDTH"));
+					ddmFormValues, "TIFF_IMAGE_WIDTH");
 
 				if (tiffImageWidth <= 0) {
 					continue;
@@ -141,13 +143,10 @@ public class DLFileEntryModelDocumentContributor
 	}
 
 	private long _getDDMFormFieldsValueValue(
-		List<DDMFormFieldValue> ddmFormFieldValues) {
+		DDMFormValues ddmFormValues, String name) {
 
-		if (ListUtil.isEmpty(ddmFormFieldValues)) {
-			return 0;
-		}
-
-		DDMFormFieldValue ddmFormFieldValue = ddmFormFieldValues.get(0);
+		DDMFormFieldValue ddmFormFieldValue =
+			ddmFormValues.getDDMFormFieldValue(name, false);
 
 		if (ddmFormFieldValue == null) {
 			return 0;
@@ -167,6 +166,9 @@ public class DLFileEntryModelDocumentContributor
 
 	@Reference
 	private DDMStorageEngineManager _ddmStorageEngineManager;
+
+	@Reference
+	private DDMStructureLocalService _ddmStructureLocalService;
 
 	@Reference
 	private DLFileEntryMetadataLocalService _dlFileEntryMetadataLocalService;

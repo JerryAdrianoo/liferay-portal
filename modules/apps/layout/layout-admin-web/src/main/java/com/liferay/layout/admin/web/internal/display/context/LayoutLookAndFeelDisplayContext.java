@@ -171,13 +171,13 @@ public class LayoutLookAndFeelDisplayContext {
 		).put(
 			"masterLayoutName", getMasterLayoutName()
 		).put(
-			"masterLayoutPlid",
+			"masterLayoutPageTemplateEntryERC",
 			() -> {
 				if (hasMasterLayout()) {
 					Layout selLayout =
 						_layoutsAdminDisplayContext.getSelLayout();
 
-					return String.valueOf(selLayout.getMasterLayoutPlid());
+					return selLayout.getMasterLayoutPageTemplateEntryERC();
 				}
 
 				return StringPool.BLANK;
@@ -195,11 +195,14 @@ public class LayoutLookAndFeelDisplayContext {
 
 		Layout selLayout = _layoutsAdminDisplayContext.getSelLayout();
 
-		if (selLayout.getMasterLayoutPlid() > 0) {
+		if (Validator.isNotNull(
+				selLayout.getMasterLayoutPageTemplateEntryERC())) {
+
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				LayoutPageTemplateEntryLocalServiceUtil.
-					fetchLayoutPageTemplateEntryByPlid(
-						selLayout.getMasterLayoutPlid());
+					fetchLayoutPageTemplateEntryByExternalReferenceCode(
+						selLayout.getMasterLayoutPageTemplateEntryERC(),
+						selLayout.getGroupId());
 
 			if (layoutPageTemplateEntry != null) {
 				masterLayoutName = layoutPageTemplateEntry.getName();
@@ -367,11 +370,14 @@ public class LayoutLookAndFeelDisplayContext {
 
 		Layout selLayout = _layoutsAdminDisplayContext.getSelLayout();
 
-		if (selLayout.getMasterLayoutPlid() > 0) {
+		if (Validator.isNotNull(
+				selLayout.getMasterLayoutPageTemplateEntryERC())) {
+
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				LayoutPageTemplateEntryLocalServiceUtil.
-					fetchLayoutPageTemplateEntryByPlid(
-						selLayout.getMasterLayoutPlid());
+					fetchLayoutPageTemplateEntryByExternalReferenceCode(
+						selLayout.getMasterLayoutPageTemplateEntryERC(),
+						selLayout.getGroupId());
 
 			if (layoutPageTemplateEntry != null) {
 				hasMasterLayout = true;
