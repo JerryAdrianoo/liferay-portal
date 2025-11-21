@@ -47,17 +47,16 @@ public class Site implements Cloneable, Serializable {
 
 	protected Boolean active;
 
-	public Map<String, String> getDescription() {
+	public String getDescription() {
 		return description;
 	}
 
-	public void setDescription(Map<String, String> description) {
+	public void setDescription(String description) {
 		this.description = description;
 	}
 
 	public void setDescription(
-		UnsafeSupplier<Map<String, String>, Exception>
-			descriptionUnsafeSupplier) {
+		UnsafeSupplier<String, Exception> descriptionUnsafeSupplier) {
 
 		try {
 			description = descriptionUnsafeSupplier.get();
@@ -67,7 +66,74 @@ public class Site implements Cloneable, Serializable {
 		}
 	}
 
-	protected Map<String, String> description;
+	protected String description;
+
+	public Map<String, String> getDescription_i18n() {
+		return description_i18n;
+	}
+
+	public void setDescription_i18n(Map<String, String> description_i18n) {
+		this.description_i18n = description_i18n;
+	}
+
+	public void setDescription_i18n(
+		UnsafeSupplier<Map<String, String>, Exception>
+			description_i18nUnsafeSupplier) {
+
+		try {
+			description_i18n = description_i18nUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, String> description_i18n;
+
+	public String getDescriptiveName() {
+		return descriptiveName;
+	}
+
+	public void setDescriptiveName(String descriptiveName) {
+		this.descriptiveName = descriptiveName;
+	}
+
+	public void setDescriptiveName(
+		UnsafeSupplier<String, Exception> descriptiveNameUnsafeSupplier) {
+
+		try {
+			descriptiveName = descriptiveNameUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String descriptiveName;
+
+	public Map<String, String> getDescriptiveName_i18n() {
+		return descriptiveName_i18n;
+	}
+
+	public void setDescriptiveName_i18n(
+		Map<String, String> descriptiveName_i18n) {
+
+		this.descriptiveName_i18n = descriptiveName_i18n;
+	}
+
+	public void setDescriptiveName_i18n(
+		UnsafeSupplier<Map<String, String>, Exception>
+			descriptiveName_i18nUnsafeSupplier) {
+
+		try {
+			descriptiveName_i18n = descriptiveName_i18nUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, String> descriptiveName_i18n;
 
 	public String getExternalReferenceCode() {
 		return externalReferenceCode;

@@ -9,6 +9,7 @@ import com.liferay.depot.constants.DepotRolesConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.model.DepotEntryPin;
 import com.liferay.depot.service.DepotEntryPinLocalService;
+import com.liferay.exportimport.constants.ExportImportPortletKeys;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
@@ -125,10 +126,7 @@ public class ViewAllSpacesDisplayContext {
 	public CreationMenu getCreationMenu() {
 		return CreationMenuBuilder.addPrimaryDropdownItem(
 			dropdownItem -> {
-				dropdownItem.setHref(
-					StringBundler.concat(
-						_themeDisplay.getPathFriendlyURLPublic(),
-						GroupConstants.CMS_FRIENDLY_URL, "/new-space"));
+				dropdownItem.setHref(_getNewSpaceCreationURL());
 				dropdownItem.setIcon("forms");
 				dropdownItem.setLabel(
 					_language.get(_httpServletRequest, "add-space"));
@@ -148,7 +146,9 @@ public class ViewAllSpacesDisplayContext {
 		).build();
 	}
 
-	public List<FDSActionDropdownItem> getFDSActionDropdownItems() {
+	public List<FDSActionDropdownItem> getFDSActionDropdownItems()
+		throws Exception {
+
 		return ListUtil.fromArray(
 			new FDSActionDropdownItem(
 				"#", "pin", "pin",
@@ -165,6 +165,18 @@ public class ViewAllSpacesDisplayContext {
 					"{id}?redirect=", _themeDisplay.getURLCurrent()),
 				"cog", "edit",
 				LanguageUtil.get(_httpServletRequest, "space-settings"), "get",
+				"update", null),
+			new FDSActionDropdownItem(
+				ActionUtil.getControlPanelPortletURL(
+					_themeDisplay, ExportImportPortletKeys.EXPORT),
+				"export", "export",
+				LanguageUtil.get(_httpServletRequest, "export"), "get",
+				"update", null),
+			new FDSActionDropdownItem(
+				ActionUtil.getControlPanelPortletURL(
+					_themeDisplay, ExportImportPortletKeys.IMPORT),
+				"import", "import",
+				LanguageUtil.get(_httpServletRequest, "import"), "get",
 				"update", null),
 			new FDSActionDropdownItem(
 				null, "users", "view-members",
@@ -245,6 +257,13 @@ public class ViewAllSpacesDisplayContext {
 		}
 
 		return layout.getName(_themeDisplay.getLocale(), true);
+	}
+
+	private String _getNewSpaceCreationURL() {
+		return StringBundler.concat(
+			_themeDisplay.getPathFriendlyURLPublic(),
+			GroupConstants.CMS_FRIENDLY_URL, "/new-space?backURL=",
+			_themeDisplay.getURLCurrent());
 	}
 
 	private Map<String, Object> _getSpacePermissionAdditionalProps() {

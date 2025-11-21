@@ -10,7 +10,9 @@ import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileEntryMetadata;
 import com.liferay.document.library.kernel.model.DLFileVersion;
 import com.liferay.document.library.kernel.service.DLFileEntryMetadataLocalService;
+import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.Value;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.storage.DDMStorageEngineManager;
@@ -24,7 +26,6 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
 
 import java.util.List;
-import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -68,26 +69,30 @@ public class DLFileEntryModelDocumentContributor
 
 		for (DLFileEntryMetadata dlFileEntryMetadata : dlFileEntryMetadatas) {
 			try {
+				DDMStructure ddmStructure =
+					_ddmStructureLocalService.getStructure(
+						dlFileEntryMetadata.getDDMStructureId());
+
 				DDMFormValues ddmFormValues =
 					_ddmStorageEngineManager.getDDMFormValues(
-						dlFileEntryMetadata.getDDMStorageId());
+						dlFileEntryMetadata.getDDMStorageId(),
+						ddmStructure.getDDMForm());
 
 				if (ddmFormValues == null) {
 					continue;
 				}
 
-				Map<String, List<DDMFormFieldValue>> ddmFormFieldValuesMap =
-					ddmFormValues.getDDMFormFieldValuesMap(false);
-
 				long tiffImageLength = _getDDMFormFieldsValueValue(
-					ddmFormFieldValuesMap.get("TIFF_IMAGE_LENGTH"));
+					ddmFormValues.getDDMFormFieldValues(
+						"TIFF_IMAGE_LENGTH", false));
 
 				if (tiffImageLength <= 0) {
 					continue;
 				}
 
 				long tiffImageWidth = _getDDMFormFieldsValueValue(
-					ddmFormFieldValuesMap.get("TIFF_IMAGE_WIDTH"));
+					ddmFormValues.getDDMFormFieldValues(
+						"TIFF_IMAGE_WIDTH", false));
 
 				if (tiffImageWidth <= 0) {
 					continue;
@@ -167,6 +172,9 @@ public class DLFileEntryModelDocumentContributor
 
 	@Reference
 	private DDMStorageEngineManager _ddmStorageEngineManager;
+
+	@Reference
+	private DDMStructureLocalService _ddmStructureLocalService;
 
 	@Reference
 	private DLFileEntryMetadataLocalService _dlFileEntryMetadataLocalService;

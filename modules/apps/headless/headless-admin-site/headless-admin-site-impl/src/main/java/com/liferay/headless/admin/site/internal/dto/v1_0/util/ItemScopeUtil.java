@@ -5,13 +5,13 @@
 
 package com.liferay.headless.admin.site.internal.dto.v1_0.util;
 
-import com.liferay.headless.admin.site.dto.v1_0.Scope;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.vulcan.scope.Scope;
 
 /**
  * @author Rubén Pulido
@@ -61,7 +61,12 @@ public class ItemScopeUtil {
 			return null;
 		}
 
-		return _getScope(GroupLocalServiceUtil.getGroup(itemScopeGroupId));
+		Group group = GroupLocalServiceUtil.getGroup(itemScopeGroupId);
+
+		Scope.Type type = (group.getType() == GroupConstants.TYPE_DEPOT) ?
+			Scope.Type.ASSET_LIBRARY : Scope.Type.SITE;
+
+		return Scope.ofReference(group.getExternalReferenceCode(), type);
 	}
 
 	public static Scope getItemScope(
@@ -76,20 +81,18 @@ public class ItemScopeUtil {
 			itemGroupExternalReferenceCode, companyId);
 
 		if (group == null) {
-			return new Scope() {
-				{
-					setExternalReferenceCode(
-						() -> itemGroupExternalReferenceCode);
-					setType(() -> Type.SITE);
-				}
-			};
+			return Scope.ofReference(
+				itemGroupExternalReferenceCode, Scope.Type.SITE);
 		}
 
 		if (group.getGroupId() == scopeGroupId) {
 			return null;
 		}
 
-		return _getScope(group);
+		Scope.Type type = (group.getType() == GroupConstants.TYPE_DEPOT) ?
+			Scope.Type.ASSET_LIBRARY : Scope.Type.SITE;
+
+		return Scope.ofReference(group.getExternalReferenceCode(), type);
 	}
 
 	public static String getItemScopeExternalReferenceCode(
@@ -110,22 +113,6 @@ public class ItemScopeUtil {
 		}
 
 		return itemScope.getExternalReferenceCode();
-	}
-
-	private static Scope _getScope(Group group) {
-		return new Scope() {
-			{
-				setExternalReferenceCode(group::getExternalReferenceCode);
-				setType(
-					() -> {
-						if (group.getType() == GroupConstants.TYPE_DEPOT) {
-							return Type.ASSET_LIBRARY;
-						}
-
-						return Type.SITE;
-					});
-			}
-		};
 	}
 
 }
