@@ -73,13 +73,11 @@ public class ImportStagedModelExceptionHandlerTest {
 
 	@Test
 	public void test() throws Exception {
-		_test(0L, "company", _companyGroup);
-		_test(_group.getGroupId(), "site", _group);
+		_test(0L, _companyGroup);
+		_test(_group.getGroupId(), _group);
 	}
 
-	private void _test(long expectedGroupId, String expectedScope, Group group)
-		throws Exception {
-
+	private void _test(long expectedGroupId, Group group) throws Exception {
 		Bundle bundle = FrameworkUtil.getBundle(
 			ImportStagedModelExceptionHandlerTest.class);
 
@@ -175,14 +173,10 @@ public class ImportStagedModelExceptionHandlerTest {
 		Assert.assertNotNull(exportImportReportEntry.getErrorStacktrace());
 		Assert.assertEquals(
 			TestStagedModel.class.getName(),
-			exportImportReportEntry.getModelName());
+			exportImportReportEntry.getModelNameLanguageKey());
 		Assert.assertEquals(
 			ExportImportReportEntryConstants.ORIGIN_STAGING,
 			exportImportReportEntry.getOrigin());
-		Assert.assertEquals(expectedScope, exportImportReportEntry.getScope());
-		Assert.assertEquals(
-			group.getExternalReferenceCode(),
-			exportImportReportEntry.getScopeKey());
 	}
 
 	@Inject

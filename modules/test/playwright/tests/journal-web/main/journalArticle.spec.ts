@@ -26,7 +26,7 @@ import {nextPage, setItemsPerPage} from '../../../utils/pagination';
 import addApprovedStructuredContent from '../../../utils/structured-content/addApprovedStructuredContent';
 import getBasicWebContentStructureId from '../../../utils/structured-content/getBasicWebContentStructureId';
 import {waitForAlert} from '../../../utils/waitForAlert';
-import {ckeditor4PageTest} from '../../frontend-editor-ckeditor-web/main/fixtures/ckeditor4PageTest';
+import {ClassicPage as CKEditor4ClassicPage} from '../../frontend-editor-ckeditor-sample-web/pages/ckeditor4/ClassicPage';
 import {journalPagesTest} from './fixtures/journalPagesTest';
 import getDataStructureDefinition from './utils/getDataStructureDefinition';
 
@@ -81,7 +81,7 @@ const assetPublisherDeprecationTest = mergeTests(
 	})
 );
 
-const ckeditor4Test = mergeTests(baseTest, ckeditor4PageTest);
+const ckeditor4Test = mergeTests(baseTest);
 
 const ckeditor5Test = mergeTests(
 	baseTest,
@@ -139,12 +139,48 @@ baseTest(
 			)
 			.uncheck();
 
-		await page.getByRole('button', {exact: true, name: 'Publish'}).click();
+		await page
+			.getByLabel('Publish With Permissions')
+			.getByRole('button', {name: 'Publish'})
+			.click();
 
 		await journalPage.assertJournalArticlePermissions(title, [
 			{enabled: false, locator: '#guest_ACTION_ADD_DISCUSSION'},
 			{enabled: false, locator: '#site-member_ACTION_ADD_DISCUSSION'},
 		]);
+	}
+);
+
+baseTest(
+	' Published After Draft can schedule',
+	{
+		tag: '@LPD-70137',
+	},
+	async ({journalEditArticlePage, page, site}) => {
+		await journalEditArticlePage.goto({siteUrl: site.friendlyUrlPath});
+
+		await journalEditArticlePage.saveAsDraftWithPermissions(
+			getRandomString()
+		);
+
+		await journalEditArticlePage.publishDropdown.click();
+
+		await page
+			.getByRole('menuitem', {name: 'Schedule Publication'})
+			.click();
+
+		await page
+			.getByPlaceholder('YYYY-MM-DD HH:mm')
+			.fill('9987-11-26 13:00');
+
+		await page
+			.getByLabel('Schedule Publication')
+			.getByRole('button', {name: 'Schedule'})
+			.click();
+
+		await expect(
+			page.locator('span').filter({hasText: 'Scheduled'}).nth(1)
+		).toBeVisible();
 	}
 );
 
@@ -167,7 +203,7 @@ baseTest(
 		await waitForAlert(
 			page,
 			"Avertissement:Les URL simplifiées suivantes ont été modifiées pour garantir l'unicité",
-			{closeText: 'Fin', type: 'warning'}
+			{closeText: 'Fermer', type: 'warning'}
 		);
 
 		// change back to english language
@@ -1910,10 +1946,12 @@ assetPublisherDeprecationTest(
 ckeditor4Test(
 	'Change image from context menu, in editor with "adaptivemedia" plugin',
 	{tag: ['@LPD-53880']},
-	async ({ckeditor4Page, journalEditArticlePage, site}) => {
+	async ({journalEditArticlePage, page, site}) => {
 		await ckeditor4Test.step('Open new Basic Web Content', async () => {
 			await journalEditArticlePage.goto({siteUrl: site.friendlyUrlPath});
 		});
+
+		const ckeditor4Page = new CKEditor4ClassicPage(page);
 
 		await ckeditor4Page.page.getByLabel('Image', {exact: true}).click();
 
@@ -2187,13 +2225,9 @@ baseTest(
 			getRandomString()
 		);
 
-		await page.waitForTimeout(50000);
+		await page.waitForTimeout(60000);
 
-		await page.getByRole('button', {name: 'Publish'}).click();
-
-		await page.waitForTimeout(50000);
-
-		await page.getByRole('menuitem', {name: 'Publish'}).click();
+		await journalEditArticlePage.publishButton.click();
 
 		await journalPage.changeView('table');
 
@@ -2249,6 +2283,54 @@ baseTest(
 				await expect(
 					page.getByRole('gridcell', {exact: true, name: category1})
 				).not.toBeVisible();
+			}
+		);
+	}
+);
+
+baseTest(
+	'Web content with "pending" status has the submission button disabled',
+	{tag: '@LPD-70782'},
+	async ({journalEditArticlePage, journalPage, site, workflowPage}) => {
+		await baseTest.step('Set up view for pending articles', async () => {
+			await journalPage.goto(site.friendlyUrlPath);
+
+			await journalPage.changeView('list');
+		});
+
+		await baseTest.step('Update workflow to require approval', async () => {
+			await workflowPage.goto(site.friendlyUrlPath);
+
+			await workflowPage.changeWorkflow(
+				'Web Content Article',
+				'Single Approver'
+			);
+		});
+
+		const articleTitle = getRandomString();
+
+		await baseTest.step('Create web content article', async () => {
+			await journalEditArticlePage.goto({siteUrl: site.friendlyUrlPath});
+
+			await journalEditArticlePage.fillTitle(articleTitle);
+
+			await journalEditArticlePage.submitArticleForWorkflow(articleTitle);
+		});
+
+		await baseTest.step(
+			'Assert that the submission buttons are disabled',
+			async () => {
+				await journalPage.goToJournalArticleAction(
+					'Edit',
+					articleTitle
+				);
+
+				await expect(
+					journalEditArticlePage.publishDropdown
+				).toBeDisabled();
+				await expect(
+					journalEditArticlePage.publishButton
+				).toBeDisabled();
 			}
 		);
 	}

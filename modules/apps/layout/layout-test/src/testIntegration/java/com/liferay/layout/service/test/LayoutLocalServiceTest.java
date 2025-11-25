@@ -12,6 +12,10 @@ import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.service.FragmentCollectionLocalService;
 import com.liferay.fragment.service.FragmentEntryLocalService;
 import com.liferay.friendly.url.service.FriendlyURLEntryLocalServiceUtil;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateConstants;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
+import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
+import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.test.util.ContentLayoutTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.lang.SafeCloseable;
@@ -273,7 +277,7 @@ public class LayoutLocalServiceTest {
 			).put(
 				LocaleUtil.US, "/englishurl"
 			).build(),
-			0, _serviceContext);
+			null, _serviceContext);
 
 		Map<Locale, String> friendlyURLMap = layout.getFriendlyURLMap();
 
@@ -288,7 +292,7 @@ public class LayoutLocalServiceTest {
 			layout.getKeywordsMap(), layout.getRobotsMap(), layout.getType(),
 			layout.isHidden(), friendlyURLMap, layout.isIconImage(), null,
 			layout.getStyleBookEntryERC(), layout.getFaviconFileEntryId(),
-			layout.getMasterLayoutPlid(), _serviceContext);
+			layout.getMasterLayoutPageTemplateEntryERC(), _serviceContext);
 
 		friendlyURLMap = layout.getFriendlyURLMap();
 
@@ -353,8 +357,8 @@ public class LayoutLocalServiceTest {
 				LocaleUtil.US, "/friendly-url-2"
 			).build(),
 			false, null, layout1.getStyleBookEntryERC(),
-			layout1.getFaviconFileEntryId(), layout1.getMasterLayoutPlid(),
-			_serviceContext);
+			layout1.getFaviconFileEntryId(),
+			layout1.getMasterLayoutPageTemplateEntryERC(), _serviceContext);
 
 		Layout layout2 = _layoutLocalService.addLayout(
 			null, TestPropsValues.getUserId(), _group.getGroupId(), false,
@@ -428,7 +432,8 @@ public class LayoutLocalServiceTest {
 				publishedLayout.getKeywordsMap(),
 				publishedLayout.getRobotsMap(), publishedLayout.getType(),
 				unicodeProperties.toString(), true, true,
-				Collections.emptyMap(), publishedLayout.getMasterLayoutPlid(),
+				Collections.emptyMap(),
+				publishedLayout.getMasterLayoutPageTemplateEntryERC(),
 				serviceContext);
 
 			draftLayout = _layoutLocalService.copyLayoutContent(
@@ -653,8 +658,8 @@ public class LayoutLocalServiceTest {
 				LocaleUtil.US, "/friendly-url-2"
 			).build(),
 			false, null, layout.getStyleBookEntryERC(),
-			layout.getFaviconFileEntryId(), layout.getMasterLayoutPlid(),
-			_serviceContext);
+			layout.getFaviconFileEntryId(),
+			layout.getMasterLayoutPageTemplateEntryERC(), _serviceContext);
 
 		Layout draftLayout = layout.fetchDraftLayout();
 
@@ -667,7 +672,7 @@ public class LayoutLocalServiceTest {
 			draftLayout.isHidden(), draftLayout.getFriendlyURLMap(), false,
 			null, draftLayout.getStyleBookEntryERC(),
 			draftLayout.getFaviconFileEntryId(),
-			draftLayout.getMasterLayoutPlid(), _serviceContext);
+			draftLayout.getMasterLayoutPageTemplateEntryERC(), _serviceContext);
 	}
 
 	@Test
@@ -697,7 +702,7 @@ public class LayoutLocalServiceTest {
 			layout.getTitleMap(), layout.getDescriptionMap(),
 			layout.getKeywordsMap(), layout.getRobotsMap(), layout.getType(),
 			layout.isHidden(), friendlyURLMap, layout.getIconImage(), null,
-			null, 0, 0, serviceContext);
+			null, 0, null, serviceContext);
 
 		Assert.assertEquals(
 			friendlyURL, layout.getFriendlyURL(LocaleUtil.GERMANY));
@@ -725,10 +730,38 @@ public class LayoutLocalServiceTest {
 				LocaleUtil.US, ""
 			).build(),
 			false, null, layout.getStyleBookEntryERC(),
-			layout.getFaviconFileEntryId(), layout.getMasterLayoutPlid(),
-			serviceContext);
+			layout.getFaviconFileEntryId(),
+			layout.getMasterLayoutPageTemplateEntryERC(), serviceContext);
 
 		Assert.assertEquals("/home", layout.getFriendlyURL(LocaleUtil.US));
+	}
+
+	@Test(expected = MasterLayoutException.class)
+	public void testUpdateLayoutWithInvalidMasterLayoutPageTemplateEntryERC()
+		throws Exception {
+
+		LayoutPageTemplateEntry layoutPageTemplateEntry =
+			_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
+				null, TestPropsValues.getUserId(), _group.getGroupId(),
+				LayoutPageTemplateConstants.
+					PARENT_LAYOUT_PAGE_TEMPLATE_COLLECTION_ID_DEFAULT,
+				null, RandomTestUtil.randomString(),
+				LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT, 0,
+				WorkflowConstants.STATUS_DRAFT, _serviceContext);
+
+		Layout layout = _layoutLocalService.getLayout(
+			layoutPageTemplateEntry.getPlid());
+
+		_layoutLocalService.updateLayout(
+			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
+			layout.getParentLayoutId(), layout.getNameMap(),
+			layout.getTitleMap(), layout.getDescriptionMap(),
+			layout.getKeywordsMap(), layout.getRobotsMap(), layout.getType(),
+			layout.isHidden(), layout.getFriendlyURLMap(),
+			layout.getIconImage(), null, layout.getStyleBookEntryERC(),
+			layout.getFaviconFileEntryId(),
+			layoutPageTemplateEntry.getExternalReferenceCode(),
+			_serviceContext);
 	}
 
 	@Test(expected = LayoutJavaScriptException.class)
@@ -775,7 +808,8 @@ public class LayoutLocalServiceTest {
 					layout.getFriendlyURLMap(), layout.isIconImage(), null,
 					layout.getStyleBookEntryERC(),
 					layout.getFaviconFileEntryId(),
-					layout.getMasterLayoutPlid(), _serviceContext);
+					layout.getMasterLayoutPageTemplateEntryERC(),
+					_serviceContext);
 
 				Assert.fail();
 			}
@@ -791,7 +825,7 @@ public class LayoutLocalServiceTest {
 				layout.getRobotsMap(), LayoutConstants.TYPE_CONTENT, false,
 				layout.getFriendlyURLMap(), layout.isIconImage(), null,
 				layout.getStyleBookEntryERC(), layout.getFaviconFileEntryId(),
-				layout.getMasterLayoutPlid(), _serviceContext);
+				layout.getMasterLayoutPageTemplateEntryERC(), _serviceContext);
 
 			Assert.assertEquals(
 				WorkflowConstants.STATUS_DRAFT, layout.getStatus());
@@ -831,26 +865,24 @@ public class LayoutLocalServiceTest {
 	}
 
 	@Test(expected = MasterLayoutException.class)
-	public void testUpdateMasterLayoutWithInvalidPlid1() throws Exception {
-		Layout layout = LayoutTestUtil.addTypeContentLayout(_group);
+	public void testUpdateMasterLayoutPageTemplateEntryERCWithInvalidMasterLayoutPageTemplateEntryERC()
+		throws Exception {
 
-		_layoutLocalService.updateMasterLayoutPlid(
+		LayoutPageTemplateEntry layoutPageTemplateEntry =
+			_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
+				null, TestPropsValues.getUserId(), _group.getGroupId(),
+				LayoutPageTemplateConstants.
+					PARENT_LAYOUT_PAGE_TEMPLATE_COLLECTION_ID_DEFAULT,
+				null, RandomTestUtil.randomString(),
+				LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT, 0,
+				WorkflowConstants.STATUS_DRAFT, _serviceContext);
+
+		Layout layout = _layoutLocalService.getLayout(
+			layoutPageTemplateEntry.getPlid());
+
+		_layoutLocalService.updateMasterLayoutPageTemplateEntryERC(
 			_group.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
-			layout.getPlid());
-	}
-
-	@Test(expected = MasterLayoutException.class)
-	public void testUpdateMasterLayoutWithInvalidPlid2() throws Exception {
-		Layout layout = LayoutTestUtil.addTypeContentLayout(_group);
-
-		_layoutLocalService.updateLayout(
-			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
-			layout.getParentLayoutId(), layout.getNameMap(),
-			layout.getTitleMap(), layout.getDescriptionMap(),
-			layout.getKeywordsMap(), layout.getRobotsMap(), layout.getType(),
-			layout.isHidden(), layout.getFriendlyURLMap(),
-			layout.getIconImage(), null, layout.getStyleBookEntryERC(),
-			layout.getFaviconFileEntryId(), layout.getPlid(), _serviceContext);
+			layoutPageTemplateEntry.getExternalReferenceCode());
 	}
 
 	@Test
@@ -963,7 +995,7 @@ public class LayoutLocalServiceTest {
 			layout.getTitleMap(), layout.getDescriptionMap(),
 			layout.getKeywordsMap(), layout.getRobotsMap(), layout.getType(),
 			layout.isHidden(), layout.getFriendlyURLMap(),
-			layout.getIconImage(), null, null, 0, 0, serviceContext);
+			layout.getIconImage(), null, null, 0, null, serviceContext);
 
 		Layout updatedLayout = _layoutLocalService.getLayout(layout.getPlid());
 
@@ -1040,6 +1072,10 @@ public class LayoutLocalServiceTest {
 
 	@Inject
 	private LayoutLocalService _layoutLocalService;
+
+	@Inject
+	private LayoutPageTemplateEntryLocalService
+		_layoutPageTemplateEntryLocalService;
 
 	@Inject
 	private Portal _portal;

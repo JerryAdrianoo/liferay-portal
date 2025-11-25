@@ -16,7 +16,6 @@
 		"moment": "2.29.4",
 		"numeral": "2.0.6",
 		"object-hash": "^2.0.1",
-		"pkce-challenge": "^3.0.0",
 		"qrcode": "1.4.4",
 		"qs": "6.9.6",
 		"react-dropzone": "11.4.2",
@@ -36,5 +35,5 @@
 		"checkFormat": "node-scripts format --check",
 		"format": "node-scripts format"
 	},
-	"version": "1.0.33"
+	"version": "1.0.34"
 }

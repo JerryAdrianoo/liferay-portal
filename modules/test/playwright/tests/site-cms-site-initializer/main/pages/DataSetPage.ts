@@ -33,7 +33,7 @@ export class DataSetPage {
 		};
 
 		this.page = page;
-		this.selectAllLink = page.getByRole('link', {
+		this.selectAllLink = page.getByRole('button', {
 			exact: true,
 			name: 'Select All',
 		});
@@ -44,7 +44,10 @@ export class DataSetPage {
 	}
 
 	async execBulkItemAction({action}) {
-		await this.page.getByLabel('Actions').click();
+		await this.page
+			.getByTestId('visualization-mode-table')
+			.getByLabel('Actions')
+			.click();
 
 		const dropdownMenuItemDelete = this.page.getByRole('menuitem', {
 			name: action,
@@ -79,7 +82,9 @@ export class DataSetPage {
 		await dropdownMenuActionItem.click();
 	}
 
-	async changeVisualizationMode(visualizationMode: 'Cards' | 'Table') {
+	async changeVisualizationMode(
+		visualizationMode: 'Cards' | 'Table' | 'Gallery'
+	) {
 		await this.activeViewSelector.waitFor({
 			state: 'visible',
 		});

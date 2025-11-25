@@ -390,6 +390,9 @@
 					"field": {
 						"type": "string"
 					},
+					"folderId": {
+						"type": "integer"
+					},
 					"id": {
 						"type": "id"
 					},
@@ -404,7 +407,13 @@
 						"items": "integer",
 						"type": "array"
 					},
+					"title": {
+						"type": "string"
+					},
 					"userId": {
+						"type": "integer"
+					},
+					"version": {
 						"type": "integer"
 					}
 				},
@@ -645,18 +654,28 @@
 			"Scope": {
 				"properties": {
 					"externalReferenceCode": {
+						"description": "The scope's external reference code.",
+						"type": "string"
+					},
+					"key": {
+						"description": "The scope's identifier.",
+						"type": "string"
+					},
+					"label": {
+						"description": "The scope's name.",
 						"type": "string"
 					},
 					"type": {
+						"description": "The scope's type.",
 						"enum": [
 							"AssetLibrary",
-							"CMS",
-							"Site"
+							"Site",
+							"Space"
 						],
 						"type": "string"
 					},
 					"x-class-name": {
-						"default": "com.liferay.headless.object.dto.v1_0.Scope",
+						"default": "com.liferay.portal.vulcan.scope.Scope",
 						"readOnly": true,
 						"type": "string"
 					}
@@ -1700,6 +1719,13 @@
 					{
 						"in": "query",
 						"name": "pageSize",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "sort",
 						"schema": {
 							"type": "string"
 						}
@@ -3290,6 +3316,13 @@
 					{
 						"in": "query",
 						"name": "pageSize",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "sort",
 						"schema": {
 							"type": "string"
 						}

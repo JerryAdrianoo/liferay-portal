@@ -31,7 +31,6 @@ import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.headless.admin.taxonomy.client.dto.v1_0.TaxonomyCategory;
 import com.liferay.headless.admin.taxonomy.client.resource.v1_0.TaxonomyCategoryResource;
 import com.liferay.headless.delivery.dto.v1_0.Creator;
-import com.liferay.headless.object.dto.v1_0.Scope;
 import com.liferay.list.type.entry.util.ListTypeEntryUtil;
 import com.liferay.list.type.model.ListTypeDefinition;
 import com.liferay.list.type.model.ListTypeEntry;
@@ -66,9 +65,10 @@ import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.model.ObjectValidationRule;
 import com.liferay.object.rest.dto.v1_0.Folder;
 import com.liferay.object.rest.dto.v1_0.Link;
+import com.liferay.object.rest.dto.v1_0.SystemProperties;
 import com.liferay.object.rest.dto.v1_0.ValidationRequest;
 import com.liferay.object.rest.dto.v1_0.ValidationResponse;
-import com.liferay.object.rest.dto.v1_0.util.ScopeUtil;
+import com.liferay.object.rest.dto.v1_0.Version;
 import com.liferay.object.rest.resource.v1_0.ObjectEntryResource;
 import com.liferay.object.rest.test.util.ObjectEntryTestUtil;
 import com.liferay.object.rest.test.util.ObjectFieldTestUtil;
@@ -127,6 +127,7 @@ import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
+import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
@@ -201,6 +202,7 @@ import com.liferay.portal.vulcan.fields.NestedFieldsContext;
 import com.liferay.portal.vulcan.fields.NestedFieldsContextThreadLocal;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import com.liferay.portal.vulcan.scope.Scope;
 import com.liferay.portal.vulcan.util.GroupUtil;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portlet.documentlibrary.constants.DLConstants;
@@ -6000,9 +6002,20 @@ public class ObjectEntryResourceTest {
 		Page<com.liferay.object.rest.dto.v1_0.ObjectEntry> objectEntryPage =
 			objectEntryResource1.getObjectEntriesVersionsPage(
 				objectEntry.getObjectEntryId(),
-				Pagination.of(QueryUtil.ALL_POS, QueryUtil.ALL_POS));
+				Pagination.of(QueryUtil.ALL_POS, QueryUtil.ALL_POS), null);
 
 		Assert.assertEquals(2, objectEntryPage.getTotalCount());
+
+		objectEntryPage = objectEntryResource1.getObjectEntriesVersionsPage(
+			objectEntry.getObjectEntryId(),
+			Pagination.of(QueryUtil.ALL_POS, QueryUtil.ALL_POS),
+			new Sort[] {new Sort("version", Sort.INT_TYPE, true)});
+
+		List<com.liferay.object.rest.dto.v1_0.ObjectEntry> objectEntries =
+			new ArrayList<>(objectEntryPage.getItems());
+
+		_assertObjectEntryVersionNumber(objectEntries.get(0), 2);
+		_assertObjectEntryVersionNumber(objectEntries.get(1), 1);
 
 		ObjectEntryResource objectEntryResource2 = _getObjectEntryResource(
 			_objectDefinition2, TestPropsValues.getUser());
@@ -6011,7 +6024,7 @@ public class ObjectEntryResourceTest {
 			NoSuchObjectEntryException.class, null,
 			() -> objectEntryResource2.getObjectEntriesVersionsPage(
 				objectEntry.getObjectEntryId(),
-				Pagination.of(QueryUtil.ALL_POS, QueryUtil.ALL_POS)));
+				Pagination.of(QueryUtil.ALL_POS, QueryUtil.ALL_POS), null));
 	}
 
 	@Test
@@ -11644,10 +11657,7 @@ public class ObjectEntryResourceTest {
 
 		fileEntry1.setExternalReferenceCode(RandomTestUtil.randomString());
 
-		Scope scope = new Scope();
-
-		scope.setExternalReferenceCode(_group.getExternalReferenceCode());
-		scope.setType(Scope.Type.SITE);
+		Scope scope = Scope.of(_group, LocaleUtil.getDefault());
 
 		fileEntry1.setScope(scope);
 
@@ -15411,6 +15421,17 @@ public class ObjectEntryResourceTest {
 			objectFieldValue);
 	}
 
+	private void _assertObjectEntryVersionNumber(
+		com.liferay.object.rest.dto.v1_0.ObjectEntry objectEntry,
+		int versionNumber) {
+
+		SystemProperties systemProperties = objectEntry.getSystemProperties();
+
+		Version version = systemProperties.getVersion();
+
+		Assert.assertEquals(versionNumber, (int)version.getNumber());
+	}
+
 	private void _assertPagination(
 			int expectedSize, ObjectDefinition objectDefinition)
 		throws Exception {
@@ -15772,20 +15793,8 @@ public class ObjectEntryResourceTest {
 					return null;
 				}
 
-				Scope scope = new Scope();
-
-				Group group = _groupLocalService.getGroup(
-					dlFileEntry.getGroupId());
-
-				scope.setExternalReferenceCode(group::getExternalReferenceCode);
-				scope.setType(
-					() -> {
-						if (group.getType() == GroupConstants.TYPE_DEPOT) {
-							return Scope.Type.ASSET_LIBRARY;
-						}
-
-						return Scope.Type.SITE;
-					});
+				Scope scope = Scope.of(
+					dlFileEntry.getGroupId(), LocaleUtil.getDefault());
 
 				return JSONFactoryUtil.createJSONObject(scope.toString());
 			}
@@ -18330,12 +18339,7 @@ public class ObjectEntryResourceTest {
 
 		Group group = GroupTestUtil.addGroup();
 
-		Scope scope = new Scope();
-
-		scope.setExternalReferenceCode(group.getExternalReferenceCode());
-		scope.setType(Scope.Type.SITE);
-
-		testFileEntry.setScope(scope);
+		testFileEntry.setScope(Scope.of(group, LocaleUtil.getDefault()));
 
 		String externalReferenceCode3 =
 			testFileEntry.getExternalReferenceCode();
@@ -19848,7 +19852,8 @@ public class ObjectEntryResourceTest {
 			boolean withEmbeddedTaxonomyCategory)
 		throws Exception {
 
-		Scope scope = ScopeUtil.toScope(taxonomyCategory.getSiteId());
+		Scope scope = Scope.of(
+			taxonomyCategory.getSiteId(), LocaleUtil.getDefault());
 
 		JSONObject jsonObject = JSONUtil.put(
 			"scope",
