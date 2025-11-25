@@ -73,6 +73,7 @@ export default function MultipleFileUploader({
 
 	const {getInputProps, getRootProps, isDragActive} = useDropzone({
 		multiple: true,
+		noKeyboard: true,
 		onDropAccepted: (acceptedFiles) => {
 			const newFilesToUpload = acceptedFiles.map((file) => ({
 				errorMessage: '',
@@ -240,7 +241,7 @@ export default function MultipleFileUploader({
 										>
 											<ClayLayout.ContentCol>
 												<ClaySticker
-													className="border border-secondary"
+													className="sticker-border-secondary"
 													displayType="secondary"
 													size="lg"
 												>

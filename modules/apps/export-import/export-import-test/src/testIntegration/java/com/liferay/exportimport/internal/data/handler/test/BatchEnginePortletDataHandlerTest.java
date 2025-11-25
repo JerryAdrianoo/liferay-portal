@@ -1414,9 +1414,8 @@ public class BatchEnginePortletDataHandlerTest {
 		Assert.assertEquals(
 			objectEntry.getGroupId(), exportImportReportEntry.getGroupId());
 		Assert.assertEquals(
-			objectDefinition.getShortName(),
-			exportImportReportEntry.getModelName());
-		Assert.assertEquals(scope, exportImportReportEntry.getScope());
+			"model.resource." + objectDefinition.getResourceName(),
+			exportImportReportEntry.getModelNameLanguageKey());
 		Assert.assertEquals(
 			ExportImportReportEntryConstants.TYPE_ERROR,
 			exportImportReportEntry.getType());
@@ -1765,6 +1764,11 @@ public class BatchEnginePortletDataHandlerTest {
 		@Override
 		public ExportImportDescriptor getExportImportDescriptor() {
 			return new ExportImportDescriptor() {
+
+				@Override
+				public String getLabelLanguageKey() {
+					return _modelClassName;
+				}
 
 				@Override
 				public String getModelClassName() {

@@ -9,14 +9,19 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.document.library.constants.DLPortletKeys;
 import com.liferay.item.selector.ItemSelectorView;
 import com.liferay.item.selector.criteria.group.criterion.GroupItemSelectorCriterion;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,13 +40,22 @@ public class DepotItemSelectorViewTest {
 			new LiferayIntegrationTestRule(),
 			PermissionCheckerMethodTestRule.INSTANCE);
 
+	@Before
+	public void setUp() throws Exception {
+		_themeDisplay.setCompany(
+			_companyLocalService.fetchCompany(TestPropsValues.getCompanyId()));
+	}
+
+	@FeatureFlag("LPD-17564")
 	@Test
 	public void testIsVisible() {
 		Assert.assertTrue(
 			_assetLibraryDepotItemSelectorView.isVisible(null, null));
-		Assert.assertTrue(_spacesDepotItemSelectorView.isVisible(null, null));
+		Assert.assertTrue(
+			_spacesDepotItemSelectorView.isVisible(null, _themeDisplay));
 	}
 
+	@FeatureFlag("LPD-17564")
 	@Test
 	public void testIsVisibleForAnUnsupportedApplication() {
 		GroupItemSelectorCriterion groupItemSelectorCriterion =
@@ -54,9 +68,10 @@ public class DepotItemSelectorViewTest {
 				groupItemSelectorCriterion, null));
 		Assert.assertFalse(
 			_spacesDepotItemSelectorView.isVisible(
-				groupItemSelectorCriterion, null));
+				groupItemSelectorCriterion, _themeDisplay));
 	}
 
+	@FeatureFlag("LPD-17564")
 	@Test
 	public void testIsVisibleForASupportedApplication() {
 		GroupItemSelectorCriterion groupItemSelectorCriterion =
@@ -70,7 +85,7 @@ public class DepotItemSelectorViewTest {
 				groupItemSelectorCriterion, null));
 		Assert.assertTrue(
 			_spacesDepotItemSelectorView.isVisible(
-				groupItemSelectorCriterion, null));
+				groupItemSelectorCriterion, _themeDisplay));
 	}
 
 	@Inject(
@@ -80,6 +95,9 @@ public class DepotItemSelectorViewTest {
 		_assetLibraryDepotItemSelectorView;
 
 	@Inject
+	private CompanyLocalService _companyLocalService;
+
+	@Inject
 	private GroupLocalService _groupLocalService;
 
 	@Inject(
@@ -87,5 +105,7 @@ public class DepotItemSelectorViewTest {
 	)
 	private ItemSelectorView<GroupItemSelectorCriterion>
 		_spacesDepotItemSelectorView;
+
+	private final ThemeDisplay _themeDisplay = new ThemeDisplay();
 
 }

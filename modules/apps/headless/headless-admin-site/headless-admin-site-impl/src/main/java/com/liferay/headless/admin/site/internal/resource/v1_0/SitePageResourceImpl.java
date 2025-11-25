@@ -10,6 +10,7 @@ import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLFileEntryService;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.vulcan.batch.engine.ExportImportVulcanBatchEngineTaskItemDelegate;
+import com.liferay.fragment.processor.FragmentEntryProcessorRegistry;
 import com.liferay.headless.admin.site.dto.v1_0.ContentPageSettings;
 import com.liferay.headless.admin.site.dto.v1_0.ContentPageSpecification;
 import com.liferay.headless.admin.site.dto.v1_0.CustomMetaTag;
@@ -137,6 +138,11 @@ public class SitePageResourceImpl
 		return new ExportImportDescriptor() {
 
 			@Override
+			public String getLabelLanguageKey() {
+				return "site-pages";
+			}
+
+			@Override
 			public String getModelClassName() {
 				return Layout.class.getName();
 			}
@@ -251,7 +257,8 @@ public class SitePageResourceImpl
 
 		return (ContentPageSpecification)_pageSpecificationDTOConverter.toDTO(
 			LayoutUtil.addDraftToLayout(
-				_cetManager, contentPageSpecification, _infoItemServiceRegistry,
+				_cetManager, contentPageSpecification,
+				_fragmentEntryProcessorRegistry, _infoItemServiceRegistry,
 				layout,
 				ServiceContextUtil.createServiceContext(
 					layout.getGroupId(), contextHttpServletRequest,
@@ -487,8 +494,8 @@ public class SitePageResourceImpl
 
 		if (Objects.equals(sitePage.getType(), SitePage.Type.CONTENT_PAGE)) {
 			layout = LayoutUtil.addContentLayout(
-				_cetManager, groupId, _infoItemServiceRegistry,
-				sitePage.getPageSpecifications(),
+				_cetManager, _fragmentEntryProcessorRegistry, groupId,
+				_infoItemServiceRegistry, sitePage.getPageSpecifications(),
 				_getParentLayoutId(
 					LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, groupId,
 					sitePage.getParentSitePageExternalReferenceCode(),
@@ -541,7 +548,7 @@ public class SitePageResourceImpl
 
 		long groupId = serviceContext.getScopeGroupId();
 
-		com.liferay.headless.admin.site.dto.v1_0.Scope scope =
+		com.liferay.portal.vulcan.scope.Scope scope =
 			itemExternalReference.getScope();
 
 		if (scope != null) {
@@ -787,9 +794,10 @@ public class SitePageResourceImpl
 
 		if (Objects.equals(sitePage.getType(), SitePage.Type.CONTENT_PAGE)) {
 			layout = LayoutUtil.updateContentLayout(
-				_cetManager, _infoItemServiceRegistry, layout, nameMap,
-				titleMap, descriptionMap, keywordsMap, robotsMap,
-				friendlyURLMap, _getTypeSettingsUnicodeProperties(sitePage),
+				_cetManager, _fragmentEntryProcessorRegistry,
+				_infoItemServiceRegistry, layout, nameMap, titleMap,
+				descriptionMap, keywordsMap, robotsMap, friendlyURLMap,
+				_getTypeSettingsUnicodeProperties(sitePage),
 				sitePage.getPageSpecifications(), serviceContext);
 		}
 		else {
@@ -991,6 +999,9 @@ public class SitePageResourceImpl
 
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
+
+	@Reference
+	private FragmentEntryProcessorRegistry _fragmentEntryProcessorRegistry;
 
 	@Reference
 	private InfoItemServiceRegistry _infoItemServiceRegistry;

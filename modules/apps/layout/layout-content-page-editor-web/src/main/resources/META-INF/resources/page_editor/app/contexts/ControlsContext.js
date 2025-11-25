@@ -15,6 +15,7 @@ import React, {
 import {ITEM_TYPES} from '../config/constants/itemTypes';
 import {LAYOUT_DATA_ITEM_TYPES} from '../config/constants/layoutDataItemTypes';
 import {MULTI_SELECT_TYPES} from '../config/constants/multiSelectTypes';
+import {deepEqual} from '../utils/checkDeepEqual';
 import {useSelectorRef} from './StoreContext';
 
 const ACTIVE_INITIAL_STATE = {
@@ -25,10 +26,11 @@ const ACTIVE_INITIAL_STATE = {
 };
 
 const HOVER_INITIAL_STATE = {
-	hoveredItemId: null,
+	hoveredItemIds: [],
 };
 
 const HOVER_ITEM = 'HOVER_ITEM';
+const MULTI_HOVER = 'MULTI_HOVER';
 const MULTI_SELECT = 'MULTI_SELECT';
 const SELECT_ITEM = 'SELECT_ITEM';
 
@@ -123,6 +125,7 @@ const reducer = (state, action) => {
 	const {
 		activeItemIds,
 		itemId,
+		itemIds,
 		itemType,
 		layoutData,
 		multiSelect,
@@ -133,11 +136,22 @@ const reducer = (state, action) => {
 
 	let nextState = state;
 
-	if (type === HOVER_ITEM && itemId !== nextState.hoveredItemId) {
+	if (type === HOVER_ITEM && !deepEqual([itemId], nextState.hoveredItemIds)) {
 		nextState = {
 			...nextState,
 			activationOrigin: origin,
-			hoveredItemId: itemId,
+			hoveredItemIds: itemId ? [itemId] : [],
+			hoveredItemType: itemType,
+		};
+	}
+	else if (
+		type === MULTI_HOVER &&
+		!deepEqual(itemIds, nextState.hoveredItemIds)
+	) {
+		nextState = {
+			...nextState,
+			activationOrigin: origin,
+			hoveredItemIds: itemIds,
 			hoveredItemType: itemType,
 		};
 	}
@@ -317,7 +331,7 @@ const useActiveItemIds = () => useContext(ActiveStateContext).activeItemIds;
 
 const useActiveItemType = () => useContext(ActiveStateContext).activeItemType;
 
-const useHoveredItemId = () => useContext(HoverStateContext).hoveredItemId;
+const useHoveredItemIds = () => useContext(HoverStateContext).hoveredItemIds;
 
 const useHoveredItemType = () => useContext(HoverStateContext).hoveredItemType;
 
@@ -343,6 +357,20 @@ const useHoverItem = () => {
 	);
 };
 
+const useHoverMultipleItems = () => {
+	const dispatch = useContext(HoverDispatchContext);
+
+	return useCallback(
+		(itemIds, {origin} = {origin: null}) =>
+			dispatch({
+				itemIds,
+				origin,
+				type: MULTI_HOVER,
+			}),
+		[dispatch]
+	);
+};
+
 const useIsActive = () => {
 	const {activeItemIds} = useContext(ActiveStateContext);
 
@@ -353,9 +381,12 @@ const useIsActive = () => {
 };
 
 const useIsHovered = () => {
-	const {hoveredItemId} = useContext(HoverStateContext);
+	const {hoveredItemIds} = useContext(HoverStateContext);
 
-	return useCallback((itemId) => hoveredItemId === itemId, [hoveredItemId]);
+	return useCallback(
+		(itemId) => hoveredItemIds.includes(itemId),
+		[hoveredItemIds]
+	);
 };
 
 const useSelectItem = () => {
@@ -425,10 +456,11 @@ export {
 	useActivationOrigin,
 	useActiveItemIds,
 	useActiveItemType,
-	useHoveredItemId,
+	useHoveredItemIds,
 	useHoveredItemType,
 	useHoveringOrigin,
 	useHoverItem,
+	useHoverMultipleItems,
 	useIsActive,
 	useIsHovered,
 	useMultiSelectType,

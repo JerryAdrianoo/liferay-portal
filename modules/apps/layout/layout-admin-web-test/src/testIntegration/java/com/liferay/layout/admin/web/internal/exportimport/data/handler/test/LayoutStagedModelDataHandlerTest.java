@@ -769,7 +769,8 @@ public class LayoutStagedModelDataHandlerTest
 				WorkflowConstants.STATUS_APPROVED);
 
 		Layout layout = LayoutTestUtil.addTypeContentLayout(
-			stagingGroup, false, false, layoutPageTemplateEntry.getPlid());
+			stagingGroup, false, false,
+			layoutPageTemplateEntry.getExternalReferenceCode());
 
 		initExport();
 
@@ -906,9 +907,9 @@ public class LayoutStagedModelDataHandlerTest
 
 		Layout layout = LayoutTestUtil.addTypeContentLayout(stagingGroup);
 
-		layout = _layoutLocalService.updateMasterLayoutPlid(
+		layout = _layoutLocalService.updateMasterLayoutPageTemplateEntryERC(
 			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
-			masterLayoutPageTemplateEntry.getPlid());
+			masterLayoutPageTemplateEntry.getExternalReferenceCode());
 
 		StagedModelDataHandlerUtil.exportStagedModel(
 			portletDataContext, layout);
@@ -1143,10 +1144,6 @@ public class LayoutStagedModelDataHandlerTest
 
 		Layout stagingMasterLayout = _layoutLocalService.fetchLayout(
 			masterLayout.getUuid(), stagingGroup.getGroupId(), true);
-
-		stagingLayout = _layoutLocalService.updateMasterLayoutPlid(
-			stagingGroup.getGroupId(), false, stagingLayout.getLayoutId(),
-			stagingMasterLayout.getPlid());
 
 		stagingMasterLayout.setLayoutId(layout.getLayoutId());
 

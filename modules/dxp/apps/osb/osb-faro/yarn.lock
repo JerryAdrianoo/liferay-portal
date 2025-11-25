@@ -1303,6 +1303,13 @@
     react-transition-group "^4.4.1"
     warning "^4.0.3"
 
+"@clayui/empty-state@^3.144.1":
+  version "3.144.1"
+  resolved "https://registry.yarnpkg.com/@clayui/empty-state/-/empty-state-3.144.1.tgz#2d01cb1f74027aeac7d524e0c2e622a45da4b513"
+  integrity sha512-aBcZVWFVOFf6UoeVTQ7p8oCZXsQrqljfTzFz3p8jlanBjxtZMfWwIfaiTO7BCc2px/duBCVdX/zSx8QmGjpG8w==
+  dependencies:
+    classnames "^2.2.6"
+
 "@clayui/form@^3.148.0":
   version "3.148.0"
   resolved "https://registry.yarnpkg.com/@clayui/form/-/form-3.148.0.tgz#446a8175362714bd5ad5bbb9e2d340c3c043a8d6"
@@ -1436,6 +1443,18 @@
     "@clayui/shared" "^3.148.0"
     classnames "^2.2.6"
 
+"@clayui/panel@^3.151.0":
+  version "3.151.0"
+  resolved "https://registry.yarnpkg.com/@clayui/panel/-/panel-3.151.0.tgz#bd998ba38d17a40779b805f81cd2956abfb8c5bc"
+  integrity sha512-YdFSCc7dZ/uxPU3jA8/V2kNZSRef3roZZBhQ/LF8T8rtyPhlFRgNHMibbL6eNv6VikS3brRRDZhc2uT1EYoRKw==
+  dependencies:
+    "@clayui/button" "^3.144.1"
+    "@clayui/icon" "^3.144.1"
+    "@clayui/provider" "^3.144.1"
+    "@clayui/shared" "^3.151.0"
+    classnames "^2.2.6"
+    react-transition-group "^4.4.1"
+
 "@clayui/popover@^3.148.0":
   version "3.148.0"
   resolved "https://registry.yarnpkg.com/@clayui/popover/-/popover-3.148.0.tgz#cc81ed66ad72caf9a68872b143ea2758090d4fa7"
@@ -1455,6 +1474,19 @@
   version "3.148.0"
   resolved "https://registry.yarnpkg.com/@clayui/shared/-/shared-3.148.0.tgz#02507748f4e9d338b1b48283d42e1ab758a25935"
   integrity sha512-C4d/NH7Y4Ix3FyruQ6IFZB4i6kij4oqthUq/bsVvQ7ukk9x72SWaogdGzbQtv/mhpvvlmwTX5ni3816oRB2lfg==
+  dependencies:
+    "@clayui/button" "^3.144.1"
+    "@clayui/link" "^3.144.1"
+    "@clayui/provider" "^3.144.1"
+    aria-hidden "^1.2.2"
+    classnames "^2.2.6"
+    dom-align "^1.12.2"
+    warning "^4.0.3"
+
+"@clayui/shared@^3.151.0":
+  version "3.151.0"
+  resolved "https://registry.yarnpkg.com/@clayui/shared/-/shared-3.151.0.tgz#b15056facf15d35344f5b471f39d37335a613f8e"
+  integrity sha512-cdA+1PVBhaTcMCI/ThufRdN3coPNZ6jS/+WN7oOM+3oEi9MKo8M6D11FYKIovYgoBaagT02qaGijWo8smur7jQ==
   dependencies:
     "@clayui/button" "^3.144.1"
     "@clayui/link" "^3.144.1"
@@ -10458,11 +10490,6 @@ path-to-regexp@^1.7.0:
   integrity sha1-Wf3g9DW62suhA6hOnTvGTpa5k30=
   dependencies:
     isarray "0.0.1"
-
-path-to-regexp@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-2.1.0.tgz#7e30f9f5b134bd6a28ffc2e3ef1e47075ac5259b"
-  integrity sha512-dZY7QPCPp5r9cnNuQ955mOv4ZFVDXY/yvqeV7Y1W2PJA3PEFcuow9xKFfJxbBj1pIjOAP+M2B4/7xubmykLrXw==
 
 path-type@^3.0.0:
   version "3.0.0"

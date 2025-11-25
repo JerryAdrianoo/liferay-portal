@@ -630,6 +630,23 @@ test.describe('Categorization Panel', () => {
 				await newTagOption.click();
 			};
 
+			// Create space
+
+			const spaceName = getRandomString();
+
+			const {id: spaceId} =
+				await apiHelpers.headlessAssetLibrary.createAssetLibrary({
+					name: spaceName,
+					settings: {},
+					type: 'Space',
+				});
+
+			// Create tags
+
+			const allSpacesTagName = await tagsPage.createTag();
+			const defaultSpaceTagName = await tagsPage.createTag(['Default']);
+			const spaceTagName = await tagsPage.createTag([spaceName]);
+
 			// Create category
 
 			const categoryName = getRandomString();
@@ -668,6 +685,26 @@ test.describe('Categorization Panel', () => {
 			await content.click();
 
 			await contentsPage.openSidePanel('Categorization');
+
+			// Assert that a tag shared with a specific space is only visible to that space
+
+			const tagsAutocomplete = page.getByPlaceholder('Add tag');
+
+			await tagsAutocomplete.click();
+
+			const tagsDropdownMenuEntry = page.locator(
+				'.dropdown-menu > ul > li > button'
+			);
+
+			await expect(
+				tagsDropdownMenuEntry.getByText(allSpacesTagName)
+			).toBeVisible();
+			await expect(
+				tagsDropdownMenuEntry.getByText(defaultSpaceTagName)
+			).toBeVisible();
+			await expect(
+				tagsDropdownMenuEntry.getByText(spaceTagName)
+			).toBeHidden();
 
 			// Add a category to the content
 
@@ -724,15 +761,27 @@ test.describe('Categorization Panel', () => {
 			await expect(tagLabel).toBeAttached();
 			await expect(categoryLabel).toBeAttached();
 
+			// Delete content
+
+			await contentsPage.goto();
+			await contentsPage.deleteContent(title);
+
 			// Delete tag
 
 			await tagsPage.goto();
 			await tagsPage.deleteTag(tagName);
+			await tagsPage.deleteTag(allSpacesTagName);
+			await tagsPage.deleteTag(defaultSpaceTagName);
+			await tagsPage.deleteTag(spaceTagName);
 
 			// Delete vocabulary
 
 			await vocabulariesPage.goto();
 			await vocabulariesPage.deleteVocabulary(vocabularyName);
+
+			// Delete space
+
+			await apiHelpers.headlessAssetLibrary.deleteAssetLibrary(spaceId);
 		}
 	);
 });
@@ -996,14 +1045,7 @@ test(
 	}
 );
 
-const testWithRepeatableFF = mergeTests(
-	test,
-	featureFlagsTest({
-		'LPD-50377': {enabled: true},
-	})
-);
-
-testWithRepeatableFF(
+test(
 	'Create item with repeatable groups',
 	{
 		tag: ['@LPD-50378', '@LPD-68645'],
@@ -1140,7 +1182,7 @@ testWithRepeatableFF(
 	}
 );
 
-testWithRepeatableFF(
+test(
 	'Create item with referenced structure',
 	{
 		tag: '@LPD-50378',
@@ -1251,7 +1293,7 @@ testWithRepeatableFF(
 	}
 );
 
-testWithRepeatableFF(
+test(
 	'Repetable text input is validated correctly',
 	{
 		tag: '@LPD-69446',

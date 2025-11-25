@@ -84,7 +84,7 @@ components:
                     readOnly: true
                     type: string
                 scope:
-                    $ref: ../../headless/headless-object/headless-object-impl/rest-openapi.yaml#Scope
+                    type: scope
                 thumbnailURL:
                     # @review
                     description:
@@ -260,7 +260,7 @@ components:
                 objectDefinitionBrief:
                     $ref: "#/components/schemas/ObjectDefinitionBrief"
                 scope:
-                    $ref: ../../headless/headless-object/headless-object-impl/rest-openapi.yaml#Scope
+                    type: scope
                 version:
                     $ref: "#/components/schemas/Version"
             type: object
@@ -295,7 +295,7 @@ components:
                     type: object
                     writeOnly: true
                 scope:
-                    $ref: ../../headless/headless-object/headless-object-impl/rest-openapi.yaml#Scope
+                    type: scope
                 taxonomyCategoryExternalReferenceCode:
                     # @review
                     description:
@@ -837,6 +837,10 @@ paths:
                     name: pageSize
                     schema:
                         type: integer
+                -   in: query
+                    name: sort
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
@@ -1505,6 +1509,10 @@ paths:
                     name: pageSize
                     schema:
                         type: integer
+                -   in: query
+                    name: sort
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
@@ -2212,6 +2220,10 @@ paths:
                     name: pageSize
                     schema:
                         type: integer
+                -   in: query
+                    name: sort
+                    schema:
+                        type: string
             responses:
                 200:
                     content:
