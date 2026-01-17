@@ -147,23 +147,22 @@ public class ClassNamePostUpgradeDataCleanupProcess
 				if (usedTableNames.isEmpty()) {
 					_classNameLocalService.deleteClassName(className);
 
-					DataCleanupLoggingUtil.logDelete(
-						_log, 1, dbInspector.normalizeName("ClassName_"),
-						StringBundler.concat(
-							"\"", value,
-							"\" is not defined in any deployed module and is ",
-							"not in use"));
-				}
-				else if (_log.isWarnEnabled()) {
-					_log.warn(
-						StringBundler.concat(
-							"Class name ", value,
-							" is not defined in any deployed module but is ",
-							"referenced in the next tables: ",
-							String.join(", ", new TreeSet<>(usedTableNames))));
-				}
-			},
-			null);
+				DataCleanupLoggingUtil.logDelete(
+					_log, 1, _dbInspector.normalizeName("ClassName_"),
+					StringBundler.concat(
+						"\"", value,
+						"\" is not defined in any deployed module and is not ",
+						"in use"));
+			}
+			else if (_log.isInfoEnabled()) {
+				_log.info(
+					StringBundler.concat(
+						"Class name ", value,
+						" is not defined in any deployed module but is ",
+						"referenced in the next tables: ",
+						String.join(", ", new TreeSet<>(usedTableNames))));
+			}
+		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
