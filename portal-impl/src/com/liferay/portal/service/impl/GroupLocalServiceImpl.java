@@ -453,12 +453,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		if (className.equals(Group.class.getName())) {
 			if (!site && (liveGroupId == 0) &&
 				!(StringUtil.startsWith(groupKey, GroupConstants.APP) ||
-				  groupKey.equals(GroupConstants.CALENDAR) ||
-				  groupKey.equals(GroupConstants.CMS) ||
-				  groupKey.equals(GroupConstants.CONTROL_PANEL) ||
 				  groupKey.equals(GroupConstants.DSR) ||
-				  groupKey.equals(GroupConstants.FORMS) ||
-				  groupKey.equals(GroupConstants.SEO_STUDIO))) {
+				  PortalUtil.isSystemGroup(groupKey))) {
 
 				throw new IllegalArgumentException();
 			}
@@ -873,6 +869,10 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 					type = GroupConstants.TYPE_SITE_PRIVATE;
 					friendlyURL =
 						GroupConstants.USER_PERSONAL_SITE_FRIENDLY_URL;
+					site = false;
+				}
+				else if (groupKey.equals(GroupConstants.SEO_STUDIO)) {
+					friendlyURL = GroupConstants.SEO_STUDIO_FRIENDLY_URL;
 					site = false;
 				}
 				else if (groupKey.equals(companyIdString)) {
