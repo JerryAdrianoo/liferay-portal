@@ -1226,7 +1226,7 @@ public class GroupImpl extends GroupBaseImpl {
 		String groupKey = getGroupKey();
 
 		if (GroupConstants.DSR.equals(groupKey) ||
-			GroupConstants.SEO_STUDIO.equals(groupKey)) {
+			PortalUtil.isSystemGroup(groupKey)) {
 
 			return true;
 		}
