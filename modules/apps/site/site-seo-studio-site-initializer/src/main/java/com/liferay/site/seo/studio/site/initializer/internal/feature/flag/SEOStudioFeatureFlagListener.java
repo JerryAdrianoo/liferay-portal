@@ -93,11 +93,13 @@ public class SEOStudioFeatureFlagListener implements FeatureFlagListener {
 	}
 
 	private void _deactivateSEOStudioGroup(long companyId) {
-		try {
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setProductionModeWithSafeCloseable()) {
+
 			Group group = _groupLocalService.fetchGroup(
 				companyId, GroupConstants.SEO_STUDIO);
 
-			if (group != null) {
+			if ((group != null) && group.isActive()) {
 				_groupLocalService.updateGroup(
 					group.getGroupId(), group.getParentGroupId(),
 					group.getNameMap(), group.getDescriptionMap(),
