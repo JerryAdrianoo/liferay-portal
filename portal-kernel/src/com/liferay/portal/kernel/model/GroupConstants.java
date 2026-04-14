@@ -57,8 +57,8 @@ public class GroupConstants {
 	public static final String SEO_STUDIO_FRIENDLY_URL = "/seo-studio";
 
 	public static final String[] SYSTEM_GROUPS = {
-		CALENDAR, CMS, CONTROL_PANEL, FORMS, GUEST, SEO_STUDIO,
-		GroupConstants.USER_PERSONAL_SITE
+		CALENDAR, CMS, CONTROL_PANEL, FORMS, GUEST,
+		GroupConstants.USER_PERSONAL_SITE, SEO_STUDIO
 	};
 
 	public static final int TYPE_DEPOT = 5;
