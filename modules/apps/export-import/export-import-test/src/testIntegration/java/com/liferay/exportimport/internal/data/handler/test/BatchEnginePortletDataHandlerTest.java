@@ -1745,6 +1745,7 @@ public class BatchEnginePortletDataHandlerTest {
 		Assert.assertEquals(objectEntries.toString(), 0, objectEntries.size());
 	}
 
+	@FeatureFlag("LPD-34594")
 	@Test
 	public void testGetDescriptionAndTagWithObjectDefinitionHierarchy()
 		throws Exception {
@@ -2089,6 +2090,7 @@ public class BatchEnginePortletDataHandlerTest {
 		_testIsConfigurationEnabled(true);
 	}
 
+	@FeatureFlag("LPD-34594")
 	@Test
 	public void testIsHiddenWithObjectDefinitionHierarchy() throws Exception {
 

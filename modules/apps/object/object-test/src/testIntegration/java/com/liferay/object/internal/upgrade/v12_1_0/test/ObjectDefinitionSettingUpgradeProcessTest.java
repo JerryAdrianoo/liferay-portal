@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.test.rule.FeatureFlag;
+import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -37,7 +38,9 @@ import org.junit.runner.RunWith;
 /**
  * @author Guilherme Camacho
  */
-@FeatureFlag("LPS-164563")
+@FeatureFlags(
+	featureFlags = {@FeatureFlag("LPD-34594"), @FeatureFlag("LPS-164563")}
+)
 @RunWith(Arquillian.class)
 public class ObjectDefinitionSettingUpgradeProcessTest {
 
@@ -50,10 +53,7 @@ public class ObjectDefinitionSettingUpgradeProcessTest {
 	public void setUp() throws Exception {
 		FrontendDataSetTestUtil.initialize(
 			ObjectDefinitionSettingUpgradeProcessTest.class);
-	}
 
-	@Test
-	public void testUpgrade() throws Exception {
 		_objectDefinition = ObjectDefinitionTestUtil.publishObjectDefinition();
 
 		_objectDefinitionA = ObjectDefinitionTestUtil.publishObjectDefinition();
@@ -65,12 +65,6 @@ public class ObjectDefinitionSettingUpgradeProcessTest {
 			_objectDefinitionAA.getObjectDefinitionId(),
 			_objectRelationshipLocalService);
 
-		_objectDefinitionSettingLocalService.deleteObjectDefinitionSetting(
-			_objectDefinitionSettingLocalService.fetchObjectDefinitionSetting(
-				_objectDefinitionAA.getObjectDefinitionId(),
-				ObjectDefinitionSettingConstants.
-					NAME_ALLOW_STANDALONE_OBJECT_ENTRY));
-
 		_objectDefinitionAB =
 			ObjectDefinitionTestUtil.publishObjectDefinition();
 
@@ -79,17 +73,15 @@ public class ObjectDefinitionSettingUpgradeProcessTest {
 			_objectDefinitionAB.getObjectDefinitionId(),
 			_objectRelationshipLocalService);
 
-		ObjectDefinitionSetting objectDefinitionSetting =
-			_objectDefinitionSettingLocalService.fetchObjectDefinitionSetting(
-				_objectDefinitionAB.getObjectDefinitionId(),
-				ObjectDefinitionSettingConstants.
-					NAME_ALLOW_STANDALONE_OBJECT_ENTRY);
+		_objectDefinitionSettingLocalService.addObjectDefinitionSetting(
+			TestPropsValues.getUserId(),
+			_objectDefinitionAB.getObjectDefinitionId(),
+			ObjectDefinitionSettingConstants.NAME_ALLOW_STANDALONE_OBJECT_ENTRY,
+			"false");
+	}
 
-		objectDefinitionSetting.setValue("false");
-
-		_objectDefinitionSettingLocalService.updateObjectDefinitionSetting(
-			objectDefinitionSetting);
-
+	@Test
+	public void testUpgrade() throws Exception {
 		_forEachDataSetObjectDefinition(
 			objectDefinition -> Assert.assertEquals(
 				"false",
@@ -106,17 +98,16 @@ public class ObjectDefinitionSettingUpgradeProcessTest {
 
 		_forEachDataSetObjectDefinition(
 			objectDefinition -> {
-				ObjectDefinitionSetting dataSetObjectDefinitionSetting =
+				ObjectDefinitionSetting objectDefinitionSetting =
 					_objectDefinitionSettingLocalService.
 						fetchObjectDefinitionSetting(
 							objectDefinition.getObjectDefinitionId(),
 							ObjectDefinitionSettingConstants.
 								NAME_ALLOW_STANDALONE_OBJECT_ENTRY);
 
-				if (dataSetObjectDefinitionSetting != null) {
+				if (objectDefinitionSetting != null) {
 					_objectDefinitionSettingLocalService.
-						deleteObjectDefinitionSetting(
-							dataSetObjectDefinitionSetting);
+						deleteObjectDefinitionSetting(objectDefinitionSetting);
 				}
 			});
 

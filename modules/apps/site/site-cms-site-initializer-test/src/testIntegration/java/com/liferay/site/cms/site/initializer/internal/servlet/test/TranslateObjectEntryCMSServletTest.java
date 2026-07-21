@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.zip.ZipReader;
 import com.liferay.portal.kernel.zip.ZipReaderFactory;
 import com.liferay.portal.test.rule.FeatureFlag;
+import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -53,7 +54,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 /**
  * @author Balázs Sáfrány-Kovalik
  */
-@FeatureFlag("LPD-17564")
+@FeatureFlags(
+	featureFlags = {@FeatureFlag("LPD-17564"), @FeatureFlag("LPD-34594")}
+)
 @RunWith(Arquillian.class)
 public class TranslateObjectEntryCMSServletTest extends BaseCMSServletTestCase {
 

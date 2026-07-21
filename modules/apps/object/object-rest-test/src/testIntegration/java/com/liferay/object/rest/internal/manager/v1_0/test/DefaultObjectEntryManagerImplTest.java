@@ -143,7 +143,6 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.NoSuchRoleException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -295,7 +294,8 @@ import org.junit.runner.RunWith;
  */
 @FeatureFlags(
 	featureFlags = {
-		@FeatureFlag(value = "LPS-164801"), @FeatureFlag("LPS-172017")
+		@FeatureFlag(value = "LPD-34594"), @FeatureFlag(value = "LPS-164801"),
+		@FeatureFlag("LPS-172017")
 	}
 )
 @RunWith(Arquillian.class)
@@ -448,8 +448,6 @@ public class DefaultObjectEntryManagerImplTest
 	@Before
 	@Override
 	public void setUp() throws Exception {
-		ObjectDefinitionTreeUtil.invalidate();
-
 		super.setUp();
 
 		_depotEntry = _addDepotEntry();
@@ -10121,19 +10119,6 @@ public class DefaultObjectEntryManagerImplTest
 			url = HttpComponentsUtil.addParameter(
 				url, "objectEntryExternalReferenceCode",
 				actualObjectEntry.getExternalReferenceCode());
-
-			if (FeatureFlagManagerUtil.isEnabled(
-					_objectDefinition2.getCompanyId(), "LPD-17564")) {
-
-				ObjectField objectField =
-					_objectFieldLocalService.fetchObjectField(
-						_objectDefinition2.getObjectDefinitionId(),
-						"attachmentObjectFieldName");
-
-				url = HttpComponentsUtil.addParameter(
-					url, "objectFieldExternalReferenceCode",
-					objectField.getExternalReferenceCode());
-			}
 
 			Assert.assertEquals(url, link.getHref());
 		}
