@@ -92,26 +92,29 @@ export function ManagementToolbar({
 					<div className="border-right ml-sm-2 mr-3 pr-3">
 						<h3 className="mb-0 text-truncate">{label}</h3>
 
-						{inheritanceLabel && (
-							<ClayTooltipProvider>
-								<strong
-									className={`${inheritanceClassName} label`}
-									title={inheritanceTitle}
-								>
-									<span className="align-items-center d-inline-flex">
-										{inheritanceLabel}
+						{Liferay.FeatureFlags['LPD-34594'] &&
+							inheritanceLabel && (
+								<ClayTooltipProvider>
+									<strong
+										className={`${inheritanceClassName} label`}
+										title={inheritanceTitle}
+									>
+										<span className="align-items-center d-inline-flex">
+											{inheritanceLabel}
 
-										{inheritanceIconSymbol && (
-											<ClayIcon
-												aria-hidden="true"
-												className="c-ml-1"
-												symbol={inheritanceIconSymbol}
-											/>
-										)}
-									</span>
-								</strong>
-							</ClayTooltipProvider>
-						)}
+											{inheritanceIconSymbol && (
+												<ClayIcon
+													aria-hidden="true"
+													className="c-ml-1"
+													symbol={
+														inheritanceIconSymbol
+													}
+												/>
+											)}
+										</span>
+									</strong>
+								</ClayTooltipProvider>
+							)}
 
 						{badgeLabel && (
 							<strong className={`${badgeClassName} label`}>

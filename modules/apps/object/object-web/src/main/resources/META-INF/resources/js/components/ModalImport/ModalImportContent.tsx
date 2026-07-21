@@ -66,7 +66,11 @@ export function ModalImportContent({
 	const nameInputId = `${portletNamespace}name`;
 
 	const getImportButtonDisableState = () => {
-		if (inputFile && importedObjectDefinitions) {
+		if (
+			Liferay.FeatureFlags['LPD-34594'] &&
+			inputFile &&
+			importedObjectDefinitions
+		) {
 			return false;
 		}
 
@@ -223,6 +227,7 @@ export function ModalImportContent({
 											| ObjectDefinition[];
 
 										if (
+											Liferay.FeatureFlags['LPD-34594'] &&
 											Array.isArray(JSONFile) &&
 											JSONFile[0].scope
 										) {
