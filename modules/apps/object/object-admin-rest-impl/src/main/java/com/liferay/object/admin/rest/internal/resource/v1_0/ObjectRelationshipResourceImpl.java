@@ -22,6 +22,7 @@ import com.liferay.object.service.ObjectFilterLocalService;
 import com.liferay.object.service.ObjectFolderLocalService;
 import com.liferay.object.service.ObjectRelationshipService;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.lazy.referencing.LazyReferencingThreadLocal;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
@@ -235,6 +236,13 @@ public class ObjectRelationshipResourceImpl
 	public ObjectRelationship putObjectRelationship(
 			Long objectRelationshipId, ObjectRelationship objectRelationship)
 		throws Exception {
+
+		if (Validator.isNotNull(objectRelationship.getEdge()) &&
+			!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-34594")) {
+
+			throw new UnsupportedOperationException();
+		}
 
 		if (Validator.isNotNull(
 				objectRelationship.getParameterObjectFieldName())) {

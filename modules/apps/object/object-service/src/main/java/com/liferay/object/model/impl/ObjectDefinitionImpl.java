@@ -194,6 +194,10 @@ public class ObjectDefinitionImpl extends ObjectDefinitionBaseImpl {
 
 	@Override
 	public long getRootObjectDefinitionId() {
+		if (!FeatureFlagManagerUtil.isEnabled(getCompanyId(), "LPD-34594")) {
+			return 0L;
+		}
+
 		long[] rootObjectDefinitionIds = getRootObjectDefinitionIds();
 
 		if (ArrayUtil.isEmpty(rootObjectDefinitionIds)) {
@@ -205,6 +209,10 @@ public class ObjectDefinitionImpl extends ObjectDefinitionBaseImpl {
 
 	@Override
 	public long[] getRootObjectDefinitionIds() {
+		if (!FeatureFlagManagerUtil.isEnabled(getCompanyId(), "LPD-34594")) {
+			return new long[0];
+		}
+
 		return ObjectDefinitionTreeUtil.getRootObjectDefinitionIds(
 			getObjectDefinitionId(),
 			ObjectDefinitionSettingLocalServiceUtil.getService());
@@ -313,12 +321,20 @@ public class ObjectDefinitionImpl extends ObjectDefinitionBaseImpl {
 
 	@Override
 	public boolean isRootDescendantNode(long rootObjectDefinitionId) {
+		if (!FeatureFlagManagerUtil.isEnabled(getCompanyId(), "LPD-34594")) {
+			return false;
+		}
+
 		return ArrayUtil.contains(
 			getRootObjectDefinitionIds(), rootObjectDefinitionId);
 	}
 
 	@Override
 	public boolean isRootNode() {
+		if (!FeatureFlagManagerUtil.isEnabled(getCompanyId(), "LPD-34594")) {
+			return false;
+		}
+
 		return ArrayUtil.contains(
 			getRootObjectDefinitionIds(), getObjectDefinitionId());
 	}

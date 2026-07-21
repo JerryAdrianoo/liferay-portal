@@ -58,6 +58,10 @@ public class ExportBoundObjectDefinitionsMVCResourceCommand
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws Exception {
 
+		if (!FeatureFlagManagerUtil.isEnabled("LPD-34594")) {
+			throw new UnsupportedOperationException();
+		}
+
 		JSONArray jsonArray = _jsonFactory.createJSONArray();
 		Set<Long> objectDefinitionIds = new HashSet<>();
 

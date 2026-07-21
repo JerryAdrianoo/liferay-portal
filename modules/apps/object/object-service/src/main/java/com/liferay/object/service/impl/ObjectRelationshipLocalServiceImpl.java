@@ -1085,14 +1085,20 @@ public class ObjectRelationshipLocalServiceImpl
 				objectRelationship.getObjectFieldId2(), false);
 		}
 
-		if (edge && !objectRelationship.isEdge()) {
+		if (edge && !objectRelationship.isEdge() &&
+			FeatureFlagManagerUtil.isEnabled(
+				objectRelationship.getCompanyId(), "LPD-34594")) {
+
 			ObjectDefinitionTreeUtil.bindObjectDefinitions(
 				_objectDefinitionLocalServiceSnapshot.get(),
 				_objectDefinitionPersistence,
 				_objectDefinitionSettingLocalService, _objectEntryLocalService,
 				objectRelationship, objectRelationshipLocalService);
 		}
-		else if (!edge && objectRelationship.isEdge()) {
+		else if (!edge && objectRelationship.isEdge() &&
+				 FeatureFlagManagerUtil.isEnabled(
+					 objectRelationship.getCompanyId(), "LPD-34594")) {
+
 			ObjectDefinitionTreeUtil.unbindObjectDefinitions(
 				_objectActionPersistence,
 				_objectDefinitionLocalServiceSnapshot.get(),
@@ -1406,7 +1412,10 @@ public class ObjectRelationshipLocalServiceImpl
 		_registerRelatedInfoItemCollectionProvider(
 			objectDefinition1, objectDefinition2, objectRelationship);
 
-		if (edge) {
+		if (edge &&
+			FeatureFlagManagerUtil.isEnabled(
+				objectRelationship.getCompanyId(), "LPD-34594")) {
+
 			ObjectDefinitionTreeUtil.bindObjectDefinitions(
 				_objectDefinitionLocalServiceSnapshot.get(),
 				_objectDefinitionPersistence,
@@ -1685,6 +1694,12 @@ public class ObjectRelationshipLocalServiceImpl
 			ObjectDefinition objectDefinition2,
 			ObjectRelationship objectRelationship, String type)
 		throws PortalException {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				objectDefinition1.getCompanyId(), "LPD-34594")) {
+
+			return;
+		}
 
 		long[] objectDefinition1RootObjectDefinitionIds =
 			objectDefinition1.getRootObjectDefinitionIds();

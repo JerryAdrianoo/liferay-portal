@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -129,7 +130,10 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 				_objectEntryLocalService.fetchObjectEntry(
 					objectEntry.getRootObjectEntryId());
 
-			if (rootObjectEntry == null) {
+			if (!FeatureFlagManagerUtil.isEnabled(
+					objectEntry.getCompanyId(), "LPD-34594") ||
+				(rootObjectEntry == null)) {
+
 				return;
 			}
 
@@ -532,7 +536,10 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 			Date modifiedDate, ObjectEntry objectEntry)
 		throws PortalException {
 
-		if (!objectEntry.isRootDescendantNode()) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				objectEntry.getCompanyId(), "LPD-34594") ||
+			!objectEntry.isRootDescendantNode()) {
+
 			return;
 		}
 
