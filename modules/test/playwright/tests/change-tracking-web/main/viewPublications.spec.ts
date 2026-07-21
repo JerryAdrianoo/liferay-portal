@@ -15,6 +15,7 @@ import {journalPagesTest} from '../../journal-web/main/fixtures/journalPagesTest
 export const test = mergeTests(
 	apiHelpersTest,
 	featureFlagsTest({
+		'LPD-34594': {enabled: true},
 		'LPS-164563': {enabled: true},
 	}),
 	journalPagesTest,
